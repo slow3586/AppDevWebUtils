@@ -1,0 +1,16 @@
+{
+  "commands_wsadmin": [
+    {
+      "id": "uric()",
+      "name": "Обновление Integration и Конфигов"
+    },
+    {
+      "id": "ura(1)",
+      "name": "Обновление GP, Integration и Конфигов"
+    },
+    {
+      "id": "ra(1)",
+      "name": "Рестарт GP и Integration"
+    }
+  ]
+}

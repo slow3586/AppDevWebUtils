@@ -1,0 +1,48 @@
+{
+  "name": "muzedodevwebutils",
+  "version": "0.1.0",
+  "description": "",
+  "repository": {
+    "type": "",
+    "url": ""
+  },
+  "keywords": [
+    "react"
+  ],
+  "author": "blogic",
+  "license": "",
+  "bugs": {
+    "url": ""
+  },
+  "homepage": "",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.1.6",
+    "lodash": "^4.17.21",
+    "less": "^4.1.3",
+    "react-bootstrap": "2.8.0"
+  },
+  "scripts": {
+    "build": "webpack",
+    "watch": "webpack --watch"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.22.0",
+    "@babel/preset-env": "^7.1.0",
+    "@babel/preset-react": "^7.0.0",
+    "babel-loader": "^8.0.2",
+    "webpack": "^5.88.1",
+    "webpack-cli": "^5.1.4",
+    "@types/lodash": "^4.14.195",
+    "@types/react": "^18.2.14",
+    "@types/react-dom": "^18.2.7",
+    "less": "^4.1.3",
+    "less-loader": "^11.1.3",
+    "css-loader": "^6.8.1",
+    "style-loader": "^3.3.3",
+    "ts-loader": "^9.4.4",
+    "uglify-js": "^3.17.4",
+    "@types/react-bootstrap": "0.32.32"
+  }
+}
