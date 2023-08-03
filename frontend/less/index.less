@@ -2,6 +2,65 @@ body {
 }
 
 .component-app {
+  margin-top: 10px;
   margin-left: 10%;
   margin-right: 10%;
+}
+
+.component-overview {
+  &-col {
+    margin: 10px;
+  }
+
+  &-textarea {
+    overflow-y: scroll;
+    max-height: 500px;
+  }
+}
+
+.component-server {
+  margin: 10px;
+  display: flex;
+  justify-content: center;
+
+  &-container {
+    width: 50%;
+
+    &-textarea {
+      max-height: 400px;
+    }
+
+    &-footer {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 20px;
+
+      &-delay {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        &-textarea {
+          width: 100px;
+
+        }
+      }
+
+      &-buttons {
+        display: flex;
+
+        & > * {
+          margin-left: 10px;
+        }
+      }
+    }
+  }
+}
+
+.component-overview-server {
+  .form-switch {
+    & > * {
+      opacity: 1 !important;
+    }
+  }
 }

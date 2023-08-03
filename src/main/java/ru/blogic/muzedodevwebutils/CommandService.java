@@ -2,6 +2,9 @@ package ru.blogic.muzedodevwebutils;
 
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -10,20 +13,22 @@ import java.util.concurrent.atomic.AtomicReference;
 public class CommandService {
     private final SSHService sshService;
     private final MuzedoServerService muzedoServerService;
-
+    private final InfoService infoService;
     @Autowired
     public CommandService(
         SSHService sshService,
-        MuzedoServerService muzedoServerService
+        MuzedoServerService muzedoServerService,
+        InfoService infoService
     ) {
         this.sshService = sshService;
         this.muzedoServerService = muzedoServerService;
+        this.infoService = infoService;
     }
 
     @PostConstruct
     public void postConstruct() {
         try {
-            MuzedoServer muzedoServer = muzedoServerService.createMuzedoServer("172.19.203.61");
+            final var muzedoServer = muzedoServerService.createMuzedoServer("172.19.203.61");
 
             System.out.println(this.executeCommandShell(muzedoServer,
                 "cd /opt/IBM/workdir/from_root/deploy/",
@@ -31,30 +36,33 @@ public class CommandService {
             System.out.println(this.executeCommandShell(muzedoServer,
                 "ls",
                 "#"));
-            System.out.println(this.executeCommandWsadmin(muzedoServer,
-                "./wsadmin_extra.sh"));
-            System.out.println(this.executeCommandWsadmin(muzedoServer,
-              "cnf()"));
+            System.out.println(this.executeCommandShell(muzedoServer,
+                "./wsadmin_extra.sh",
+                ">"));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     public String run(
-        RunCommandRequest runCommandRequest
+        final RunCommandRequest runCommandRequest
     ) {
-        MuzedoServer muzedoServer = muzedoServerService.getMuzedoServer(runCommandRequest.host());
-        if (runCommandRequest.type().equals(RunCommandRequest.Type.WSADMIN)) {
-            return this.executeCommandWsadmin(muzedoServer, runCommandRequest.command());
-        } else {
-            return this.executeCommandSsh(muzedoServer, runCommandRequest.command());
+        MuzedoServer muzedoServer = muzedoServerService.getMuzedoServer(runCommandRequest.serverId());
+        try {
+            if (runCommandRequest.type().equals(RunCommandRequest.Type.WSADMIN)) {
+                return executeCommandShell(muzedoServer, runCommandRequest.command(), ">");
+            } else {
+                return sshService.executeCommand(muzedoServer.clientSession, runCommandRequest.command());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
     public String executeCommandShell(
-        MuzedoServer muzedoServer,
-        String command,
-        String readySymbol
+        final MuzedoServer muzedoServer,
+        final String command,
+        final String readySymbol
     ) {
         try {
             AtomicReference<String> currentRef = muzedoServer.getChannelShellCurrentCommand();
@@ -63,6 +71,10 @@ public class CommandService {
                 throw new RuntimeException("В даннный момент выполняется операция: " + currentRef.get());
             }
 
+            infoService.writeInfo(
+                muzedoServer.id,
+                InfoEntry.Severity.CRIT,
+                "Запущен " + command + " на " + muzedoServer.host);
             currentRef.set(command);
             String result = sshService.executeCommand(
                 muzedoServer.channelShell,
@@ -76,25 +88,4 @@ public class CommandService {
         }
     }
 
-    public String executeCommandWsadmin(
-        MuzedoServer muzedoServer,
-        String command
-    ) {
-        try {
-            return executeCommandShell(muzedoServer, command, ">");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public String executeCommandSsh(
-        MuzedoServer muzedoServer,
-        String command
-    ) {
-        try {
-            return sshService.executeCommand(muzedoServer.clientSession, command);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
 }

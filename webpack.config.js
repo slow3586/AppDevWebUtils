@@ -22,15 +22,21 @@ module.exports = {
                 exclude: /node_modules/,
             },
             {
-                test: /\.less$/i,
+                test: /\.(less)$/,
                 use: [
                     'style-loader',
                     'css-loader',
                     'less-loader'
+                ]
+            },
+            {
+                test: /\.s[ac]ss|css$/i,
+                use: [
+                    "style-loader",
+                    "css-loader",
+                    "sass-loader",
                 ],
-                exclude: /node_modules/,
-                include: /frontend/,
-            }
+            },
         ]
     },
     resolve: {

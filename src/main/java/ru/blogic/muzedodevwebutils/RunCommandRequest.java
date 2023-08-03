@@ -1,9 +1,7 @@
 package ru.blogic.muzedodevwebutils;
 
-import lombok.Value;
-
 public record RunCommandRequest(
-    String host,
+    int serverId,
     String command,
     Type type
 ) {

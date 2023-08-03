@@ -1,42 +1,62 @@
-import React, {ReactNode, useRef} from "react";
-import {getLog} from "../clients/client";
+import React, {useEffect, useState} from "react";
 import {Button, Form} from "react-bootstrap";
+import {getServerInfo, InfoEntry} from "../clients/client";
+import dateFormat from "dateformat";
 
-export interface ServerProps {
-    host: string
+export type ServerProps = {
+    host: number
 }
 
-export interface ServerState {
-}
+export function Server({host}: ServerProps) {
+    let [last, setLast] = useState(0);
+    let [info, setInfo] = useState("");
 
-export class Server extends React.Component<ServerProps, ServerState> {
-    private textArea: React.MutableRefObject<HTMLTextAreaElement> = useRef(null);
-
-    constructor(props: ServerProps) {
-        super(props);
-    }
-
-    componentDidMount() {
-        getLog(this.props.host).then((response) => {
-            this.textArea.current.value = response.trim();
+    const fetchInfo = () => {
+        getServerInfo(61, last).then((response: InfoEntry[]) => {
+            setInfo(
+                response.map(e =>
+                    `${dateFormat(e.date, "hh:MM:ss")} [${e.severity}] ${e.user} ${e.text}`
+                ).join("\n")
+            );
         });
     }
 
-    render() {
-        return (
-            <div className="server">
-                <Form.Control readOnly as="textarea" rows={3} />
-                <Form.Select aria-label="Default select example">
-                    <option>Open this select menu</option>
+    useEffect(() => {
+        const interval =
+            setInterval(() => fetchInfo(), 3000);
+    }, []);
+
+    return (
+        <div className="component-server">
+            <div className="component-server-container">
+                <Form.Text>{host}</Form.Text>
+                <Form.Control className="component-server-container-textarea"
+                              value={info}
+                              readOnly as="textarea" rows={10}/>
+
+                <Form.Text muted>Команда</Form.Text>
+                <Form.Select aria-label="Выбор команды">
                     <option value="1">Рестарт</option>
                     <option value="2">Обновление</option>
                     <option value="3">Клир кэш</option>
                 </Form.Select>
-                <Form.Control type="text" placeholder="qwe" />
-                <Form.Control type="text" placeholder="Normal text" />
-                <Button variant="primary">Запустить</Button>
-                <Button variant="primary">Отменить</Button>
+
+                <Form.Text muted>Комментарий</Form.Text>
+                <Form.Control type="text" placeholder=""/>
+
+                <div className="component-server-container-footer">
+                    <div className="component-server-container-footer-delay">
+                        <Form.Text muted>Задержка (сек)</Form.Text>
+                        <Form.Control className="component-server-container-footer-delay-textarea"
+                                      type="text" placeholder=""/>
+                    </div>
+                    <div className="component-server-container-footer-buttons">
+                        <Button variant="primary">Запустить</Button>
+                        <Button variant="primary">Оттянуть</Button>
+                        <Button variant="primary">Отменить</Button>
+                    </div>
+                </div>
             </div>
-        )
-    }
+        </div>
+    );
 }

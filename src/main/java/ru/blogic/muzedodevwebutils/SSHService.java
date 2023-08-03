@@ -33,7 +33,7 @@ public class SSHService {
         String host
     ) {
         try {
-            ClientSession session = client.connect("root", host, 22)
+            final var session = client.connect("root", host, 22)
                 .verify(TIMEOUT)
                 .getSession();
             session.addPasswordIdentity("");
@@ -49,7 +49,7 @@ public class SSHService {
         ClientSession clientSession
     ) {
         try {
-            ChannelShell channelShell = clientSession.createShellChannel();
+            final var channelShell = clientSession.createShellChannel();
             channelShell.setRedirectErrorStream(true);
             channelShell.open().verify(TIMEOUT);
 
@@ -76,7 +76,7 @@ public class SSHService {
         String readySymbol
     ) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(channelShell.getInvertedIn()));
+            final var writer = new BufferedWriter(new OutputStreamWriter(channelShell.getInvertedIn()));
             channelShell.setOut(baos);
             writer.write(command);
             writer.write("\n");
@@ -84,11 +84,11 @@ public class SSHService {
             int count = 0;
             while (true) {
                 Thread.sleep(1000);
-                String string = baos.toString().trim();
+                final var string = baos.toString().trim();
                 if (string.endsWith(readySymbol)) {
                     return StringUtils.substringBeforeLast(string, "\n");
                 }
-                if (count % 5 == 0) {
+                if (count != 0 && count % 5 == 0) {
                     System.out.println(channelShell.getSession().getRemoteAddress() + ": " + command + ": " + count);
                 }
                 count++;

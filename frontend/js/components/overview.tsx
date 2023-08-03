@@ -1,45 +1,58 @@
-import React, {useRef} from "react";
-import {getLog} from "../clients/client";
-import {ServerProps} from "./server";
-import {Col, Form, Container, Row} from "react-bootstrap";
+import React, {MutableRefObject, useEffect, useRef, useState} from "react";
+import {Col, Form, Container, Row, FormControl} from "react-bootstrap";
+import {OverviewServer} from "./overview_server";
+import {getOverview, getServerInfo, InfoEntry} from "../clients/client";
+import dateFormat, {masks} from "dateformat";
 
-export interface OverviewProps {
-}
+export function Overview() {
+    let [last, setLast] = useState(0);
+    let [info, setInfo] = useState("");
 
-export interface OverviewState {
-}
-
-export class Overview extends React.Component<OverviewProps, OverviewState> {
-    constructor(props: ServerProps) {
-        super(props);
+    const fetchInfo = () => {
+        getOverview(last).then((response: Map<number, InfoEntry[]>) => {
+            setInfo(
+                Object.entries(response)
+                    .flatMap(e => {
+                        const k = e[0];
+                        const v = e[1];
+                        return v.map((e: InfoEntry) => {
+                            const date = new Date(e.date);
+                            return ({
+                                date: date,
+                                text: `${dateFormat(date, "hh:MM:ss")} [${k}] [${e.severity}] [${e.user}] ${e.text}`
+                            });
+                        });
+                    })
+                    .sort((a, b) =>
+                        a.date.getTime() - b.date.getTime())
+                    .map(e => e.text)
+                    .join("\n")
+            );
+        });
     }
 
-    componentDidMount() {
-    }
+    useEffect(() => {
+        const interval =
+            setInterval(() => fetchInfo(), 3000);
+    }, []);
 
-    render() {
-        return (
+    return (
+        <div className="component-overview">
             <Container>
                 <Row>
-                    <Col>
-                        <Form.Check
-                            type="switch"
-                            id="custom-switch60"
-                            label="60"
-                        />
-                        <Form.Check
-                            type="switch"
-                            id="custom-switch61"
-                            label="61"
-                        />
-                    </Col>
-                    <Col>
+                    <Col className="component-overview-col">
                         <Form.Group controlId="exampleForm.ControlTextarea1">
-                            <Form.Control readOnly as="textarea" rows={50}/>
+                            <Form.Control className="component-overview-textarea"
+                                          value={info}
+                                          readOnly as="textarea" rows={15}/>
                         </Form.Group>
+                    </Col>
+                    <Col className="component-overview-col">
+                        <OverviewServer></OverviewServer>
+                        <OverviewServer></OverviewServer>
                     </Col>
                 </Row>
             </Container>
-        )
-    }
+        </div>
+    );
 }

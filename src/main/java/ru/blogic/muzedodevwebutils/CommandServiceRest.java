@@ -22,17 +22,22 @@ public class CommandServiceRest {
 
     @GetMapping(path = "run/{host}/{type}/{command}", produces = "application/json")
     public String runGet(
-        @PathVariable("host") String host,
+        @PathVariable("host") int host,
         @PathVariable("type") RunCommandRequest.Type type,
         @PathVariable("command") String command
     ) {
-        return commandService.run(new RunCommandRequest(host, command, type));
+        return commandService.run(
+            new RunCommandRequest(
+                host,
+                command,
+                type));
     }
 
     @PostMapping(path = "run", produces = "application/json")
     public String runPost(
         @RequestBody final RunCommandRequest runCommandRequest
     ) {
-        return commandService.run(runCommandRequest);
+        return commandService.run(
+            runCommandRequest);
     }
 }
