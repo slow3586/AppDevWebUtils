@@ -10,7 +10,7 @@
     <groupId>ru.blogic</groupId>
     <artifactId>MuzedoDevWebUtils</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <packaging>war</packaging>
+    <packaging>jar</packaging>
     <name>MuzedoDevWebUtils</name>
     <description>MuzedoDevWebUtils</description>
     <properties>
