@@ -1,4 +1,4 @@
-package ru.blogic.muzedodevwebutils;
+package ru.blogic.muzedodevwebutils.command;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,7 +26,7 @@ public class CommandServiceRest {
         @PathVariable("command") String commandId
     ) {
         return commandService.run(
-            new RunCommandRequest(
+            new CommandRunRequest(
                 serverId,
                 commandId,
                 "",
@@ -35,9 +35,9 @@ public class CommandServiceRest {
 
     @PostMapping(path = "run", produces = "application/json")
     public String runPost(
-        @RequestBody final RunCommandRequest runCommandRequest
+        @RequestBody final CommandRunRequest commandRunRequest
     ) {
         return commandService.run(
-            runCommandRequest);
+            commandRunRequest);
     }
 }

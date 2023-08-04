@@ -1,7 +1,6 @@
-package ru.blogic.muzedodevwebutils;
+package ru.blogic.muzedodevwebutils.server;
 
 import jakarta.annotation.PostConstruct;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -12,7 +11,7 @@ public class MuzedoServerDao {
     private final List<MuzedoServer> servers = new ArrayList<>();
 
     @PostConstruct
-    public void postConstruct(){
+    public void postConstruct() {
         servers.add(new MuzedoServer(60, "172.19.203.60"));
         servers.add(new MuzedoServer(61, "172.19.203.61"));
     }
@@ -33,7 +32,7 @@ public class MuzedoServerDao {
                 new RuntimeException("Не найден: " + id));
     }
 
-    public List<MuzedoServer> getAll(){
+    public List<MuzedoServer> getAll() {
         return new ArrayList<>(servers);
     }
 }

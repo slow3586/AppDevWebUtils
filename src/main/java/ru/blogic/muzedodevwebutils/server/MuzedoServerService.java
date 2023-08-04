@@ -1,13 +1,9 @@
-package ru.blogic.muzedodevwebutils;
+package ru.blogic.muzedodevwebutils.server;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.sshd.client.channel.ChannelShell;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
+import ru.blogic.muzedodevwebutils.SSHService;
 
 @Service
 @Slf4j
@@ -32,7 +28,7 @@ public class MuzedoServerService {
                 retryConnectShell(s);
             });
         } catch (Exception e) {
-
+            throw new RuntimeException(e);
         }
     }
 
@@ -47,15 +43,20 @@ public class MuzedoServerService {
                 log.warn("ShellChannel closed: {}", muzedoServer.host);
                 retryConnectShell(muzedoServer);
             });
+
+            log.debug("{}: Starting wsadmin", muzedoServer.host);
+            sshService.executeCommand(
+                channel,
+                "cd /root/deploy/",
+                "#");
+            sshService.executeCommand(
+                channel,
+                "./wsadmin_extra.sh",
+                ">");
+            log.debug("{}: Wsadmin started!", muzedoServer.host);
         } catch (Exception e) {
             log.error("#retryConnectShell exception: {}", e.getMessage(), e);
             retryConnectShell(muzedoServer);
         }
-    }
-
-    public void getServerStatus(
-        final int serverId
-    ) {
-        MuzedoServer muzedoServer = muzedoServerDao.get(serverId);
     }
 }

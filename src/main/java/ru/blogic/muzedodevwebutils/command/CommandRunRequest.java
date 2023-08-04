@@ -1,6 +1,6 @@
-package ru.blogic.muzedodevwebutils;
+package ru.blogic.muzedodevwebutils.command;
 
-public record RunCommandRequest(
+public record CommandRunRequest(
     int serverId,
     String commandId,
     String comment,

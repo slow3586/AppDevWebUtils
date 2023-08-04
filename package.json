@@ -22,7 +22,9 @@
     "sass": "^1.64.2",
     "bootstrap": "^5.3.1",
     "react-bootstrap": "^2.8.0",
-    "dateformat": "^5.0.3"
+    "dateformat": "^5.0.3",
+    "react-query": "^3.39.3",
+    "lodash": "^4.17.21"
   },
   "scripts": {
     "build": "webpack",
@@ -47,6 +49,8 @@
     "ts-loader": "^9.4.4",
     "uglify-js": "^3.17.4",
     "@types/react-bootstrap": "^0.32.32",
-    "@types/dateformat": "^5.0.0"
+    "@types/dateformat": "^5.0.0",
+    "@types/react-query": "^1.2.9",
+    "@types/lodash": "^4.14.196"
   }
 }
