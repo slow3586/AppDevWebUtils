@@ -15,10 +15,10 @@ export function App() {
                     <Overview></Overview>
                 </Tab>
                 <Tab eventKey="b60" title="60">
-                    <Server host={60}></Server>
+                    <Server serverId={60}></Server>
                 </Tab>
                 <Tab eventKey="b61" title="61">
-                    <Server host={61}></Server>
+                    <Server serverId={61}></Server>
                 </Tab>
             </Tabs>
         </div>

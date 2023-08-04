@@ -4,7 +4,7 @@ export enum Severity {
     TRACE = "TRACE"
 }
 
-export interface InfoEntry {
+export type InfoEntry = {
     date: Date,
     text: string,
     severity: Severity,

@@ -1,9 +1,11 @@
 import React, {useEffect, useRef, useState} from "react";
 import {Col, Form, Container, Row} from "react-bootstrap";
-import {getServerInfo, InfoEntry} from "../clients/client";
-import dateFormat from "dateformat";
 
-export function OverviewServer() {
+export type OverviewServerProps = {
+    serverId: number
+}
+
+export function OverviewServer({serverId}: OverviewServerProps) {
     const fetchInfo = () => {
     }
 
@@ -14,7 +16,7 @@ export function OverviewServer() {
 
     return (
         <div className="component-overview-server">
-            <Form.Text muted>Стенд</Form.Text>
+            <Form.Text muted>{serverId}</Form.Text>
             <Form.Check
                 disabled
                 type="switch"

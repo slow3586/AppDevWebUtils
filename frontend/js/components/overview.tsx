@@ -1,7 +1,7 @@
 import React, {MutableRefObject, useEffect, useRef, useState} from "react";
 import {Col, Form, Container, Row, FormControl} from "react-bootstrap";
 import {OverviewServer} from "./overview_server";
-import {getOverview, getServerInfo, InfoEntry} from "../clients/client";
+import {getOverview, getServerInfo, InfoEntry} from "../clients/info_client";
 import dateFormat, {masks} from "dateformat";
 
 export function Overview() {
@@ -48,8 +48,8 @@ export function Overview() {
                         </Form.Group>
                     </Col>
                     <Col className="component-overview-col">
-                        <OverviewServer></OverviewServer>
-                        <OverviewServer></OverviewServer>
+                        <OverviewServer serverId={60}/>
+                        <OverviewServer serverId={61}/>
                     </Col>
                 </Row>
             </Container>

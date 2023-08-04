@@ -20,17 +20,17 @@ public class CommandServiceRest {
         this.commandService = commandService;
     }
 
-    @GetMapping(path = "run/{host}/{type}/{command}", produces = "application/json")
+    @GetMapping(path = "run/{host}/{command}", produces = "application/json")
     public String runGet(
-        @PathVariable("host") int host,
-        @PathVariable("type") RunCommandRequest.Type type,
-        @PathVariable("command") String command
+        @PathVariable("host") int serverId,
+        @PathVariable("command") String commandId
     ) {
         return commandService.run(
             new RunCommandRequest(
-                host,
-                command,
-                type));
+                serverId,
+                commandId,
+                "",
+                0));
     }
 
     @PostMapping(path = "run", produces = "application/json")

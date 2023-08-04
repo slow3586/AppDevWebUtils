@@ -1,10 +1,12 @@
 package ru.blogic.muzedodevwebutils;
 
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.channel.ChannelShell;
 import org.apache.sshd.client.session.ClientSession;
+import org.apache.sshd.common.channel.RequestHandler;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedWriter;
@@ -13,6 +15,7 @@ import java.io.OutputStreamWriter;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
+@Slf4j
 public class SSHService {
 
     private static final long TIMEOUT = 5000;
@@ -52,6 +55,11 @@ public class SSHService {
             final var channelShell = clientSession.createShellChannel();
             channelShell.setRedirectErrorStream(true);
             channelShell.open().verify(TIMEOUT);
+            channelShell.addRequestHandler((channel, request, wantReply, buffer) -> {
+                if ("keepalive@openssh.com".equals(request))
+                    return RequestHandler.Result.ReplySuccess;
+                return RequestHandler.Result.Unsupported;
+            });
 
             return channelShell;
         } catch (Exception e) {
@@ -89,7 +97,10 @@ public class SSHService {
                     return StringUtils.substringBeforeLast(string, "\n");
                 }
                 if (count != 0 && count % 5 == 0) {
-                    System.out.println(channelShell.getSession().getRemoteAddress() + ": " + command + ": " + count);
+                    log.debug("{}: {}: {}",
+                        channelShell.getSession().getRemoteAddress(),
+                        command,
+                        count);
                 }
                 count++;
             }
