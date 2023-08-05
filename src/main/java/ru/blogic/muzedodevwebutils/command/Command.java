@@ -6,11 +6,11 @@ public record Command(
     String id,
     String name,
     Optional<String> text,
-    Type type,
+    Shell shell,
     Effect effect,
     String command
 ) {
-    public enum Type {
+    public enum Shell {
         NONE,
         WSADMIN,
         SSH
@@ -18,7 +18,7 @@ public record Command(
 
     public enum Effect {
         SERVER_BLOCK,
-        WS_CRIT,
+        WS_BLOCK,
         NONE
     }
 }

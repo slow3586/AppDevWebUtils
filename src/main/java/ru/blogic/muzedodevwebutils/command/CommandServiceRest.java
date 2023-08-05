@@ -40,4 +40,18 @@ public class CommandServiceRest {
         return commandService.run(
             commandRunRequest);
     }
+
+    @PostMapping(path = "delay", produces = "application/json")
+    public void delay(
+        @RequestBody final CommandDelayRequest commandDelayRequest
+    ) {
+        commandService.delay(commandDelayRequest);
+    }
+
+    @PostMapping(path = "cancel", produces = "application/json")
+    public void cancel(
+        @RequestBody final CommandCancelRequest commandCancelRequest
+    ) {
+        commandService.cancel(commandCancelRequest);
+    }
 }

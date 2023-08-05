@@ -17,6 +17,7 @@ import ru.blogic.muzedodevwebutils.server.MuzedoServerService;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class InfoService {
@@ -53,6 +54,10 @@ public class InfoService {
                     .get())
                 .map(Command::name)
                 .getOrElse("")
+                +
+                Option.of(muzedoServer.getScheduledCommandFuture())
+                    .map(c -> " через " + c.getDelay(TimeUnit.SECONDS) + " сек. ")
+                    .getOrElse("")
         );
     }
 

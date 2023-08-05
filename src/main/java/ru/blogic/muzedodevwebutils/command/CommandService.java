@@ -10,6 +10,11 @@ import ru.blogic.muzedodevwebutils.server.MuzedoServer;
 import ru.blogic.muzedodevwebutils.server.MuzedoServerDao;
 import ru.blogic.muzedodevwebutils.server.MuzedoServerService;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 @Service
 @Slf4j
 public class CommandService {
@@ -18,6 +23,8 @@ public class CommandService {
     private final MuzedoServerService muzedoServerService;
     private final InfoService infoService;
     private final CommandDao commandDao;
+    private final ScheduledExecutorService executorService =
+        Executors.newSingleThreadScheduledExecutor();
 
     public CommandService(
         SSHService sshService,
@@ -47,68 +54,173 @@ public class CommandService {
         try {
             final var muzedoServer = muzedoServerDao.get(commandRunRequest.serverId());
             final var command = commandDao.get(commandRunRequest.commandId());
-            infoService.writeInfo(
-                muzedoServer.getId(),
-                command.effect().equals(Command.Effect.WS_CRIT)
-                    ? MuzedoServer.LogEntry.Severity.CRIT
-                    : MuzedoServer.LogEntry.Severity.INFO,
-                (!command.type().equals(Command.Type.NONE) ? "Запуск " : "")
-                    + "\"" + command.name() + "\""
-                    + (StringUtils.isNotBlank(commandRunRequest.comment())
-                    ? " \"" + commandRunRequest.comment() + "\""
-                    : "")
-                    + (commandRunRequest.delaySeconds() > 0
-                    ? " через " + commandRunRequest.delaySeconds() + " сек"
-                    : "")
-            );
 
-            String result = "";
-            if (command.type().equals(Command.Type.WSADMIN)) {
-                result = executeCommandShell(muzedoServer, commandRunRequest.commandId(), ">");
-            } else if (command.type().equals(Command.Type.SSH)) {
-                result = sshService.executeCommand(muzedoServer.getClientSession(), commandRunRequest.commandId());
+            final var currentRef = muzedoServer.getChannelShellCurrentCommand();
+            if (command.effect() != Command.Effect.NONE) {
+                if (!currentRef.compareAndSet(null, currentRef.get())) {
+                    throw new RuntimeException("В даннный момент выполняется операция: " + currentRef.get().name());
+                }
+                currentRef.set(command);
             }
 
-            if (!command.type().equals(Command.Type.NONE)) {
+            final var delay = Math.min(Math.max(0, commandRunRequest.delaySeconds()), 600);
+
+            final Callable<String> callable = () -> {
+                muzedoServer.setScheduledCommandFuture(null);
+
                 infoService.writeInfo(
                     muzedoServer.getId(),
-                    command.effect().equals(Command.Effect.WS_CRIT)
+                    command.effect().equals(Command.Effect.WS_BLOCK)
                         ? MuzedoServer.LogEntry.Severity.CRIT
                         : MuzedoServer.LogEntry.Severity.INFO,
-                    "Завершено \"" + command.name() + "\"");
-            }
+                    (!command.shell().equals(Command.Shell.NONE) ? "Запуск " : "")
+                        + command.name()
+                        + (delay == 0 && StringUtils.isNotBlank(commandRunRequest.comment())
+                        ? " \"" + commandRunRequest.comment() + "\""
+                        : "")
+                );
 
-            return result;
+                final String result;
+                if (command.shell().equals(Command.Shell.WSADMIN)) {
+                    result = sshService.executeCommand(
+                        muzedoServer.getChannelShell(),
+                        commandRunRequest.commandId(),
+                        ">");
+                } else if (command.shell().equals(Command.Shell.SSH)) {
+                    result = sshService.executeCommand(
+                        muzedoServer.getClientSession(),
+                        commandRunRequest.commandId());
+                } else {
+                    result = "";
+                }
+
+                if (!command.shell().equals(Command.Shell.NONE)) {
+                    currentRef.set(null);
+                    infoService.writeInfo(
+                        muzedoServer.getId(),
+                        command.effect().equals(Command.Effect.WS_BLOCK)
+                            ? MuzedoServer.LogEntry.Severity.CRIT
+                            : MuzedoServer.LogEntry.Severity.INFO,
+                        "Завершено \"" + command.name() + "\"");
+                }
+
+                return result;
+            };
+
+            if (delay > 0) {
+                infoService.writeInfo(
+                    muzedoServer.getId(),
+                    command.effect().equals(Command.Effect.WS_BLOCK)
+                        ? MuzedoServer.LogEntry.Severity.CRIT
+                        : MuzedoServer.LogEntry.Severity.INFO,
+                    "Запланирована операция "
+                        + "\"" + command.name() + "\""
+                        + (StringUtils.isNotBlank(commandRunRequest.comment())
+                        ? ":\"" + commandRunRequest.comment() + "\""
+                        : "")
+                        + " через " + commandRunRequest.delaySeconds() + " сек."
+                );
+                final var schedule = executorService.schedule(
+                    callable,
+                    delay,
+                    TimeUnit.SECONDS);
+                muzedoServer.setScheduledCommandFuture(schedule);
+                muzedoServer.setScheduledCallable(callable);
+                muzedoServer.setScheduledCommand(command);
+                return "Scheduled";
+            } else {
+                return callable.call();
+            }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("#run Не удалось запланировать операцию: " + e.getMessage(), e);
         }
     }
 
-    public String executeCommandShell(
-        final MuzedoServer muzedoServer,
-        final String commandId,
-        final String readySymbol
+    public void delay(
+        final CommandDelayRequest commandDelayRequest
     ) {
         try {
-            final var currentRef = muzedoServer.getChannelShellCurrentCommand();
+            final var muzedoServer = muzedoServerDao.get(commandDelayRequest.serverId());
 
-            if (!currentRef.compareAndSet(null, currentRef.get())) {
-                throw new RuntimeException("В даннный момент выполняется операция: " + currentRef.get().name());
+            final var scheduledCommand = muzedoServer.getScheduledCommandFuture();
+            if (scheduledCommand == null) {
+                throw new RuntimeException("Нет запланированной операции");
             }
 
-            final var command = commandDao.get(commandId);
+            final var currentDelay = scheduledCommand.getDelay(TimeUnit.SECONDS);
+            final var command = muzedoServer.getScheduledCommand();
+            final var callable = muzedoServer.getScheduledCallable();
+            final var shellCommand = muzedoServer.getChannelShellCurrentCommand().get();
 
-            currentRef.set(command);
-            final var result = sshService.executeCommand(
-                muzedoServer.getChannelShell(),
-                command.command(),
-                readySymbol);
+            this.cancel(
+                new CommandCancelRequest(
+                    commandDelayRequest.serverId(),
+                    commandDelayRequest.comment(),
+                    true));
 
-            currentRef.set(null);
-            return result;
+            final var newDelay = currentDelay + commandDelayRequest.delaySeconds();
+            final var newSchedule = executorService.schedule(
+                callable,
+                newDelay,
+                TimeUnit.SECONDS);
+
+            muzedoServer.setScheduledCommand(command);
+            muzedoServer.setScheduledCommandFuture(newSchedule);
+            muzedoServer.setScheduledCallable(callable);
+            muzedoServer.getChannelShellCurrentCommand().set(shellCommand);
+
+            infoService.writeInfo(
+                muzedoServer.getId(),
+                MuzedoServer.LogEntry.Severity.CRIT,
+                "Отложена операция \"" + command.name() + "\""
+                    + (StringUtils.isNotBlank(commandDelayRequest.comment())
+                    ? ": \"" + commandDelayRequest.comment() + "\""
+                    : "")
+                    + "(осталось " + newDelay + " сек)"
+            );
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("#delay Не удалось отложить запланированную операцию: " + e.getMessage(), e);
         }
     }
 
+    public void cancel(
+        final CommandCancelRequest commandCancelRequest
+    ) {
+        try {
+            final var muzedoServer = muzedoServerDao.get(commandCancelRequest.serverId());
+
+            final var scheduledCommand = muzedoServer.getScheduledCommandFuture();
+            if (scheduledCommand == null) {
+                throw new RuntimeException("В данный момент нет операции на сервере");
+            }
+
+            if (scheduledCommand.getDelay(TimeUnit.SECONDS) <= 1) {
+                throw new RuntimeException("Отменять операцию уже поздно.");
+            }
+
+            final var cancelled = scheduledCommand.cancel(false);
+            if (!cancelled) {
+                throw new RuntimeException("Не удалось отменить операцию.");
+            }
+
+            final var commandName = muzedoServer.getScheduledCommand().name();
+            muzedoServer.setScheduledCommand(null);
+            muzedoServer.setScheduledCommandFuture(null);
+            muzedoServer.getChannelShellCurrentCommand().set(null);
+            muzedoServer.setScheduledCallable(null);
+
+            if (!commandCancelRequest.silent()) {
+                infoService.writeInfo(
+                    muzedoServer.getId(),
+                    MuzedoServer.LogEntry.Severity.CRIT,
+                    "Отменена операция \"" + commandName + "\""
+                        + (StringUtils.isNotBlank(commandCancelRequest.comment())
+                        ? ": \"" + commandCancelRequest.comment() + "\""
+                        : "")
+                );
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("#cancel Не удалось отменить запланированную операцию:" + e.getMessage(), e);
+        }
+    }
 }

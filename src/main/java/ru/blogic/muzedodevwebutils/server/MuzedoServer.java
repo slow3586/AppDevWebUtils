@@ -9,7 +9,8 @@ import ru.blogic.muzedodevwebutils.command.Command;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Data
@@ -20,11 +21,14 @@ public class MuzedoServer {
     ClientSession clientSession;
     ChannelShell channelShell;
     AtomicReference<Command> channelShellCurrentCommand = new AtomicReference<>(null);
-    Optional<Command> currentCommand = Optional.empty();
     boolean isGPRunning = false;
     boolean isIntegRunning = false;
     boolean isServerOn = false;
     List<LogEntry> log = new ArrayList<>();
+    //Command scheduledCommand = null;
+    ScheduledFuture<String> scheduledCommandFuture = null;
+    Callable<String> scheduledCallable = null;
+    Command scheduledCommand = null;
 
     public record LogEntry(
         Date date,

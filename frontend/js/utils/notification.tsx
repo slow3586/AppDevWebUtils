@@ -18,6 +18,6 @@ export function runNotification(head: string, body: string) {
             }
         })
     } else {
-        alert("Пожалуйста, разрешите оповещения :(")
+        //alert("Пожалуйста, разрешите оповещения :(")
     }
 }

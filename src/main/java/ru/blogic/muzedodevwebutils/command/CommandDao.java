@@ -16,32 +16,32 @@ public class CommandDao {
         commands.add(new Command("announce",
             "Оповещение",
             Optional.of(""),
-            Command.Type.NONE,
+            Command.Shell.NONE,
             Command.Effect.NONE,
             ""));
         commands.add(new Command("hostname",
             "Проверка",
             Optional.empty(),
-            Command.Type.SSH,
+            Command.Shell.SSH,
             Command.Effect.NONE,
             "hostname"));
         commands.add(new Command("ra",
             "Рестарт",
             Optional.empty(),
-            Command.Type.WSADMIN,
-            Command.Effect.WS_CRIT,
+            Command.Shell.WSADMIN,
+            Command.Effect.WS_BLOCK,
             "ra(1)"));
         commands.add(new Command("ura",
             "Обновление",
             Optional.empty(),
-            Command.Type.WSADMIN,
-            Command.Effect.WS_CRIT,
+            Command.Shell.WSADMIN,
+            Command.Effect.WS_BLOCK,
             "ura(1)"));
         commands.add(new Command("clear_cache",
             "Клир кэш",
             Optional.empty(),
-            Command.Type.SSH,
-            Command.Effect.WS_CRIT,
+            Command.Shell.SSH,
+            Command.Effect.WS_BLOCK,
             "/root/deploy/clear_cache_shortcut.sh"));
     }
 

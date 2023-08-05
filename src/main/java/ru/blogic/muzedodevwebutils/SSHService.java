@@ -44,7 +44,7 @@ public class SSHService {
 
             return session;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("#createSession Не удалось создать SSH сессию: " + e.getMessage(), e);
         }
     }
 
@@ -97,10 +97,13 @@ public class SSHService {
                     return StringUtils.substringBeforeLast(string, "\n");
                 }
                 if (count != 0 && count % 5 == 0) {
-                    log.debug("{}: {}: {}",
+                    log.debug("{}: {}: {} {}",
                         channelShell.getSession().getRemoteAddress(),
                         command,
-                        count);
+                        count,
+                        (count >= 60 && count % 60 == 0)
+                            ? "\n" + string : ""
+                    );
                 }
                 count++;
             }

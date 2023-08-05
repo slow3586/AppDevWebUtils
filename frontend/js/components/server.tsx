@@ -2,22 +2,47 @@ import React, {useEffect, useRef, useState} from "react";
 import {Button, Form} from "react-bootstrap";
 import {getServerInfo, getServerLog, LogEntry} from "../clients/info_client";
 import dateFormat from "dateformat";
-import {run, Type} from "../clients/command_client";
+import {commandCancel, commandDelay, commandRun, Type} from "../clients/command_client";
 import {useQuery} from "react-query";
-import {isEmpty, trim} from "lodash";
+import {isEmpty, isNil, trim} from "lodash";
 
 export type ServerProps = {
     isActive: boolean,
     serverId: number
 }
 
+export type Command = {
+    id: string,
+    name: string,
+    effect: string
+}
+
 export function Server({isActive, serverId}: ServerProps) {
     const logLast = useRef(0);
     const info = useRef("");
-    const commandId = useRef("hostname");
     const comment = useRef("");
     const delay = useRef("0");
-    let [disableAll, setDisableAll] = useState(false);
+    const [disableAll, setDisableAll] = useState(true);
+    const [commandId, setCommandId] = useState("");
+
+    const commands = [{
+        id: "announce",
+        name: "Оповещение",
+        effect: "NONE"
+    }, {
+        id: "ra",
+        name: "Рестарт",
+        effect: "WS_BLOCK"
+    }, {
+        id: "ura",
+        name: "Обновление",
+        effect: "WS_BLOCK"
+    }, {
+        id: "clear_cache",
+        name: "Клир кэш",
+        effect: "SERVER_BLOCK"
+    }];
+    const getCommand = (id: string) => commands.find(c => c.id == id);
 
     const query = useQuery(
         ['getServerLog', serverId, logLast.current],
@@ -48,9 +73,9 @@ export function Server({isActive, serverId}: ServerProps) {
 
     const runCommand = () => {
         setDisableAll(true);
-        run({
+        commandRun({
             serverId: serverId,
-            commandId: commandId.current,
+            commandId: commandId,
             comment: comment.current,
             delaySeconds: parseInt(delay.current)
         }).then((r) => {
@@ -62,11 +87,28 @@ export function Server({isActive, serverId}: ServerProps) {
     };
 
     const cancelCommand = () => {
-
+        commandCancel({
+            serverId: serverId,
+            comment: comment.current
+        }).then((r) => {
+            console.log(r);
+        }).catch((e) => {
+            console.error(e);
+            alert(e);
+        }).finally(() => setDisableAll(false))
     };
 
     const delayCommand = () => {
-
+        commandDelay({
+            serverId: serverId,
+            comment: comment.current,
+            delaySeconds: parseInt(delay.current)
+        }).then((r) => {
+            console.log(r);
+        }).catch((e) => {
+            console.error(e);
+            alert(e);
+        }).finally(() => setDisableAll(false))
     };
 
     return (
@@ -79,13 +121,12 @@ export function Server({isActive, serverId}: ServerProps) {
 
                 <Form.Text muted>Команда</Form.Text>
                 <Form.Select aria-label="Выбор команды"
-                             disabled={disableAll}
-                             onChange={e => commandId.current = e.target.value}>
-                    <option value="hostname">Выберите команду</option>
-                    <option value="announce">Оповещение</option>
-                    <option value="ra">Рестарт</option>
-                    <option value="ura">Обновление</option>
-                    <option value="clear_cache">Клир кэш</option>
+                             onChange={e => {
+                                 setCommandId(e.target.value);
+                                 setDisableAll(isNil(getCommand(e.target.value)));
+                             }}>
+                    {(commandId == "") ? (<option value="">Выберите команду</option>) : ""}
+                    {commands.map(c => (<option value={c.id}>{c.name}</option>))}
                 </Form.Select>
 
                 <Form.Text muted>Комментарий</Form.Text>
@@ -99,7 +140,9 @@ export function Server({isActive, serverId}: ServerProps) {
                         <Form.Text muted>Задержка (сек)</Form.Text>
                         <Form.Control onChange={e => delay.current = e.target.value}
                                       className="component-server-container-footer-delay-textarea"
-                                      disabled={disableAll}
+                                      disabled={disableAll ||
+                                          isNil(getCommand(commandId)) ||
+                                          getCommand(commandId).effect == "NONE"}
                                       type="text"
                                       placeholder="0"/>
                     </div>
@@ -107,11 +150,9 @@ export function Server({isActive, serverId}: ServerProps) {
                         <Button disabled={disableAll}
                                 onClick={runCommand}
                                 variant="primary">Запустить</Button>
-                        <Button disabled={disableAll}
-                                onClick={delayCommand}
-                                variant="primary">Оттянуть</Button>
-                        <Button disabled={disableAll}
-                                onClick={cancelCommand}
+                        <Button onClick={delayCommand}
+                                variant="primary">Отложить</Button>
+                        <Button onClick={cancelCommand}
                                 variant="primary">Отменить</Button>
                     </div>
                 </div>
