@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 import ru.blogic.muzedodevwebutils.command.Command;
+import ru.blogic.muzedodevwebutils.logging.DisableLoggingAspect;
 import ru.blogic.muzedodevwebutils.server.MuzedoServer;
 import ru.blogic.muzedodevwebutils.server.MuzedoServerDao;
 import ru.blogic.muzedodevwebutils.server.MuzedoServerService;
@@ -43,6 +44,7 @@ public class InfoService {
         }
     }
 
+    @DisableLoggingAspect
     @Cacheable(value = "getServerInfo")
     public GetServerInfoResponse getServerInfo(int serverId) {
         final var muzedoServer = muzedoServerDao.get(serverId);
@@ -63,10 +65,12 @@ public class InfoService {
 
     @CacheEvict(allEntries = true, value = "getServerInfo")
     @Scheduled(fixedDelay = 1000)
+    @DisableLoggingAspect
     public void clearGetServerInfoCache() {}
 
     @CacheEvict(allEntries = true, value = "getServerLog")
     @Scheduled(fixedDelay = 1000)
+    @DisableLoggingAspect
     public void clearGetServerLogCache() {}
 
     public void writeInfo(
@@ -92,6 +96,7 @@ public class InfoService {
             .add(infoEntry);
     }
 
+    @DisableLoggingAspect
     @Cacheable(value = "getServerLog")
     public GetServerLogResponse getServerLog(
         final int serverId,

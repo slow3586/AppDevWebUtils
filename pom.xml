@@ -14,7 +14,7 @@
     <name>MuzedoDevWebUtils</name>
     <description>MuzedoDevWebUtils</description>
     <properties>
-        <java.version>17</java.version>
+        <java.version>16</java.version>
         <frontend-src-dir>${project.basedir}/frontend</frontend-src-dir>
     </properties>
     <dependencies>
@@ -45,6 +45,12 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.12.0</version>
+        </dependency>
+        <!-- ASPECTS -->
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjrt</artifactId>
+            <version>1.9.19</version>
         </dependency>
 
         <dependency>
@@ -105,6 +111,38 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>aspectj-maven-plugin</artifactId>
+                <version>1.14.0</version>
+                <configuration>
+                    <showWeaveInfo/>
+                    <sources/>
+                    <weaveDirectories>
+                        <weaveDirectory>${project.build.directory}/classes</weaveDirectory>
+                    </weaveDirectories>
+                    <forceAjcCompile>true</forceAjcCompile>
+                    <source>16</source>
+                    <target>16</target>
+                    <proc>none</proc>
+                    <complianceLevel>16</complianceLevel>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.aspectj</groupId>
+                        <artifactId>aspectjtools</artifactId>
+                        <version>1.9.19</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <groupId>com.github.eirslett</groupId>
