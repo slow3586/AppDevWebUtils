@@ -6,7 +6,7 @@ import {useQueryClient} from "react-query";
 
 export function App() {
     let [activeTab, setActiveTab] = useState("overview");
-    const servers = [60, 61];
+    const servers = [58, 59, 60, 61];
 
     return (
         <div className="component-app">

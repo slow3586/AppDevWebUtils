@@ -22,41 +22,51 @@ public class MuzedoServerService {
     @PostConstruct
     public void postConstruct() {
         try {
-            muzedoServerDao.getAll().forEach(s -> {
-                final var session = sshService.createSession(s.host);
-                s.setClientSession(session);
-                retryConnectShell(s);
-            });
+            muzedoServerDao.getAll()
+                .parallelStream()
+                .forEach(s -> {
+                    final var session = sshService.createSession(s.host);
+                    s.setClientSession(session);
+                    reconnectWsadminShell(s);
+                });
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void retryConnectShell(MuzedoServer muzedoServer) {
+    public void reconnectWsadminShell(MuzedoServer muzedoServer) {
         try {
-            if (muzedoServer.getChannelShell() == null) {
-                muzedoServer.setChannelShell(sshService.createShellChannel(muzedoServer.clientSession));
+            if (muzedoServer.getWsadminShell() != null
+                && !muzedoServer.getWsadminShell().isClosing()
+            ) {
+                muzedoServer.getWsadminShell().close();
             }
-            final var channel = muzedoServer.getChannelShell();
-            channel.open().verify(10000);
-            channel.addCloseFutureListener(future -> {
-                log.warn("ShellChannel closed: {}", muzedoServer.host);
-                retryConnectShell(muzedoServer);
-            });
+
+            final var shell = sshService.createShellChannel(muzedoServer.clientSession);
+            muzedoServer.setWsadminShell(shell);
+
+            shell.open().verify(10000);
 
             log.debug("{}: Starting wsadmin", muzedoServer.host);
             sshService.executeCommand(
-                channel,
+                shell,
                 "cd /root/deploy/",
                 "#");
             sshService.executeCommand(
-                channel,
+                shell,
                 "./wsadmin_extra.sh",
                 ">");
             log.debug("{}: Wsadmin started!", muzedoServer.host);
         } catch (Exception e) {
             log.error("#retryConnectShell exception: {}", e.getMessage(), e);
-            retryConnectShell(muzedoServer);
+            new Thread(() -> {
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException ex) {
+                    throw new RuntimeException(ex);
+                }
+                reconnectWsadminShell(muzedoServer);
+            }).start();
         }
     }
 }

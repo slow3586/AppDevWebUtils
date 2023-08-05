@@ -19,16 +19,16 @@ public class MuzedoServer {
     final int id;
     final String host;
     ClientSession clientSession;
-    ChannelShell channelShell;
-    AtomicReference<Command> channelShellCurrentCommand = new AtomicReference<>(null);
+    ChannelShell wsadminShell;
+    AtomicReference<Command> wsadminShellCommand = new AtomicReference<>(null);
     boolean isGPRunning = false;
     boolean isIntegRunning = false;
     boolean isServerOn = false;
     List<LogEntry> log = new ArrayList<>();
-    //Command scheduledCommand = null;
     ScheduledFuture<String> scheduledCommandFuture = null;
     Callable<String> scheduledCallable = null;
     Command scheduledCommand = null;
+    boolean scheduledCommandActive = false;
 
     public record LogEntry(
         Date date,

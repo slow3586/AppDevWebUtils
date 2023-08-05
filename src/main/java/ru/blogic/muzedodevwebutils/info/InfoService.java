@@ -3,7 +3,6 @@ package ru.blogic.muzedodevwebutils.info;
 import io.vavr.control.Option;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -50,9 +49,12 @@ public class InfoService {
         final var muzedoServer = muzedoServerDao.get(serverId);
 
         return new GetServerInfoResponse(
-            muzedoServer.getChannelShell().isOpen(),
+            muzedoServer.getWsadminShell() != null
+                && muzedoServer.getWsadminShell().isOpen()
+                && !(muzedoServer.isScheduledCommandActive() &&
+                muzedoServer.getScheduledCommand().effect() == Command.Effect.SERVER_BLOCK),
             Option.of(muzedoServer
-                    .getChannelShellCurrentCommand()
+                    .getWsadminShellCommand()
                     .get())
                 .map(Command::name)
                 .getOrElse("")

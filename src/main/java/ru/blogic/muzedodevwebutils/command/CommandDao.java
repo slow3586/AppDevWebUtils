@@ -2,12 +2,14 @@ package ru.blogic.muzedodevwebutils.command;
 
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Repository;
+import ru.blogic.muzedodevwebutils.logging.DisableLoggingAspect;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
+@DisableLoggingAspect
 public class CommandDao {
     private final List<Command> commands = new ArrayList<>();
 
@@ -41,7 +43,7 @@ public class CommandDao {
             "Клир кэш",
             Optional.empty(),
             Command.Shell.SSH,
-            Command.Effect.WS_BLOCK,
+            Command.Effect.SERVER_BLOCK,
             "/root/deploy/clear_cache_shortcut.sh"));
     }
 

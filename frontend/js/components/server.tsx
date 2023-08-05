@@ -60,7 +60,7 @@ export function Server({isActive, serverId}: ServerProps) {
     }
     if (query.isError) {
         // @ts-ignore
-        addInfo(error.message);
+        addInfo(query.error.message);
     }
     if (!query.isLoading && !query.isError) {
         logLast.current = query.data.logLast;

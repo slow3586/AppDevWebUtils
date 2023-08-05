@@ -1,5 +1,6 @@
 package ru.blogic.muzedodevwebutils;
 
+import io.vavr.collection.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -36,18 +37,30 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        final var user = User.withDefaultPasswordEncoder()
-            .username("Тестовый Пользователь")
-            //.passwordEncoder(passwordEncoder().encode(pw))
-            .password("1")
-            .roles("USER")
-            .build();
-        final var admin = User.withDefaultPasswordEncoder()
-            .username("admin")
-            .password("password")
-            .roles("ADMIN", "USER")
-            .build();
-        return new InMemoryUserDetailsManager(user, admin);
+        java.util.List<UserDetails> users = List.of(
+                "Багрянцев Дмитрий",
+                "Власов Павел",
+                "Дымко Андрей",
+                "Ермолаева Екатерина",
+                "Ермош Константин",
+                "Кравцов Павел",
+                "Скворцов Демьян",
+                "Чанчиков Сергей",
+                "Саитова Ильсияр",
+                "Каюмов Камиль",
+                "Климов Максим",
+                "Беркутов Алмаз",
+                "Габдуллина Гузель",
+                "Чурсин Владимир",
+                "Смирнова Наталья"
+            ).map(name -> User.withDefaultPasswordEncoder()
+                .username(name)
+                //.passwordEncoder(passwordEncoder().encode(pw))
+                .password("1")
+                .roles("USER")
+                .build())
+            .toJavaList();
+        return new InMemoryUserDetailsManager(users);
     }
 
 //    @Bean

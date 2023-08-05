@@ -12,7 +12,7 @@ export function Overview() {
     const info = useRef("");
     const firstRun = useRef(true);
 
-    const servers = [60, 61];
+    const servers = [58, 59, 60, 61];
 
     const addInfo = (add: string) => {
         if (!isEmpty(trim(add))) {
@@ -71,8 +71,7 @@ export function Overview() {
                         </Form.Group>
                     </Col>
                     <Col className="component-overview-col">
-                        <OverviewServer serverId={60}/>
-                        <OverviewServer serverId={61}/>
+                        {servers.map(s => (<OverviewServer serverId={s}/>))}
                     </Col>
                 </Row>
             </Container>

@@ -4,7 +4,9 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.client.SshClient;
+import org.apache.sshd.client.channel.ChannelExec;
 import org.apache.sshd.client.channel.ChannelShell;
+import org.apache.sshd.client.channel.PtyCapableChannelSession;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.channel.RequestHandler;
 import org.springframework.stereotype.Service;
@@ -71,24 +73,26 @@ public class SSHService {
         ClientSession clientSession,
         String command
     ) {
-        try {
-            return clientSession.executeRemoteCommand(command);
+        try (ChannelShell channelShell = createShellChannel(clientSession)) {
+            return executeCommand(channelShell, command, "#");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     public String executeCommand(
-        ChannelShell channelShell,
+        PtyCapableChannelSession channelShell,
         String command,
         String readySymbol
     ) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            final var writer = new BufferedWriter(new OutputStreamWriter(channelShell.getInvertedIn()));
             channelShell.setOut(baos);
+
+            final var writer = new BufferedWriter(new OutputStreamWriter(channelShell.getInvertedIn()));
             writer.write(command);
             writer.write("\n");
             writer.flush();
+
             int count = 0;
             while (true) {
                 Thread.sleep(1000);

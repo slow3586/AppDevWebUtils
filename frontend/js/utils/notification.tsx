@@ -6,7 +6,6 @@ function sendNotification(head: string, body: string) {
 }
 
 export function runNotification(head: string, body: string) {
-    console.error("TEST");
     if (!("Notification" in window)) {
         alert("This browser does not support system notifications!")
     } else if (Notification.permission === "granted") {
