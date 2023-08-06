@@ -23,7 +23,7 @@ export function Server({isActive, serverId}: ServerProps) {
     const info = useRef("");
     const comment = useRef("");
     const delay = useRef("0");
-    const [disableAll, setDisableAll] = useState(true);
+    const [disableAll, setDisableAll] = useState(false);
     const [commandId, setCommandId] = useState("");
     //const [commandScheduled, setCommandScheduled] = useState(false);
     //const [commandExecuting, setCommandExecuting] = useState(false);
@@ -97,6 +97,14 @@ export function Server({isActive, serverId}: ServerProps) {
         );
     }
 
+    if(serverId == 58) {
+        console.table(infoQuery);
+    }
+
+    if (!infoQuery.isLoading && !logQuery.isError && disableAll == true) {
+        setDisableAll(false);
+    }
+
     const commandScheduled = infoQuery?.data?.scheduledCommand;
     const commandExecuting = infoQuery?.data?.executingCommand;
 
@@ -113,13 +121,13 @@ export function Server({isActive, serverId}: ServerProps) {
             console.error(e);
             alert(e);
         }).finally(() => {
-            setDisableAll(false);
-            queryClient.invalidateQueries(['getServerLog', {serverId: serverId}]);
-            queryClient.invalidateQueries(['getServerInfo', {serverId: serverId}]);
+            queryClient.resetQueries(['getServerLog', {serverId: serverId}]);
+            queryClient.resetQueries(['getServerInfo', {serverId: serverId}]);
         })
     };
 
     const cancelCommand = () => {
+        setDisableAll(true);
         commandCancel({
             serverId: serverId,
             comment: comment.current
@@ -129,13 +137,13 @@ export function Server({isActive, serverId}: ServerProps) {
             console.error(e);
             alert(e);
         }).finally(() => {
-            setDisableAll(false);
-            queryClient.invalidateQueries(['getServerLog', {serverId: serverId}]);
-            queryClient.invalidateQueries(['getServerInfo', {serverId: serverId}]);
+            queryClient.resetQueries(['getServerLog', {serverId: serverId}]);
+            queryClient.resetQueries(['getServerInfo', {serverId: serverId}]);
         })
     };
 
     const delayCommand = () => {
+        setDisableAll(true);
         commandDelay({
             serverId: serverId,
             comment: comment.current,
@@ -146,9 +154,8 @@ export function Server({isActive, serverId}: ServerProps) {
             console.error(e);
             alert(e);
         }).finally(() => {
-            setDisableAll(false);
-            queryClient.invalidateQueries(['getServerLog', {serverId: serverId}]);
-            queryClient.invalidateQueries(['getServerInfo', {serverId: serverId}]);
+            queryClient.resetQueries(['getServerLog', {serverId: serverId}]);
+            queryClient.resetQueries(['getServerInfo', {serverId: serverId}]);
         })
     };
 
@@ -174,6 +181,9 @@ export function Server({isActive, serverId}: ServerProps) {
     }
     if (cantExecuteBecauseSchedule) {
         errorMessages.push("Запланированная операция мешает выбранной");
+    }
+    if (disableAll) {
+        errorMessages.push("Жду ответа");
     }
 
     return (
@@ -215,13 +225,19 @@ export function Server({isActive, serverId}: ServerProps) {
                                       placeholder="0"/>
                     </div>
                     <div className="component-server-container-footer-buttons">
-                        <Button disabled={disableAll || cantSchedule || cantExecute || cantExecuteBecauseSchedule}
+                        <Button disabled={disableAll
+                            || cantSchedule
+                            || cantExecute
+                            || cantExecuteBecauseSchedule
+                            || isEmpty(commandId)}
                                 onClick={runCommand}
                                 variant="primary">Запустить</Button>
-                        <Button disabled={disableAll || !commandScheduled}
+                        <Button disabled={disableAll
+                            || !commandScheduled}
                                 onClick={delayCommand}
                                 variant="primary">Отложить</Button>
-                        <Button disabled={disableAll || !commandScheduled}
+                        <Button disabled={disableAll
+                            || !commandScheduled}
                                 onClick={cancelCommand}
                                 variant="primary">Отменить</Button>
                     </div>

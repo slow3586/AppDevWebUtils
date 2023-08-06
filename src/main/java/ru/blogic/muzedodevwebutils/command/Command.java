@@ -1,5 +1,8 @@
 package ru.blogic.muzedodevwebutils.command;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 public record Command(
@@ -11,7 +14,8 @@ public record Command(
     String command,
     String readySymbol,
     int timeout,
-    boolean announce
+    boolean announce,
+    List<String> errTexts
 ) {
     public enum Shell {
         NONE,
@@ -27,4 +31,7 @@ public record Command(
 
     public static final String SSH_READY = "#";
     public static final String WSADMIN_READY = ">";
+    public static final List<String> WSADMIN_ERRTEXTS
+        = List.of("com.ibm.ws.scripting.ScriptingException",
+        "Error creating \"SOAP\" connection");
 }

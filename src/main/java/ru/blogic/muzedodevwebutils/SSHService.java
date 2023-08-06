@@ -15,6 +15,9 @@ import ru.blogic.muzedodevwebutils.command.Command;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
@@ -87,6 +90,7 @@ public class SSHService {
         Command command
     ) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            final var outputParts = new ArrayList<String>();
             channelShell.setOut(baos);
 
             final var writer = new BufferedWriter(new OutputStreamWriter(channelShell.getInvertedIn()));
@@ -94,29 +98,50 @@ public class SSHService {
             writer.write("\n");
             writer.flush();
 
-            int count = 0;
+            var count = 0;
             while (true) {
                 Thread.sleep(1000);
-                final var string = baos.toString().trim();
-                if (string.endsWith(command.readySymbol())) {
+                final var entireOutput = baos.toString().trim();
+                final var newOutputPart = entireOutput.substring(outputParts
+                    .stream()
+                    .mapToInt(String::length)
+                    .sum());
+                if (!newOutputPart.isEmpty()) {
+                    outputParts.add(newOutputPart);
+                    log.debug("{}: {}: ({}s) {}",
+                        channelShell.getSession().getRemoteAddress(),
+                        command.command(),
+                        count,
+                        newOutputPart
+                    );
+                }
+                final var err = command.errTexts()
+                    .stream()
+                    .filter(e ->
+                        StringUtils.containsIgnoreCase(
+                            entireOutput, e))
+                    .findFirst();
+                if (err.isPresent()) {
+                    log.error("{}: {}: обнаружена ошибка \"{}\"",
+                        channelShell.getSession().getRemoteAddress(),
+                        command.command(),
+                        err.get());
+                    throw new RuntimeException("#executeCommand обнаружен текст ошибки: "
+                        + channelShell.getSession().getRemoteAddress()
+                        + ": " + err.get());
+                }
+                if (entireOutput.endsWith(command.readySymbol())) {
                     log.debug("{}: {}: complete @ {}s",
                         channelShell.getSession().getRemoteAddress(),
                         command.command(),
                         count);
-                    return StringUtils.substringBeforeLast(string, "\n");
-                }
-                if (count != 0 && count % 5 == 0) {
-                    log.debug("{}: {}: {} {}",
-                        channelShell.getSession().getRemoteAddress(),
-                        command.command(),
-                        count,
-                        (count >= 60 && count % 60 == 0)
-                            ? "\n" + string : ""
-                    );
+                    return StringUtils.substringBeforeLast(entireOutput, "\n");
                 }
                 count++;
                 if (command.timeout() != 0 && count > command.timeout()) {
-                    throw new RuntimeException("#eexecuteCommand Таймаут " + command);
+                    throw new RuntimeException("#executeCommand Таймаут: "
+                        + channelShell.getSession().getRemoteAddress()
+                        + ": " + command);
                 }
             }
         } catch (Exception e) {
