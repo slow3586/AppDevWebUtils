@@ -107,11 +107,13 @@ public class CommandService {
                         if (command.shell().equals(Command.Shell.WSADMIN)) {
                             result = sshService.executeCommand(
                                 muzedoServer.getWsadminShell(),
-                                command);
+                                command,
+                                muzedoServer.getExecutingCommandTimer());
                         } else if (command.shell().equals(Command.Shell.SSH)) {
                             result = sshService.executeCommand(
                                 muzedoServer.getSshClientSession(),
-                                command);
+                                command,
+                                muzedoServer.getExecutingCommandTimer());
                         } else {
                             result = "";
                         }
@@ -124,7 +126,8 @@ public class CommandService {
                                 command.announce()
                                     ? MuzedoServer.LogEntry.Severity.CRIT
                                     : MuzedoServer.LogEntry.Severity.INFO,
-                                "Завершено \"" + command.name() + "\"");
+                                "Завершено \"" + command.name() + "\" за " + muzedoServer.getExecutingCommandTimer().get() + " сек.");
+                            muzedoServer.getExecutingCommandTimer().set(0);
                         }
                         //endregion
 

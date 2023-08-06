@@ -97,11 +97,11 @@ export function Server({isActive, serverId}: ServerProps) {
         );
     }
 
-    if(serverId == 58) {
-        console.table(infoQuery);
-    }
-
-    if (!infoQuery.isLoading && !logQuery.isError && disableAll == true) {
+    if (!infoQuery.isRefetching
+        && !logQuery.isRefetching
+        && !infoQuery.isLoading
+        && !logQuery.isError
+        && disableAll == true) {
         setDisableAll(false);
     }
 
@@ -221,7 +221,9 @@ export function Server({isActive, serverId}: ServerProps) {
                                       disabled={disableAll ||
                                           isNil(getCommand(commandId)) ||
                                           getCommand(commandId).blocks == "NONE"}
-                                      type="text"
+                                      type="number"
+                                      min="0"
+                                      max="600"
                                       placeholder="0"/>
                     </div>
                     <div className="component-server-container-footer-buttons">

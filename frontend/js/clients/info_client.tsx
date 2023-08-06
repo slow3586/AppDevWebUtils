@@ -25,7 +25,9 @@ export type Command = {
 export type GetServerInfoResponse = {
     wsAdminShell: boolean,
     executingCommand: Command,
-    scheduledCommand: Command
+    executingCommandTimer: number,
+    scheduledCommand: Command,
+    scheduledCommandTimer: number,
 }
 
 export type GetServerLogResponse = {

@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Data
@@ -31,6 +32,7 @@ public class MuzedoServer {
     ScheduledCommand scheduledCommand = null;
 
     Command executingCommand = null;
+    final AtomicInteger executingCommandTimer = new AtomicInteger(0);
 
     public record LogEntry(
         Date date,

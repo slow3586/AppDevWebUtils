@@ -5,5 +5,7 @@ import ru.blogic.muzedodevwebutils.command.Command;
 public record GetServerInfoResponse(
     boolean wsAdminShell,
     Command scheduledCommand,
-    Command executingCommand
+    Command executingCommand,
+    int executingCommandTimer,
+    int scheduledCommandTimer
 ) {}

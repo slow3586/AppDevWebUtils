@@ -17,6 +17,7 @@ import ru.blogic.muzedodevwebutils.server.MuzedoServerService;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -59,7 +60,13 @@ public class InfoService {
             Option.of(muzedoServer.getScheduledCommand())
                 .map(MuzedoServer.ScheduledCommand::command)
                 .getOrNull(),
-            muzedoServer.getExecutingCommand()
+            muzedoServer.getExecutingCommand(),
+            muzedoServer.getExecutingCommandTimer().get(),
+            Option.of(muzedoServer.getScheduledCommand())
+                .map(MuzedoServer.ScheduledCommand::future)
+                .map(f -> f.getDelay(TimeUnit.SECONDS))
+                .map(Math::toIntExact)
+                .getOrElse(0)
         );
     }
 

@@ -4,21 +4,19 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.client.SshClient;
-import org.apache.sshd.client.channel.ChannelExec;
 import org.apache.sshd.client.channel.ChannelShell;
 import org.apache.sshd.client.channel.PtyCapableChannelSession;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.channel.RequestHandler;
 import org.springframework.stereotype.Service;
 import ru.blogic.muzedodevwebutils.command.Command;
+import ru.blogic.muzedodevwebutils.server.MuzedoServer;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @Slf4j
@@ -76,10 +74,11 @@ public class SSHService {
 
     public String executeCommand(
         ClientSession clientSession,
-        Command command
+        Command command,
+        AtomicInteger timerOut
     ) {
         try (ChannelShell channelShell = createShellChannel(clientSession)) {
-            return executeCommand(channelShell, command);
+            return executeCommand(channelShell, command, timerOut);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -87,7 +86,8 @@ public class SSHService {
 
     public String executeCommand(
         PtyCapableChannelSession channelShell,
-        Command command
+        Command command,
+        AtomicInteger timerOut
     ) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             final var outputParts = new ArrayList<String>();
@@ -138,6 +138,9 @@ public class SSHService {
                     return StringUtils.substringBeforeLast(entireOutput, "\n");
                 }
                 count++;
+                if (timerOut != null) {
+                    timerOut.set(count);
+                }
                 if (command.timeout() != 0 && count > command.timeout()) {
                     throw new RuntimeException("#executeCommand Таймаут: "
                         + channelShell.getSession().getRemoteAddress()

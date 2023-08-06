@@ -105,10 +105,12 @@ public class MuzedoServerService {
             log.debug("{}: запускаю WsAdmin", muzedoServer.getHost());
             sshService.executeCommand(
                 shell,
-                commandDao.get("cd_root_deploy"));
+                commandDao.get("cd_root_deploy"),
+                null);
             sshService.executeCommand(
                 shell,
-                commandDao.get("wsadmin_start"));
+                commandDao.get("wsadmin_start"),
+                null);
 
             muzedoServer.setWsadminShell(shell);
             log.debug("{}: WsAdmin запущен!", muzedoServer.getHost());
