@@ -49,19 +49,17 @@ public class InfoService {
         final var muzedoServer = muzedoServerDao.get(serverId);
 
         return new GetServerInfoResponse(
-            muzedoServer.getWsadminShell() != null
+            muzedoServer.getSshClientSession() != null
+                && muzedoServer.getSshClientSession().isOpen()
+                && muzedoServer.getWsadminShell() != null
                 && muzedoServer.getWsadminShell().isOpen()
-                && !(muzedoServer.isScheduledCommandActive() &&
-                muzedoServer.getScheduledCommand().effect() == Command.Effect.SERVER_BLOCK),
-            Option.of(muzedoServer
-                    .getWsadminShellCommand()
-                    .get())
-                .map(Command::name)
-                .getOrElse("")
-                +
-                Option.of(muzedoServer.getScheduledCommandFuture())
-                    .map(c -> " через " + c.getDelay(TimeUnit.SECONDS) + " сек. ")
-                    .getOrElse("")
+                && !Option.of(muzedoServer.getExecutingCommand())
+                .map(Command::blocks)
+                .contains(Command.Block.SERVER),
+            Option.of(muzedoServer.getScheduledCommand())
+                .map(MuzedoServer.ScheduledCommand::command)
+                .getOrNull(),
+            muzedoServer.getExecutingCommand()
         );
     }
 
@@ -94,7 +92,7 @@ public class InfoService {
 
         muzedoServerDao
             .get(serverId)
-            .getLog()
+            .getLogs()
             .add(infoEntry);
     }
 
@@ -106,7 +104,7 @@ public class InfoService {
     ) {
         final var log = muzedoServerDao
             .get(serverId)
-            .getLog();
+            .getLogs();
         final var infoEntries = log
             .stream()
             .skip(Math.min(log.size(),

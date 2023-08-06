@@ -2,29 +2,50 @@ body {
 }
 
 .component-app {
-  margin-top: 10px;
-  margin-left: 10%;
-  margin-right: 10%;
+  margin-top: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  > .nav-tabs {
+    font-size: 18px;
+  }
+
+  > .tab-content {
+    margin-top: 10px
+  }
 }
 
 .component-overview {
+  min-width: 800px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+
   &-col {
-    margin: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 400px;
   }
 
   &-textarea {
-    overflow-y: scroll;
     max-height: 500px;
   }
 }
 
 .component-server {
-  margin: 10px;
   display: flex;
   justify-content: center;
 
   &-container {
-    width: 50%;
+    width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
 
     &-textarea {
       max-height: 400px;
@@ -34,6 +55,10 @@ body {
       display: flex;
       justify-content: flex-end;
       margin-top: 20px;
+
+      &-error {
+        color: indianred;
+      }
 
       &-delay {
         display: flex;
@@ -58,9 +83,19 @@ body {
 }
 
 .component-overview-server {
+  border: var(--bs-border-width) solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  padding: 5px;
+  min-width: 300px;
+
   .form-switch {
     & > * {
       opacity: 1 !important;
     }
+  }
+
+  &-insides {
+    display: flex;
+    flex-direction: column;
   }
 }

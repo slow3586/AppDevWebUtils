@@ -21,7 +21,8 @@ export const commandRun = (
         }
     }).then((response) => {
         if (!response.ok) {
-            throw new Error(response.statusText)
+            response.text().then(body => alert(body));
+            throw response;
         }
         return response.text() as Promise<string>;
     })
@@ -43,7 +44,8 @@ export const commandDelay = (
         }
     }).then((response) => {
         if (!response.ok) {
-            throw new Error(response.statusText)
+            response.text().then(body => alert(body));
+            throw response;
         }
         return response.text() as Promise<string>;
     })
@@ -64,7 +66,8 @@ export const commandCancel = (
         }
     }).then((response) => {
         if (!response.ok) {
-            throw new Error(response.statusText)
+            response.text().then(body => alert(body));
+            throw response;
         }
         return response.text() as Promise<string>;
     })

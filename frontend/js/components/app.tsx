@@ -14,13 +14,15 @@ export function App() {
                 defaultActiveKey="overview"
                 transition={false}
             >
-                <Tab onSelect={() => setActiveTab(`overview`)}
+                <Tab key="overview"
+                     onSelect={() => setActiveTab(`overview`)}
                      eventKey="overview"
                      title="Общее">
                     <Overview></Overview>
                 </Tab>
                 {servers.map(s => (
-                    <Tab onSelect={() => setActiveTab(`tab${s}`)}
+                    <Tab key={`key${s}`}
+                         onSelect={() => setActiveTab(`tab${s}`)}
                          eventKey={`tab${s}`}
                          title={s}>
                         <Server isActive={true} serverId={s}></Server>

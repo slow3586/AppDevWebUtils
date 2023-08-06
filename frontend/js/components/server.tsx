@@ -3,8 +3,9 @@ import {Button, Form} from "react-bootstrap";
 import {getServerInfo, getServerLog, LogEntry} from "../clients/info_client";
 import dateFormat from "dateformat";
 import {commandCancel, commandDelay, commandRun, Type} from "../clients/command_client";
-import {useQuery} from "react-query";
+import {useQuery, useQueryClient} from "react-query";
 import {isEmpty, isNil, trim} from "lodash";
+import {OverviewServer} from "./overview_server";
 
 export type ServerProps = {
     isActive: boolean,
@@ -24,29 +25,42 @@ export function Server({isActive, serverId}: ServerProps) {
     const delay = useRef("0");
     const [disableAll, setDisableAll] = useState(true);
     const [commandId, setCommandId] = useState("");
+    //const [commandScheduled, setCommandScheduled] = useState(false);
+    //const [commandExecuting, setCommandExecuting] = useState(false);
+
+    const queryClient = useQueryClient();
 
     const commands = [{
         id: "announce",
         name: "Оповещение",
-        effect: "NONE"
+        blocks: "NONE"
     }, {
         id: "ra",
         name: "Рестарт",
-        effect: "WS_BLOCK"
+        blocks: "WS_BLOCK"
     }, {
         id: "ura",
         name: "Обновление",
-        effect: "WS_BLOCK"
+        blocks: "WS_BLOCK"
     }, {
         id: "clear_cache",
         name: "Клир кэш",
-        effect: "SERVER_BLOCK"
+        blocks: "SERVER_BLOCK"
     }];
     const getCommand = (id: string) => commands.find(c => c.id == id);
 
-    const query = useQuery(
-        ['getServerLog', serverId, logLast.current],
+    const logQuery = useQuery(
+        ['getServerLog', {serverId: serverId, logLast: logLast.current}],
         async () => await getServerLog(serverId, logLast.current),
+        {
+            refetchInterval: 3000,
+            refetchIntervalInBackground: true,
+            enabled: isActive
+        });
+
+    const infoQuery = useQuery(
+        ['getServerInfo', {serverId: serverId}],
+        async () => await getServerInfo(serverId),
         {
             refetchInterval: 3000,
             refetchIntervalInBackground: true,
@@ -58,18 +72,29 @@ export function Server({isActive, serverId}: ServerProps) {
             info.current += add + "\n";
         }
     }
-    if (query.isError) {
+    if (logQuery.isError) {
         // @ts-ignore
-        addInfo(query.error.message);
+        addInfo(logQuery.error.message);
     }
-    if (!query.isLoading && !query.isError) {
-        logLast.current = query.data.logLast;
+    if (infoQuery.isError) {
+        // @ts-ignore
+        addInfo(infoQuery.error.message);
+    }
+    if (infoQuery.isLoading || logQuery.isLoading) {
+        // setDisableAll(true);
+    }
+
+    if (!logQuery.isLoading && !logQuery.isError) {
+        logLast.current = logQuery.data.logLast;
         addInfo(
-            query.data.logs.map(e =>
+            logQuery.data.logs.map(e =>
                 `${dateFormat(e.date, "hh:MM:ss")} [${e.severity}] [${e.user}] ${e.text}`
             ).join("\n")
         );
     }
+
+    const commandScheduled = infoQuery?.data?.scheduledCommand;
+    const commandExecuting = infoQuery?.data?.executingCommand;
 
     const runCommand = () => {
         setDisableAll(true);
@@ -83,7 +108,11 @@ export function Server({isActive, serverId}: ServerProps) {
         }).catch((e) => {
             console.error(e);
             alert(e);
-        }).finally(() => setDisableAll(false))
+        }).finally(() => {
+            setDisableAll(false);
+            queryClient.invalidateQueries(['getServerLog', {serverId: serverId}]);
+            queryClient.invalidateQueries(['getServerInfo', {serverId: serverId}]);
+        })
     };
 
     const cancelCommand = () => {
@@ -95,7 +124,11 @@ export function Server({isActive, serverId}: ServerProps) {
         }).catch((e) => {
             console.error(e);
             alert(e);
-        }).finally(() => setDisableAll(false))
+        }).finally(() => {
+            setDisableAll(false);
+            queryClient.invalidateQueries(['getServerLog', {serverId: serverId}]);
+            queryClient.invalidateQueries(['getServerInfo', {serverId: serverId}]);
+        })
     };
 
     const delayCommand = () => {
@@ -108,25 +141,54 @@ export function Server({isActive, serverId}: ServerProps) {
         }).catch((e) => {
             console.error(e);
             alert(e);
-        }).finally(() => setDisableAll(false))
+        }).finally(() => {
+            setDisableAll(false);
+            queryClient.invalidateQueries(['getServerLog', {serverId: serverId}]);
+            queryClient.invalidateQueries(['getServerInfo', {serverId: serverId}]);
+        })
     };
+
+    const delayActive = (!isEmpty(delay.current)
+        && parseInt(delay.current) > 0);
+
+    const cantSchedule = !isNil(commandScheduled)
+        && delayActive
+        && getCommand(commandId)?.blocks != "NONE";
+
+    const cantExecute = !isNil(commandExecuting) && !delayActive;
+
+    const cantExecuteBecauseSchedule = !isNil(commandScheduled)
+        && !delayActive
+        && getCommand(commandId)?.blocks != "NONE";
+
+    let errorMessages = new Array<string>;
+    if (cantSchedule) {
+        errorMessages.push("Уже есть запланированная операция");
+    }
+    if (cantExecute) {
+        errorMessages.push("Выполняемая операция мешает выбранной");
+    }
+    if (cantExecuteBecauseSchedule) {
+        errorMessages.push("Запланированная операция мешает выбранной");
+    }
 
     return (
         <div className="component-server">
             <div className="component-server-container">
-                <Form.Text>{serverId}</Form.Text>
+                <OverviewServer serverId={serverId}></OverviewServer>
                 <Form.Control className="component-server-container-textarea"
                               value={info.current}
                               readOnly as="textarea" rows={10}/>
 
                 <Form.Text muted>Команда</Form.Text>
-                <Form.Select aria-label="Выбор команды"
-                             onChange={e => {
-                                 setCommandId(e.target.value);
-                                 setDisableAll(isNil(getCommand(e.target.value)));
-                             }}>
-                    {(commandId == "") ? (<option value="">Выберите команду</option>) : ""}
-                    {commands.map(c => (<option value={c.id}>{c.name}</option>))}
+                <Form.Select
+                    aria-label="Выбор команды"
+                    onChange={e => {
+                        setCommandId(e.target.value);
+                        setDisableAll(isNil(getCommand(e.target.value)));
+                    }}>
+                    {(commandId == "") ? (<option key="none" value="">Выберите команду</option>) : ""}
+                    {commands.map(c => (<option key={`k${c.id}`} value={c.id}>{c.name}</option>))}
                 </Form.Select>
 
                 <Form.Text muted>Комментарий</Form.Text>
@@ -136,23 +198,27 @@ export function Server({isActive, serverId}: ServerProps) {
                               placeholder=""/>
 
                 <div className="component-server-container-footer">
+                    <Form.Text className="component-server-container-footer-error">
+                        {errorMessages.join("\n")}</Form.Text>
                     <div className="component-server-container-footer-delay">
                         <Form.Text muted>Задержка (сек)</Form.Text>
                         <Form.Control onChange={e => delay.current = e.target.value}
                                       className="component-server-container-footer-delay-textarea"
                                       disabled={disableAll ||
                                           isNil(getCommand(commandId)) ||
-                                          getCommand(commandId).effect == "NONE"}
+                                          getCommand(commandId).blocks == "NONE"}
                                       type="text"
                                       placeholder="0"/>
                     </div>
                     <div className="component-server-container-footer-buttons">
-                        <Button disabled={disableAll}
+                        <Button disabled={disableAll || cantSchedule || cantExecute || cantExecuteBecauseSchedule}
                                 onClick={runCommand}
                                 variant="primary">Запустить</Button>
-                        <Button onClick={delayCommand}
+                        <Button disabled={disableAll || !commandScheduled}
+                                onClick={delayCommand}
                                 variant="primary">Отложить</Button>
-                        <Button onClick={cancelCommand}
+                        <Button disabled={disableAll || !commandScheduled}
+                                onClick={cancelCommand}
                                 variant="primary">Отменить</Button>
                     </div>
                 </div>

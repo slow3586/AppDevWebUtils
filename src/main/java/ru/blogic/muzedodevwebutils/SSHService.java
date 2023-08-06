@@ -10,6 +10,7 @@ import org.apache.sshd.client.channel.PtyCapableChannelSession;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.channel.RequestHandler;
 import org.springframework.stereotype.Service;
+import ru.blogic.muzedodevwebutils.command.Command;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
@@ -46,7 +47,8 @@ public class SSHService {
 
             return session;
         } catch (Exception e) {
-            throw new RuntimeException("#createSession Не удалось создать SSH сессию: " + e.getMessage(), e);
+            throw new RuntimeException(
+                "#createSession " + host + " Не удалось создать SSH сессию: " + e.getMessage(), e);
         }
     }
 
@@ -71,10 +73,10 @@ public class SSHService {
 
     public String executeCommand(
         ClientSession clientSession,
-        String command
+        Command command
     ) {
         try (ChannelShell channelShell = createShellChannel(clientSession)) {
-            return executeCommand(channelShell, command, "#");
+            return executeCommand(channelShell, command);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -82,14 +84,13 @@ public class SSHService {
 
     public String executeCommand(
         PtyCapableChannelSession channelShell,
-        String command,
-        String readySymbol
+        Command command
     ) {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             channelShell.setOut(baos);
 
             final var writer = new BufferedWriter(new OutputStreamWriter(channelShell.getInvertedIn()));
-            writer.write(command);
+            writer.write(command.command());
             writer.write("\n");
             writer.flush();
 
@@ -97,19 +98,26 @@ public class SSHService {
             while (true) {
                 Thread.sleep(1000);
                 final var string = baos.toString().trim();
-                if (string.endsWith(readySymbol)) {
+                if (string.endsWith(command.readySymbol())) {
+                    log.debug("{}: {}: complete @ {}s",
+                        channelShell.getSession().getRemoteAddress(),
+                        command.command(),
+                        count);
                     return StringUtils.substringBeforeLast(string, "\n");
                 }
                 if (count != 0 && count % 5 == 0) {
                     log.debug("{}: {}: {} {}",
                         channelShell.getSession().getRemoteAddress(),
-                        command,
+                        command.command(),
                         count,
                         (count >= 60 && count % 60 == 0)
                             ? "\n" + string : ""
                     );
                 }
                 count++;
+                if(command.timeout() != 0 && count > command.timeout()) {
+                    throw new RuntimeException("#eexecuteCommand Таймаут " + command);
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

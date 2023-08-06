@@ -4,17 +4,23 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.blogic.muzedodevwebutils.SSHService;
+import ru.blogic.muzedodevwebutils.command.CommandDao;
+
+import java.util.concurrent.Executors;
 
 @Service
 @Slf4j
 public class MuzedoServerService {
+    private final CommandDao commandDao;
     private final SSHService sshService;
     private final MuzedoServerDao muzedoServerDao;
 
     public MuzedoServerService(
+        CommandDao commandDao,
         SSHService sshService,
         MuzedoServerDao muzedoServerDao
     ) {
+        this.commandDao = commandDao;
         this.sshService = sshService;
         this.muzedoServerDao = muzedoServerDao;
     }
@@ -22,13 +28,12 @@ public class MuzedoServerService {
     @PostConstruct
     public void postConstruct() {
         try {
+            final var executorService = Executors.newCachedThreadPool();
             muzedoServerDao.getAll()
-                .parallelStream()
-                .forEach(s -> {
-                    final var session = sshService.createSession(s.host);
-                    s.setClientSession(session);
-                    reconnectWsadminShell(s);
-                });
+                .forEach(server -> executorService.submit(() -> {
+                    server.setSshClientSession(sshService.createSession(server.host));
+                    reconnectWsadminShell(server);
+                }));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -42,26 +47,24 @@ public class MuzedoServerService {
                 muzedoServer.getWsadminShell().close();
             }
 
-            final var shell = sshService.createShellChannel(muzedoServer.clientSession);
-            muzedoServer.setWsadminShell(shell);
+            final var shell = sshService.createShellChannel(muzedoServer.sshClientSession);
 
             shell.open().verify(10000);
 
             log.debug("{}: Starting wsadmin", muzedoServer.host);
             sshService.executeCommand(
                 shell,
-                "cd /root/deploy/",
-                "#");
+                commandDao.get("cd_root_deploy"));
             sshService.executeCommand(
                 shell,
-                "./wsadmin_extra.sh",
-                ">");
+                commandDao.get("wsadmin_start"));
+            muzedoServer.setWsadminShell(shell);
             log.debug("{}: Wsadmin started!", muzedoServer.host);
         } catch (Exception e) {
             log.error("#retryConnectShell exception: {}", e.getMessage(), e);
             new Thread(() -> {
                 try {
-                    Thread.sleep(5000);
+                    Thread.sleep(10000);
                 } catch (InterruptedException ex) {
                     throw new RuntimeException(ex);
                 }

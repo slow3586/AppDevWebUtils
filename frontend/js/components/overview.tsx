@@ -22,7 +22,7 @@ export function Overview() {
 
     const queries = useQueries(
         servers.map(serverId => ({
-                queryKey: ['getServerLog', serverId, last.current.get(serverId) ?? 0],
+                queryKey: ['getServerLog', {serverId: serverId, logLast: last.current.get(serverId) ?? 0}],
                 queryFn: async () => await getServerLog(serverId, last.current.get(serverId) ?? 0),
                 refetchInterval: 3000,
                 refetchIntervalInBackground: true
@@ -61,20 +61,16 @@ export function Overview() {
 
     return (
         <div className="component-overview">
-            <Container>
-                <Row>
-                    <Col className="component-overview-col">
-                        <Form.Group controlId="exampleForm.ControlTextarea1">
-                            <Form.Control className="component-overview-textarea"
-                                          value={info.current}
-                                          readOnly as="textarea" rows={15}/>
-                        </Form.Group>
-                    </Col>
-                    <Col className="component-overview-col">
-                        {servers.map(s => (<OverviewServer serverId={s}/>))}
-                    </Col>
-                </Row>
-            </Container>
+            <div className="component-overview-col">
+                <Form.Group controlId="exampleForm.ControlTextarea1">
+                    <Form.Control className="component-overview-textarea"
+                                  value={info.current}
+                                  readOnly as="textarea" rows={15}/>
+                </Form.Group>
+            </div>
+            <div className="component-overview-col">
+                {servers.map(s => (<OverviewServer key={`k${s}`} serverId={s}/>))}
+            </div>
         </div>
     );
 }

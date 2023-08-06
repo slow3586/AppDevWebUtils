@@ -11,24 +11,24 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Data
 @RequiredArgsConstructor
 public class MuzedoServer {
     final int id;
     final String host;
-    ClientSession clientSession;
+
+    ClientSession sshClientSession;
     ChannelShell wsadminShell;
-    AtomicReference<Command> wsadminShellCommand = new AtomicReference<>(null);
-    boolean isGPRunning = false;
-    boolean isIntegRunning = false;
-    boolean isServerOn = false;
-    List<LogEntry> log = new ArrayList<>();
-    ScheduledFuture<String> scheduledCommandFuture = null;
-    Callable<String> scheduledCallable = null;
-    Command scheduledCommand = null;
-    boolean scheduledCommandActive = false;
+
+    List<LogEntry> logs = new ArrayList<>();
+
+    final ReentrantLock commandSchedulingLock = new ReentrantLock();
+
+    ScheduledCommand scheduledCommand = null;
+
+    Command executingCommand = null;
 
     public record LogEntry(
         Date date,
@@ -42,4 +42,10 @@ public class MuzedoServer {
             TRACE
         }
     }
+
+    public record ScheduledCommand(
+        Command command,
+        ScheduledFuture<String> future,
+        Callable<String> callable
+    ) {}
 }

@@ -11,18 +11,19 @@ export type LogEntry = {
     user: string
 }
 
-export type GetServerInfoRequest = {
-    serverId: number
-}
-
-export type GetServerLogRequest = {
-    serverId: number,
-    logLast: number
+export type Command = {
+    id: string,
+    name: string,
+    text: string,
+    shell: string,
+    blocks: string,
+    command: string
 }
 
 export type GetServerInfoResponse = {
     wsAdminShell: boolean,
-    currentOperation: string
+    executingCommand: Command,
+    scheduledCommand: Command
 }
 
 export type GetServerLogResponse = {
@@ -36,7 +37,8 @@ export const getServerInfo = (
     method: 'GET'
 }).then((response) => {
     if (!response.ok) {
-        throw new Error(response.statusText)
+        response.text().then(body => alert(body));
+        throw response;
     }
     return response.json() as Promise<GetServerInfoResponse>;
 })
@@ -48,7 +50,8 @@ export const getServerLog = (
     method: 'GET'
 }).then((response) => {
     if (!response.ok) {
-        throw new Error(response.statusText)
+        response.text().then(body => alert(body));
+        throw response;
     }
     return response.json() as Promise<GetServerLogResponse>;
 })

@@ -7,8 +7,10 @@ public record Command(
     String name,
     Optional<String> text,
     Shell shell,
-    Effect effect,
-    String command
+    Block blocks,
+    String command,
+    String readySymbol,
+    int timeout
 ) {
     public enum Shell {
         NONE,
@@ -16,9 +18,12 @@ public record Command(
         SSH
     }
 
-    public enum Effect {
-        SERVER_BLOCK,
-        WS_BLOCK,
+    public enum Block {
+        SERVER,
+        WSADMIN,
         NONE
     }
+
+    public static final String SSH_READY = "#";
+    public static final String WSADMIN_READY = ">";
 }
