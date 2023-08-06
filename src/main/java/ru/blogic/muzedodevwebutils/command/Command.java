@@ -10,7 +10,8 @@ public record Command(
     Block blocks,
     String command,
     String readySymbol,
-    int timeout
+    int timeout,
+    boolean announce
 ) {
     public enum Shell {
         NONE,

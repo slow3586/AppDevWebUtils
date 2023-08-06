@@ -1,3 +1,5 @@
+import {post} from "../utils/client";
+
 export enum Type {
     WSADMIN = "WSADMIN",
     SSH = "SSH"
@@ -13,19 +15,7 @@ export interface CommandRunRequest {
 export const commandRun = (
     request: CommandRunRequest
 ): Promise<string> =>
-    fetch(`api/command/run`, {
-        method: 'POST',
-        body: JSON.stringify(request),
-        headers: {
-            'Content-Type': 'application/json; charset=utf-8; charset=UTF-8'
-        }
-    }).then((response) => {
-        if (!response.ok) {
-            response.text().then(body => alert(body));
-            throw response;
-        }
-        return response.text() as Promise<string>;
-    })
+    post(`api/command/run`, request, true)
 
 export interface CommandDelayRequest {
     serverId: number,
@@ -36,19 +26,7 @@ export interface CommandDelayRequest {
 export const commandDelay = (
     request: CommandDelayRequest
 ): Promise<string> =>
-    fetch(`api/command/delay`, {
-        method: 'POST',
-        body: JSON.stringify(request),
-        headers: {
-            'Content-Type': 'application/json; charset=utf-8; charset=UTF-8'
-        }
-    }).then((response) => {
-        if (!response.ok) {
-            response.text().then(body => alert(body));
-            throw response;
-        }
-        return response.text() as Promise<string>;
-    })
+    post(`api/command/delay`, request, true)
 
 export interface CommandCancelRequest {
     serverId: number,
@@ -58,16 +36,4 @@ export interface CommandCancelRequest {
 export const commandCancel = (
     request: CommandCancelRequest
 ): Promise<string> =>
-    fetch(`api/command/cancel`, {
-        method: 'POST',
-        body: JSON.stringify(request),
-        headers: {
-            'Content-Type': 'application/json; charset=utf-8; charset=UTF-8'
-        }
-    }).then((response) => {
-        if (!response.ok) {
-            response.text().then(body => alert(body));
-            throw response;
-        }
-        return response.text() as Promise<string>;
-    })
+    post(`api/command/cancel`, request, true)

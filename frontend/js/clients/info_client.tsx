@@ -1,3 +1,5 @@
+import {get} from "../utils/client";
+
 export enum Severity {
     CRIT = "CRIT",
     INFO = "INFO",
@@ -33,25 +35,11 @@ export type GetServerLogResponse = {
 
 export const getServerInfo = (
     serverId: number
-): Promise<GetServerInfoResponse> => fetch(`api/info/getServerInfo/${serverId}`, {
-    method: 'GET'
-}).then((response) => {
-    if (!response.ok) {
-        response.text().then(body => alert(body));
-        throw response;
-    }
-    return response.json() as Promise<GetServerInfoResponse>;
-})
+): Promise<GetServerInfoResponse> =>
+    get(`api/info/getServerInfo/${serverId}`)
 
 export const getServerLog = (
     serverId: number,
     last: number
-): Promise<GetServerLogResponse> => fetch(`api/info/getServerLog/${serverId}?last=${last}`, {
-    method: 'GET'
-}).then((response) => {
-    if (!response.ok) {
-        response.text().then(body => alert(body));
-        throw response;
-    }
-    return response.json() as Promise<GetServerLogResponse>;
-})
+): Promise<GetServerLogResponse> =>
+    get(`api/info/getServerLog/${serverId}?last=${last}`)

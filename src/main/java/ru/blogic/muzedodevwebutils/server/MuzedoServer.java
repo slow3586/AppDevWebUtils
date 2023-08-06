@@ -25,6 +25,8 @@ public class MuzedoServer {
     List<LogEntry> logs = new ArrayList<>();
 
     final ReentrantLock commandSchedulingLock = new ReentrantLock();
+    final ReentrantLock wsadminConnectLock = new ReentrantLock();
+    final ReentrantLock sessionConnectLock = new ReentrantLock();
 
     ScheduledCommand scheduledCommand = null;
 

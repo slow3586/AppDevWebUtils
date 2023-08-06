@@ -22,7 +22,8 @@ public class CommandDao {
             Command.Block.NONE,
             "",
             "",
-            10));
+            10,
+            true));
         commands.add(new Command("hostname",
             "Проверка",
             Optional.empty(),
@@ -30,7 +31,8 @@ public class CommandDao {
             Command.Block.NONE,
             "hostname",
             Command.SSH_READY,
-            10));
+            10,
+            false));
         commands.add(new Command("ra",
             "Рестарт",
             Optional.empty(),
@@ -38,15 +40,26 @@ public class CommandDao {
             Command.Block.WSADMIN,
             "ra(1)",
             Command.WSADMIN_READY,
-            180));
+            180,
+            true));
         commands.add(new Command("ura",
-            "Обновление",
+            "Обновление (gp + integ + cfg)",
             Optional.empty(),
             Command.Shell.WSADMIN,
             Command.Block.WSADMIN,
             "ura(1)",
             Command.WSADMIN_READY,
-            480));
+            480,
+            true));
+        commands.add(new Command("uric",
+            "Обновление (integ + cfg)",
+            Optional.empty(),
+            Command.Shell.WSADMIN,
+            Command.Block.WSADMIN,
+            "uric()",
+            Command.WSADMIN_READY,
+            480,
+            true));
         commands.add(new Command("clear_cache",
             "Клир кэш",
             Optional.empty(),
@@ -54,7 +67,8 @@ public class CommandDao {
             Command.Block.SERVER,
             "/root/deploy/clear_cache_shortcut.sh",
             Command.SSH_READY,
-            900));
+            900,
+            true));
         commands.add(new Command("cd_root_deploy",
             "cd_root_deploy",
             Optional.empty(),
@@ -62,7 +76,8 @@ public class CommandDao {
             Command.Block.WSADMIN,
             "cd /root/deploy/",
             Command.SSH_READY,
-            10));
+            10,
+            true));
         commands.add(new Command("wsadmin_start",
             "wsadmin_start",
             Optional.empty(),
@@ -70,7 +85,8 @@ public class CommandDao {
             Command.Block.WSADMIN,
             "./wsadmin_extra.sh",
             Command.WSADMIN_READY,
-            60));
+            60,
+            true));
     }
 
     public Command get(String id) {

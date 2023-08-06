@@ -60,7 +60,7 @@ public class SSHService {
             channelShell.setRedirectErrorStream(true);
             channelShell.open().verify(TIMEOUT);
             channelShell.addRequestHandler((channel, request, wantReply, buffer) -> {
-                if ("keepalive@openssh.com".equals(request))
+                if (StringUtils.contains(request, "keepalive@openssh.com"))
                     return RequestHandler.Result.ReplySuccess;
                 return RequestHandler.Result.Unsupported;
             });
@@ -115,7 +115,7 @@ public class SSHService {
                     );
                 }
                 count++;
-                if(command.timeout() != 0 && count > command.timeout()) {
+                if (command.timeout() != 0 && count > command.timeout()) {
                     throw new RuntimeException("#eexecuteCommand Таймаут " + command);
                 }
             }

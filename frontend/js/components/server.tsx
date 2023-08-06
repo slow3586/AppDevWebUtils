@@ -39,8 +39,12 @@ export function Server({isActive, serverId}: ServerProps) {
         name: "Рестарт",
         blocks: "WS_BLOCK"
     }, {
+        id: "uric",
+        name: "Обновление (integ + cfg)",
+        blocks: "WS_BLOCK"
+    }, {
         id: "ura",
-        name: "Обновление",
+        name: "Обновление (gp + integ + cfg)",
         blocks: "WS_BLOCK"
     }, {
         id: "clear_cache",

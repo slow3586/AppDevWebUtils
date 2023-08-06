@@ -52,7 +52,9 @@ public class CommandService {
             }
 
             try {
-                if (muzedoServer.getWsadminShell() == null || muzedoServer.getWsadminShell().isClosing()) {
+                if (muzedoServer.getWsadminShell() == null
+                    || muzedoServer.getWsadminShell().isClosing()
+                    || !muzedoServer.getWsadminShell().isOpen()) {
                     throw new RuntimeException("Wsadmin закрыт!");
                 }
 
@@ -89,7 +91,7 @@ public class CommandService {
                         //region ЗАПИСЬ СТАРТА ОПЕРАЦИИ
                         infoService.writeInfo(
                             muzedoServer.getId(),
-                            (isBlockingCommand)
+                            command.announce()
                                 ? MuzedoServer.LogEntry.Severity.CRIT
                                 : MuzedoServer.LogEntry.Severity.INFO,
                             (isBlockingCommand ? "Запуск операции " : "")
@@ -119,7 +121,9 @@ public class CommandService {
                         if (isBlockingCommand) {
                             infoService.writeInfo(
                                 muzedoServer.getId(),
-                                MuzedoServer.LogEntry.Severity.CRIT,
+                                command.announce()
+                                    ? MuzedoServer.LogEntry.Severity.CRIT
+                                    : MuzedoServer.LogEntry.Severity.INFO,
                                 "Завершено \"" + command.name() + "\"");
                         }
                         //endregion
