@@ -5,13 +5,18 @@ import {
     QueryClient,
     QueryClientProvider,
 } from 'react-query'
+import { ToastContainer } from "react-toastify";
 
 require('../less/index.less')
 
 const queryClient = new QueryClient()
+Notification.requestPermission();
 
 createRoot(document.getElementById("root")).render(
-    <QueryClientProvider client={queryClient}>
-        <App/>
-    </QueryClientProvider>
+    <div>
+        <QueryClientProvider client={queryClient}>
+            <App/>
+        </QueryClientProvider>
+        <ToastContainer/>
+    </div>
 );

@@ -1,24 +1,50 @@
+// @ts-ignore
+import {toast} from 'react-toastify';
+import {startsWith} from "lodash";
+
 const common = (
     path: string,
     options: any,
     textResponse: boolean
-): Promise<any> =>
-    fetch(path, options)
-        .then((response) => {
-            if (!response.ok) {
-                response.text().then(body => alert(body));
-                throw response;
-            }
-            return textResponse
-                ? response.text()
-                : response.json() as Promise<any>;
-        })
-        .catch((error) => {
-            if (error == "Failed to fetch") {
-                throw "Потеряно соединение!";
-            }
-            throw error;
-        })
+): Promise<any> => {
+    try {
+        return fetch(path, options)
+            .then((response) => {
+                if (!response.ok) {
+                    response.text().then(body => alert(body));
+                    throw response;
+                }
+                return textResponse
+                    ? response.text()
+                    : response.json() as Promise<any>;
+            })
+            .catch((error) => {
+                console.error(error);
+                let text = error.message;
+                if (startsWith(error.message, `Failed to fetch`)) {
+                    text = "Потеряно соединение, необходимо перезагрузить страницу"
+                }
+                if (startsWith(error.message, `Unexpected token '<'`)) {
+                    text = "Было потеряно и восстановлено соединение, необходимо перезагрузить страницу"
+                }
+                toast(text, {
+                    toastId: "clienterr",
+                    position: "top-right",
+                    autoClose: 3000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                    theme: "light",
+                });
+                throw error.message;
+            })
+    } catch (error) {
+        console.error(error);
+        throw "Необходимо перезагрузить страницу";
+    }
+}
 
 export const get = (
     path: string,

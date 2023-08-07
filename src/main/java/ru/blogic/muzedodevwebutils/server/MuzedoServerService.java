@@ -4,6 +4,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.blogic.muzedodevwebutils.SSHService;
+import ru.blogic.muzedodevwebutils.command.Command;
 import ru.blogic.muzedodevwebutils.command.CommandDao;
 
 import java.util.concurrent.Executors;
@@ -84,6 +85,16 @@ public class MuzedoServerService {
             log.warn("#reconnectWsadminShell {}: уже в процессе", muzedoServer.host);
             return;
         }
+        /*if (muzedoServer.getExecutingCommand().blocks().equals(Command.Block.SERVER)) {
+            new Thread(() -> {
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException ex) {
+                    throw new RuntimeException(ex);
+                }
+                reconnectWsadminShell(muzedoServer);
+            }).start();
+        }*/
         try {
             if (muzedoServer.getSshClientSession() == null
                 || muzedoServer.getSshClientSession().isClosing()) {

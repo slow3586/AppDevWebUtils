@@ -1,7 +1,5 @@
 package ru.blogic.muzedodevwebutils.command;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,5 +31,6 @@ public record Command(
     public static final String WSADMIN_READY = ">";
     public static final List<String> WSADMIN_ERRTEXTS
         = List.of("com.ibm.ws.scripting.ScriptingException",
-        "Error creating \"SOAP\" connection");
+        "Error creating \"SOAP\" connection",
+        "syntax error");
 }

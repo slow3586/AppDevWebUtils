@@ -39,10 +39,10 @@ export function Overview() {
     }
 
     if (isEmpty(loading) && isEmpty(errored)) {
-        queries.forEach(q => {
-            last.current.set(q.serverId, q.query.data.logLast);
-        })
-        const logs = queries.flatMap(q => q.query.data.logs.flatMap(l => ({serverId: q.serverId, data: l})))
+        const logs = queries
+            .filter(q => last.current.get(q.serverId) != q.query.data.logLast)
+            .flatMap(q => q.query.data.logs.flatMap(l => ({serverId: q.serverId, data: l})))
+            .sort((a, b) => new Date(a.data.date)?.getTime?.() - new Date(b.data.date)?.getTime?.())
             .map(e => ({
                 severity: e.data.severity, text:
                     `${dateFormat(e.data.date, "hh:MM:ss")} [${e.serverId}] [${e.data.severity}] [${e.data.user}] ${e.data.text}`
@@ -55,8 +55,11 @@ export function Overview() {
             if (!firstRun.current && !isEmpty(trim(crits))) {
                 runNotification("МЮЗ ЭДО DEV", crits);
             }
-            firstRun.current = false;
         }
+        queries.forEach(q => {
+            last.current.set(q.serverId, q.query.data.logLast);
+        })
+        firstRun.current = false;
     }
 
     return (

@@ -1,16 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <property name="PATTERN" value="%d{HH:mm:ss.SSS} [%-1level] [%.3t] %logger{0}: %msg%n" />
     <appender name="MDWUConsole"
               class="ch.qos.logback.core.ConsoleAppender">
-        <layout class="ch.qos.logback.classic.PatternLayout">
-            <Pattern>
-                %d{HH:mm:ss.SSS} [%-1level] %logger{0}: %msg%n
-            </Pattern>
-        </layout>
+        <encoder>
+            <pattern>${PATTERN}</pattern>
+        </encoder>
     </appender>
+
+    <appender name="MDWUFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>log.txt</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>logs/%d{yyyy-MM-dd}.%i.txt</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${PATTERN}</pattern>
+        </encoder>
+    </appender>
+
     <logger name="ru.blogic.muzedodevwebutils" level="TRACE"/>
     <root level="INFO">
         <appender-ref ref="MDWUConsole" />
+        <appender-ref ref="MDWUFile" />
     </root>
 </configuration>

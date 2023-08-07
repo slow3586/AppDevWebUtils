@@ -24,7 +24,7 @@ public class CommandService {
     private final InfoService infoService;
     private final CommandDao commandDao;
     private final ScheduledExecutorService executorService =
-        Executors.newSingleThreadScheduledExecutor();
+        Executors.newScheduledThreadPool(4);
 
     public CommandService(
         SSHService sshService,
@@ -47,17 +47,17 @@ public class CommandService {
         final var command = commandDao.get(commandRunRequest.commandId());
 
         try {
+            if (muzedoServer.getWsadminShell() == null
+                || muzedoServer.getWsadminShell().isClosing()
+                || !muzedoServer.getWsadminShell().isOpen()) {
+                throw new RuntimeException("Wsadmin закрыт!");
+            }
+
             if (!muzedoServer.getCommandSchedulingLock().tryLock(5, TimeUnit.SECONDS)) {
                 throw new RuntimeException("На сервере планируется другая операция");
             }
 
             try {
-                if (muzedoServer.getWsadminShell() == null
-                    || muzedoServer.getWsadminShell().isClosing()
-                    || !muzedoServer.getWsadminShell().isOpen()) {
-                    throw new RuntimeException("Wsadmin закрыт!");
-                }
-
                 final var commandDelay = command.blocks() == Command.Block.NONE
                     ? 0
                     : Math.min(Math.max(0, commandRunRequest.delaySeconds()), 600);
@@ -151,9 +151,7 @@ public class CommandService {
                     //region ПЛАНИРОВАНИЕ ОПЕРАЦИИ
                     infoService.writeInfo(
                         muzedoServer.getId(),
-                        command.blocks().equals(Command.Block.WSADMIN)
-                            ? MuzedoServer.LogEntry.Severity.CRIT
-                            : MuzedoServer.LogEntry.Severity.INFO,
+                        MuzedoServer.LogEntry.Severity.CRIT,
                         "Запланирована операция "
                             + "\"" + command.name() + "\""
                             + (StringUtils.isNotBlank(commandRunRequest.comment())

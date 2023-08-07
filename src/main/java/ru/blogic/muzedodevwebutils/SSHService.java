@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.channel.ChannelShell;
+import org.apache.sshd.client.channel.ClientChannelEvent;
 import org.apache.sshd.client.channel.PtyCapableChannelSession;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.channel.RequestHandler;
@@ -16,6 +17,7 @@ import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -98,7 +100,8 @@ public class SSHService {
             writer.write("\n");
             writer.flush();
 
-            var count = 0;
+            var count = 1;
+            Thread.sleep(1000);
             while (true) {
                 Thread.sleep(1000);
                 final var entireOutput = baos.toString().trim();
@@ -126,7 +129,7 @@ public class SSHService {
                         channelShell.getSession().getRemoteAddress(),
                         command.command(),
                         err.get());
-                    throw new RuntimeException("#executeCommand обнаружен текст ошибки: "
+                    throw new RuntimeException("#executeCommand ошибка: "
                         + channelShell.getSession().getRemoteAddress()
                         + ": " + err.get());
                 }

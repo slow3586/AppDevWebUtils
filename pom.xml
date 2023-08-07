@@ -77,6 +77,18 @@
             <artifactId>ehcache</artifactId>
             <version>3.10.8</version>
         </dependency>
+        <dependency>
+            <groupId>org.ehcache</groupId>
+            <artifactId>ehcache</artifactId>
+            <version>3.10.8</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-core -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>1.4.9</version>
+        </dependency>
+
 
         <dependency>
             <groupId>org.springframework.boot</groupId>

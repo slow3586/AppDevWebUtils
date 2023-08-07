@@ -7,7 +7,7 @@ module.exports = {
     entry: './frontend/js/index.tsx',
     devtool: 'source-map',
     cache: true,
-    mode: 'development',
+    mode: 'production',
     output: {
         path: __dirname,
         filename: './src/main/resources/static/built/bundle.js'
