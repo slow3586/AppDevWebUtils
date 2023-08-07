@@ -27,7 +27,7 @@ const common = (
                 if (startsWith(error.message, `Unexpected token '<'`)) {
                     text = "Было потеряно и восстановлено соединение, необходимо перезагрузить страницу"
                 }
-                toast(text, {
+                toast.warn(text, {
                     toastId: "clienterr",
                     position: "top-right",
                     autoClose: 3000,
@@ -37,6 +37,7 @@ const common = (
                     draggable: true,
                     progress: undefined,
                     theme: "light",
+                    closeButton: false
                 });
                 throw error.message;
             })

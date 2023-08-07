@@ -30,11 +30,13 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    min-width: 400px;
+    width: 400px;
   }
 
   &-textarea {
     max-height: 500px;
+    letter-spacing: -0.5px;
+    font-family: monospace;
   }
 }
 
@@ -43,20 +45,21 @@
   justify-content: center;
 
   &-container {
-    width: 600px;
+    width: 450px;
     display: flex;
     flex-direction: column;
     gap: 5px;
 
-
     &-textarea {
       max-height: 400px;
+      letter-spacing: -0.5px;
+      font-family: monospace;
     }
 
     &-footer {
       display: flex;
       justify-content: flex-end;
-      margin-top: 20px;
+      margin-top: 10px;
 
       &-error {
         color: indianred;
@@ -66,10 +69,10 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+        gap: 5px;
 
         &-textarea {
           width: 100px;
-
         }
       }
 
@@ -87,17 +90,33 @@
 .component-overview-server {
   border: var(--bs-border-width) solid var(--bs-border-color);
   border-radius: var(--bs-border-radius);
-  padding: 5px;
   min-width: 300px;
+  padding: 5px 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
 
-  .form-switch {
-    & > * {
-      opacity: 1 !important;
-    }
+  & > .component-overview-server-id {
+    font-size: 16px;
+    color: black;
   }
 
-  &-insides {
+  & > .component-overview-server-content {
     display: flex;
     flex-direction: column;
+    padding-left: 10px;
+    border-left: 1px solid var(--bs-border-color);
+    & > .component-overview-server-row {
+      & > .component-overview-server-status {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block;
+        color: black;
+        font-size: 14px;
+        letter-spacing: 0.2px;
+      }
+    }
   }
 }

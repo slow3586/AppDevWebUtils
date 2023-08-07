@@ -45,7 +45,7 @@ export function Overview() {
             .sort((a, b) => new Date(a.data.date)?.getTime?.() - new Date(b.data.date)?.getTime?.())
             .map(e => ({
                 severity: e.data.severity, text:
-                    `${dateFormat(e.data.date, "hh:MM:ss")} [${e.serverId}] [${e.data.severity}] [${e.data.user}] ${e.data.text}`
+                    `${dateFormat(e.data.date, "hh:MM:ss")} [${e.serverId}] [${e.data.user}] ${e.data.text}` // [${e.data.severity}]
             }));
         if (!isEmpty(logs)) {
             addInfo(logs

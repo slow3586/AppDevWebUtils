@@ -206,7 +206,8 @@ public class CommandService {
                     commandDelayRequest.comment(),
                     true));
 
-            final var newDelay = currentDelay + commandDelayRequest.delaySeconds();
+            final var delayPlus = Math.min(600, Math.max(0, commandDelayRequest.delaySeconds()));
+            final var newDelay = Math.min(600, currentDelay + delayPlus);
 
             muzedoServer.setScheduledCommand(new MuzedoServer.ScheduledCommand(
                 command,
@@ -224,7 +225,8 @@ public class CommandService {
                     + (StringUtils.isNotBlank(commandDelayRequest.comment())
                     ? ": \"" + commandDelayRequest.comment() + "\""
                     : "")
-                    + "(осталось " + newDelay + " сек)"
+                    + " на " + delayPlus + " сек. "
+                    + "(осталось " + newDelay + " сек.)"
             );
         } catch (Exception e) {
             infoService.writeInfo(

@@ -19,6 +19,10 @@ import java.util.concurrent.locks.ReentrantLock;
 public class MuzedoServer {
     final int id;
     final String host;
+    final String uri;
+
+    String gpStatus;
+    String integStatus;
 
     ClientSession sshClientSession;
     ChannelShell wsadminShell;

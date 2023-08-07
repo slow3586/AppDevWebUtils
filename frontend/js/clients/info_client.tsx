@@ -28,6 +28,8 @@ export type GetServerInfoResponse = {
     executingCommandTimer: number,
     scheduledCommand: Command,
     scheduledCommandTimer: number,
+    gpStatus: string,
+    integStatus: string
 }
 
 export type GetServerLogResponse = {

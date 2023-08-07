@@ -6,6 +6,7 @@ import {commandCancel, commandDelay, commandRun, Type} from "../clients/command_
 import {useQuery, useQueryClient} from "react-query";
 import {isEmpty, isNil, trim} from "lodash";
 import {OverviewServer} from "./overview_server";
+import {toast} from "react-toastify";
 
 export type ServerProps = {
     isActive: boolean,
@@ -92,7 +93,7 @@ export function Server({isActive, serverId}: ServerProps) {
         logLast.current = logQuery.data.logLast;
         addInfo(
             logQuery.data.logs.map(e =>
-                `${dateFormat(e.date, "hh:MM:ss")} [${e.severity}] [${e.user}] ${e.text}`
+                `${dateFormat(e.date, "hh:MM:ss")} [${e.user}] ${e.text}` // [${e.data.severity}]
             ).join("\n")
         );
     }
@@ -108,56 +109,56 @@ export function Server({isActive, serverId}: ServerProps) {
     const commandScheduled = infoQuery?.data?.scheduledCommand;
     const commandExecuting = infoQuery?.data?.executingCommand;
 
-    const runCommand = () => {
+    const requestWrapper = (promise: Promise<string>) => {
         setDisableAll(true);
-        commandRun({
-            serverId: serverId,
-            commandId: commandId,
-            comment: comment.current,
-            delaySeconds: parseInt(delay.current)
-        }).then((r) => {
+        promise.then((r) => {
+            // toast.success("Запрос отправлен!", {
+            //     position: "top-right",
+            //     autoClose: 3000,
+            //     hideProgressBar: true,
+            //     closeOnClick: true,
+            //     pauseOnHover: false,
+            //     draggable: true,
+            //     theme: "light",
+            //     closeButton: false
+            // });
             console.log(r);
         }).catch((e) => {
             console.error(e);
-            alert(e);
         }).finally(() => {
+            queryClient.cancelQueries(['getServerLog', {serverId: serverId}]);
+            queryClient.cancelQueries(['getServerInfo', {serverId: serverId}]);
             queryClient.resetQueries(['getServerLog', {serverId: serverId}]);
             queryClient.resetQueries(['getServerInfo', {serverId: serverId}]);
         })
-    };
+    }
 
-    const cancelCommand = () => {
-        setDisableAll(true);
-        commandCancel({
-            serverId: serverId,
-            comment: comment.current
-        }).then((r) => {
-            console.log(r);
-        }).catch((e) => {
-            console.error(e);
-            alert(e);
-        }).finally(() => {
-            queryClient.resetQueries(['getServerLog', {serverId: serverId}]);
-            queryClient.resetQueries(['getServerInfo', {serverId: serverId}]);
-        })
-    };
+    const runCommand = () =>
+        requestWrapper(
+            commandRun({
+                serverId: serverId,
+                commandId: commandId,
+                comment: comment.current,
+                delaySeconds: parseInt(delay.current)
+            })
+        );
 
-    const delayCommand = () => {
-        setDisableAll(true);
-        commandDelay({
-            serverId: serverId,
-            comment: comment.current,
-            delaySeconds: parseInt(delay.current)
-        }).then((r) => {
-            console.log(r);
-        }).catch((e) => {
-            console.error(e);
-            alert(e);
-        }).finally(() => {
-            queryClient.resetQueries(['getServerLog', {serverId: serverId}]);
-            queryClient.resetQueries(['getServerInfo', {serverId: serverId}]);
-        })
-    };
+    const cancelCommand = () =>
+        requestWrapper(
+            commandCancel({
+                serverId: serverId,
+                comment: comment.current
+            })
+        );
+
+    const delayCommand = () =>
+        requestWrapper(
+            commandDelay({
+                serverId: serverId,
+                comment: comment.current,
+                delaySeconds: parseInt(delay.current)
+            })
+        );
 
     const delayActive = (!isEmpty(delay.current)
         && parseInt(delay.current) > 0);
@@ -173,6 +174,9 @@ export function Server({isActive, serverId}: ServerProps) {
         && getCommand(commandId)?.blocks != "NONE";
 
     let errorMessages = new Array<string>;
+    if (!infoQuery?.data?.wsAdminShell) {
+        errorMessages.push("WsAdmin недоступен");
+    }
     if (cantSchedule) {
         errorMessages.push("Уже есть запланированная операция");
     }
@@ -212,8 +216,6 @@ export function Server({isActive, serverId}: ServerProps) {
                               placeholder=""/>
 
                 <div className="component-server-container-footer">
-                    <Form.Text className="component-server-container-footer-error">
-                        {errorMessages.join("\n")}</Form.Text>
                     <div className="component-server-container-footer-delay">
                         <Form.Text muted>Задержка (сек)</Form.Text>
                         <Form.Control onChange={e => delay.current = e.target.value}
@@ -244,6 +246,8 @@ export function Server({isActive, serverId}: ServerProps) {
                                 variant="primary">Отменить</Button>
                     </div>
                 </div>
+                <Form.Text className="component-server-container-footer-error">
+                    {errorMessages.join("\n")}</Form.Text>
             </div>
         </div>
     );

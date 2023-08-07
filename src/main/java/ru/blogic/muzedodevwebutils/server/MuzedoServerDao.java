@@ -14,10 +14,10 @@ public class MuzedoServerDao {
 
     @PostConstruct
     public void postConstruct() {
-        servers.add(new MuzedoServer(58, "172.19.203.58"));
-        servers.add(new MuzedoServer(59, "172.19.203.59"));
-        servers.add(new MuzedoServer(60, "172.19.203.60"));
-        servers.add(new MuzedoServer(61, "172.19.203.61"));
+        servers.add(new MuzedoServer(58, "172.19.203.58", "http://172.19.203.58"));
+        servers.add(new MuzedoServer(59, "172.19.203.59", "http://172.19.203.59"));
+        servers.add(new MuzedoServer(60, "172.19.203.60", "http://172.19.203.60"));
+        servers.add(new MuzedoServer(61, "172.19.203.61", "http://172.19.203.61"));
     }
 
     public MuzedoServer get(

@@ -32,5 +32,6 @@ public record Command(
     public static final List<String> WSADMIN_ERRTEXTS
         = List.of("com.ibm.ws.scripting.ScriptingException",
         "Error creating \"SOAP\" connection",
-        "syntax error");
+        "syntax error",
+        "root@edo-dev");
 }

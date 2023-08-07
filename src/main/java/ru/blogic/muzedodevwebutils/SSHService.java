@@ -23,15 +23,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 @Slf4j
 public class SSHService {
-
     private static final long TIMEOUT = 5000;
-
-    SshClient client;
+    private final SshClient client = SshClient.setUpDefaultClient();
 
     @PostConstruct
     public void postConstruct() {
         try {
-            client = SshClient.setUpDefaultClient();
             client.start();
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -39,7 +36,7 @@ public class SSHService {
     }
 
     public ClientSession createSession(
-        String host
+        final String host
     ) {
         try {
             final var session = client.connect("root", host, 22)
@@ -56,7 +53,7 @@ public class SSHService {
     }
 
     public ChannelShell createShellChannel(
-        ClientSession clientSession
+        final ClientSession clientSession
     ) {
         try {
             final var channelShell = clientSession.createShellChannel();
@@ -75,11 +72,11 @@ public class SSHService {
     }
 
     public String executeCommand(
-        ClientSession clientSession,
-        Command command,
-        AtomicInteger timerOut
+        final ClientSession clientSession,
+        final Command command,
+        final AtomicInteger timerOut
     ) {
-        try (ChannelShell channelShell = createShellChannel(clientSession)) {
+        try (final var channelShell = createShellChannel(clientSession)) {
             return executeCommand(channelShell, command, timerOut);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -87,30 +84,29 @@ public class SSHService {
     }
 
     public String executeCommand(
-        PtyCapableChannelSession channelShell,
-        Command command,
-        AtomicInteger timerOut
+        final PtyCapableChannelSession channelShell,
+        final Command command,
+        final AtomicInteger timerOut
     ) {
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            final var outputParts = new ArrayList<String>();
+        try (final var baos = new ByteArrayOutputStream()) {
             channelShell.setOut(baos);
 
-            final var writer = new BufferedWriter(new OutputStreamWriter(channelShell.getInvertedIn()));
+            final var writer = new BufferedWriter(
+                new OutputStreamWriter(
+                    channelShell.getInvertedIn()));
             writer.write(command.command());
             writer.write("\n");
             writer.flush();
 
             var count = 1;
+            var substringBegin = 0;
             Thread.sleep(1000);
             while (true) {
                 Thread.sleep(1000);
                 final var entireOutput = baos.toString().trim();
-                final var newOutputPart = entireOutput.substring(outputParts
-                    .stream()
-                    .mapToInt(String::length)
-                    .sum());
+                final var newOutputPart = entireOutput.substring(substringBegin);
                 if (!newOutputPart.isEmpty()) {
-                    outputParts.add(newOutputPart);
+                    substringBegin += newOutputPart.length();
                     log.debug("{}: {}: ({}s) {}",
                         channelShell.getSession().getRemoteAddress(),
                         command.command(),
