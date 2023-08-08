@@ -190,10 +190,10 @@ export function Server({isActive, serverId}: ServerProps) {
     }
 
     return (
-        <div className="component-server">
-            <div className="component-server-container">
+        <div className="comp-server">
+            <div className="comp-container">
                 <OverviewServer serverId={serverId}></OverviewServer>
-                <Form.Control className="component-server-container-textarea"
+                <Form.Control className="comp-textarea"
                               value={info.current}
                               readOnly as="textarea" rows={10}/>
 
@@ -214,11 +214,11 @@ export function Server({isActive, serverId}: ServerProps) {
                               type="text"
                               placeholder=""/>
 
-                <div className="component-server-container-footer">
-                    <div className="component-server-container-footer-delay">
+                <div className="comp-footer">
+                    <div className="comp-delay">
                         <Form.Text muted>Задержка (сек)</Form.Text>
                         <Form.Control onChange={e => delay.current = e.target.value}
-                                      className="component-server-container-footer-delay-textarea"
+                                      className="comp-textarea"
                                       disabled={disableAll ||
                                           isNil(getCommand(commandId)) ||
                                           getCommand(commandId).blocks == "NONE"}
@@ -227,7 +227,7 @@ export function Server({isActive, serverId}: ServerProps) {
                                       max="600"
                                       placeholder="0"/>
                     </div>
-                    <div className="component-server-container-footer-buttons">
+                    <div className="comp-buttons">
                         <Button disabled={disableAll
                             || cantSchedule
                             || cantExecute
@@ -246,7 +246,7 @@ export function Server({isActive, serverId}: ServerProps) {
                                 variant="primary">Отменить</Button>
                     </div>
                 </div>
-                <Form.Text className="component-server-container-footer-error">
+                <Form.Text className="comp-error">
                     {errorMessages.join("\n")}</Form.Text>
             </div>
         </div>

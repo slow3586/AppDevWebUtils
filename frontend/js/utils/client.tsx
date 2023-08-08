@@ -11,7 +11,6 @@ const common = (
         return fetch(path, options)
             .then((response) => {
                 if (!response.ok) {
-                    response.text().then(body => alert(body));
                     throw response;
                 }
                 return textResponse

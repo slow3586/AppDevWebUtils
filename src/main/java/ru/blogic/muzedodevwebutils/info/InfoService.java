@@ -41,7 +41,6 @@ public class InfoService {
     private static final String path0 = "UZDO/api/app/buildInfo";
     private static final String path1 = "UZDO-ui/rest/app/buildInfo";
 
-    @Autowired
     public InfoService(
         MuzedoServerService muzedoServerService,
         MuzedoServerDao muzedoServerDao
@@ -87,8 +86,12 @@ public class InfoService {
                 .map(Math::toIntExact)
                 .getOrElse(0),
             muzedoServer.getBuild(),
-            muzedoServer.getGpBuildInfo().shortInfo(),
-            muzedoServer.getIntegBuildInfo().shortInfo()
+            Option.of(muzedoServer.getGpBuildInfo())
+                .map(MuzedoServer.MuzedoBuildInfo::shortInfo)
+                .getOrNull(),
+            Option.of(muzedoServer.getIntegBuildInfo())
+                .map(MuzedoServer.MuzedoBuildInfo::shortInfo)
+                .getOrNull()
         );
     }
 
@@ -189,12 +192,12 @@ public class InfoService {
     }
 
     @CacheEvict(allEntries = true, value = "getServerInfo")
-    @Scheduled(fixedDelay = 1000)
+    @Scheduled(fixedDelay = 3000)
     @DisableLoggingAspect
     public void clearGetServerInfoCache() {}
 
     @CacheEvict(allEntries = true, value = "getServerLog")
-    @Scheduled(fixedDelay = 1000)
+    @Scheduled(fixedDelay = 3000)
     @DisableLoggingAspect
     public void clearGetServerLogCache() {}
 

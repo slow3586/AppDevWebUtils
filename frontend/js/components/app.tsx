@@ -9,7 +9,7 @@ export function App() {
     const servers = [58, 59, 60, 61];
 
     return (
-        <div className="component-app">
+        <div className="comp-app">
             <Tabs
                 defaultActiveKey="overview"
                 transition={false}

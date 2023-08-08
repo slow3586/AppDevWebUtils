@@ -27,22 +27,23 @@ export function OverviewServer({serverId}: OverviewServerProps) {
     } else if (!isEmpty(query?.data?.scheduledCommand?.name)) {
         commandText = `${query?.data?.scheduledCommand?.name ?? "-"} через ${query?.data?.scheduledCommandTimer ?? ""} сек.`;
     } else if (!query?.data?.wsAdminShell) {
-        commandText = `X (WsAdmin запускается)`;
+        commandText = `- (WsAdmin запускается)`;
     }
 
     return (
-        <div className="component-overview-server">
-            <Form.Text className="component-overview-server-id">{serverId}</Form.Text>
-            <div className="component-overview-server-content">
-                <div className="component-overview-server-row">
-                    <Form.Text className="component-overview-server-status">Сборка: {query?.data?.build ?? "OFF"}</Form.Text></div>
-                <div className="component-overview-server-row">
-                    <Form.Text className="component-overview-server-status">GP: {query?.data?.gpBuild ?? "OFF"}</Form.Text></div>
-                <div className="component-overview-server-row">
-                    <Form.Text className="component-overview-server-status">Integ: {query?.data?.integBuild ?? "OFF"}</Form.Text>
+        <div className="comp-overview-server">
+            <Form.Text className="comp-id">{serverId}</Form.Text>
+            <div className="comp-content">
+                <div className="comp-row">
+                    <Form.Text className="comp-status">Сборка: <span className="comp-status-bold">{query?.data?.build ?? "OFF"}</span>
+                    </Form.Text></div>
+                <div className="comp-row">
+                    <Form.Text className="comp-status">GP: {query?.data?.gpBuild ?? "OFF"}</Form.Text></div>
+                <div className="comp-row">
+                    <Form.Text className="comp-status">Integ: {query?.data?.integBuild ?? "OFF"}</Form.Text>
                 </div>
-                <div className="component-overview-server-row">
-                    <Form.Text className="component-overview-server-status">Операция: {commandText}</Form.Text>
+                <div className="comp-row">
+                    <Form.Text className="comp-status">Операция: {commandText}</Form.Text>
                 </div>
             </div>
         </div>

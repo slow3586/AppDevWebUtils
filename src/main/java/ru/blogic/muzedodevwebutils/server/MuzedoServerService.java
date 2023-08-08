@@ -34,7 +34,11 @@ public class MuzedoServerService {
             muzedoServerDao.getAll()
                 .stream()
                 .filter(server ->
-                    server.getExecutingCommand() == null && server.getScheduledCommand() == null)
+                    server.getExecutingCommand() == null
+                        && server.getScheduledCommand() == null
+                        && !server.getCommandSchedulingLock().isLocked()
+                        && !server.getWsadminConnectLock().isLocked()
+                        && !server.getSessionConnectLock().isLocked())
                 .forEach(server -> executorService.submit(
                     () -> reconnectSshSession(server)));
         } catch (Exception e) {
@@ -70,7 +74,7 @@ public class MuzedoServerService {
                 } catch (InterruptedException ex) {
                     throw new RuntimeException(ex);
                 }
-                reconnectWsadminShell(muzedoServer);
+                reconnectSshSession(muzedoServer);
             }).start();
             return;
         } finally {

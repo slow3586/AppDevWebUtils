@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class CommandServiceRest {
     private final CommandService commandService;
 
-    @Autowired
     public CommandServiceRest(
         CommandService commandService
     ) {

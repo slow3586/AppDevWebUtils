@@ -17,7 +17,6 @@ import java.net.http.HttpHeaders;
 public class InfoServiceRest {
     private final InfoService infoService;
 
-    @Autowired
     public InfoServiceRest(
         InfoService infoService
     ) {

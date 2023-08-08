@@ -1,4 +1,4 @@
-package ru.blogic.muzedodevwebutils;
+package ru.blogic.muzedodevwebutils.config;
 
 
 import org.springframework.cache.CacheManager;

@@ -187,6 +187,9 @@ public class CommandService {
                 "Ошибка при планировании операции \"" + command.name()
                     + "\": " + e.getMessage());
             throw new RuntimeException("#run Не удалось запланировать операцию: " + e.getMessage(), e);
+        } finally {
+            infoService.clearGetServerInfoCache();
+            infoService.clearGetServerLogCache();
         }
     }
 
@@ -233,12 +236,16 @@ public class CommandService {
                     + " на " + delayPlus + " сек. "
                     + "(осталось " + newDelay + " сек.)"
             );
+
         } catch (Exception e) {
             infoService.writeInfo(
                 muzedoServer.getId(),
                 MuzedoServer.LogEntry.Severity.CRIT,
                 "Ошибка при откладывании операции: " + e.getMessage());
             throw new RuntimeException("#delay Не удалось отложить запланированную операцию: " + e.getMessage(), e);
+        } finally {
+            infoService.clearGetServerInfoCache();
+            infoService.clearGetServerLogCache();
         }
     }
 

@@ -63,15 +63,15 @@ export function Overview() {
     }
 
     return (
-        <div className="component-overview">
-            <div className="component-overview-col">
+        <div className="comp-overview">
+            <div className="comp-col">
                 <Form.Group controlId="exampleForm.ControlTextarea1">
-                    <Form.Control className="component-overview-textarea"
+                    <Form.Control className="comp-textarea"
                                   value={info.current}
                                   readOnly as="textarea" rows={15}/>
                 </Form.Group>
             </div>
-            <div className="component-overview-col">
+            <div className="comp-col">
                 {servers.map(s => (<OverviewServer key={`k${s}`} serverId={s}/>))}
             </div>
         </div>
