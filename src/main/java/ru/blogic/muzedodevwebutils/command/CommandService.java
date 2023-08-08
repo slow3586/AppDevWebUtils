@@ -50,7 +50,7 @@ public class CommandService {
             if (muzedoServer.getWsadminShell() == null
                 || muzedoServer.getWsadminShell().isClosing()
                 || !muzedoServer.getWsadminShell().isOpen()) {
-                throw new RuntimeException("Wsadmin закрыт!");
+                throw new RuntimeException("Wsadmin не запущен! Необходимо дождаться его запуска (~1 мин)");
             }
 
             if (!muzedoServer.getCommandSchedulingLock().tryLock(5, TimeUnit.SECONDS)) {
@@ -105,10 +105,15 @@ public class CommandService {
                         //region ЗАПУСК ОПЕРАЦИИ
                         final String result;
                         if (command.shell().equals(Command.Shell.WSADMIN)) {
-                            result = sshService.executeCommand(
-                                muzedoServer.getWsadminShell(),
-                                command,
-                                muzedoServer.getExecutingCommandTimer());
+                            try {
+                                result = sshService.executeCommand(
+                                    muzedoServer.getWsadminShell(),
+                                    command,
+                                    muzedoServer.getExecutingCommandTimer());
+                            } catch (Exception e) {
+                                executorService.submit(() -> muzedoServerService.reconnectWsadminShell(muzedoServer));
+                                throw new RuntimeException("#executeCommand ошибка выполнения WsAdmin команды: " + e.getMessage());
+                            }
                         } else if (command.shell().equals(Command.Shell.SSH)) {
                             result = sshService.executeCommand(
                                 muzedoServer.getSshClientSession(),

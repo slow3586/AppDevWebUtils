@@ -5,19 +5,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.channel.ChannelShell;
-import org.apache.sshd.client.channel.ClientChannelEvent;
 import org.apache.sshd.client.channel.PtyCapableChannelSession;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.channel.RequestHandler;
+import org.apache.sshd.common.util.io.output.NoCloseOutputStream;
 import org.springframework.stereotype.Service;
 import ru.blogic.muzedodevwebutils.command.Command;
-import ru.blogic.muzedodevwebutils.server.MuzedoServer;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -88,12 +85,14 @@ public class SSHService {
         final Command command,
         final AtomicInteger timerOut
     ) {
-        try (final var baos = new ByteArrayOutputStream()) {
-            channelShell.setOut(baos);
-
+        try (
             final var writer = new BufferedWriter(
                 new OutputStreamWriter(
-                    channelShell.getInvertedIn()));
+                    new NoCloseOutputStream(channelShell.getInvertedIn())));
+            final var baos = new ByteArrayOutputStream()
+        ) {
+            channelShell.setOut(baos);
+
             writer.write(command.command());
             writer.write("\n");
             writer.flush();

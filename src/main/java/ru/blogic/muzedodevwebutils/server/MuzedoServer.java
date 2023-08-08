@@ -21,8 +21,9 @@ public class MuzedoServer {
     final String host;
     final String uri;
 
-    String gpStatus;
-    String integStatus;
+    String build;
+    MuzedoBuildInfo gpBuildInfo;
+    MuzedoBuildInfo integBuildInfo;
 
     ClientSession sshClientSession;
     ChannelShell wsadminShell;
@@ -38,6 +39,8 @@ public class MuzedoServer {
     Command executingCommand = null;
     final AtomicInteger executingCommandTimer = new AtomicInteger(0);
 
+    public static String UNKNOWN_BUILD = "Неизвестная сборка";
+
     public record LogEntry(
         Date date,
         String text,
@@ -50,6 +53,14 @@ public class MuzedoServer {
             TRACE
         }
     }
+
+    public record MuzedoBuildInfo(
+        String author,
+        String dateString,
+        Date date,
+        String branch,
+        String shortInfo
+    ) {}
 
     public record ScheduledCommand(
         Command command,

@@ -26,8 +26,6 @@ export function Server({isActive, serverId}: ServerProps) {
     const delay = useRef("0");
     const [disableAll, setDisableAll] = useState(false);
     const [commandId, setCommandId] = useState("");
-    //const [commandScheduled, setCommandScheduled] = useState(false);
-    //const [commandExecuting, setCommandExecuting] = useState(false);
 
     const queryClient = useQueryClient();
 
@@ -56,20 +54,22 @@ export function Server({isActive, serverId}: ServerProps) {
 
     const logQuery = useQuery(
         ['getServerLog', {serverId: serverId, logLast: logLast.current}],
-        async () => await getServerLog(serverId, logLast.current),
+        () => getServerLog(serverId, logLast.current),
         {
             refetchInterval: 3000,
             refetchIntervalInBackground: true,
-            enabled: isActive
+            enabled: isActive,
+            staleTime: Infinity
         });
 
     const infoQuery = useQuery(
         ['getServerInfo', {serverId: serverId}],
-        async () => await getServerInfo(serverId),
+        () => getServerInfo(serverId),
         {
             refetchInterval: 3000,
             refetchIntervalInBackground: true,
-            enabled: isActive
+            enabled: isActive,
+            staleTime: Infinity
         });
 
     const addInfo = (add: string) => {
@@ -85,9 +85,6 @@ export function Server({isActive, serverId}: ServerProps) {
         // @ts-ignore
         addInfo(infoQuery.error.message);
     }
-    if (infoQuery.isLoading || logQuery.isLoading) {
-        // setDisableAll(true);
-    }
 
     if (!logQuery.isLoading && !logQuery.isError) {
         logLast.current = logQuery.data.logLast;
@@ -101,13 +98,14 @@ export function Server({isActive, serverId}: ServerProps) {
     if (!infoQuery.isRefetching
         && !logQuery.isRefetching
         && !infoQuery.isLoading
+        && !logQuery.isLoading
         && !logQuery.isError
+        && !infoQuery.isError
+        && !logQuery.isStale
+        && !infoQuery.isStale
         && disableAll == true) {
         setDisableAll(false);
     }
-
-    const commandScheduled = infoQuery?.data?.scheduledCommand;
-    const commandExecuting = infoQuery?.data?.executingCommand;
 
     const requestWrapper = (promise: Promise<string>) => {
         setDisableAll(true);
@@ -126,39 +124,37 @@ export function Server({isActive, serverId}: ServerProps) {
         }).catch((e) => {
             console.error(e);
         }).finally(() => {
-            queryClient.cancelQueries(['getServerLog', {serverId: serverId}]);
-            queryClient.cancelQueries(['getServerInfo', {serverId: serverId}]);
-            queryClient.resetQueries(['getServerLog', {serverId: serverId}]);
-            queryClient.resetQueries(['getServerInfo', {serverId: serverId}]);
+            queryClient.invalidateQueries(['getServerLog', {serverId: serverId}]);
+            queryClient.invalidateQueries(['getServerInfo', {serverId: serverId}]);
         })
     }
 
-    const runCommand = () =>
-        requestWrapper(
-            commandRun({
-                serverId: serverId,
-                commandId: commandId,
-                comment: comment.current,
-                delaySeconds: parseInt(delay.current)
-            })
-        );
+    const runCommand = () => requestWrapper(
+        commandRun({
+            serverId: serverId,
+            commandId: commandId,
+            comment: comment.current,
+            delaySeconds: parseInt(delay.current)
+        })
+    );
 
-    const cancelCommand = () =>
-        requestWrapper(
-            commandCancel({
-                serverId: serverId,
-                comment: comment.current
-            })
-        );
+    const cancelCommand = () => requestWrapper(
+        commandCancel({
+            serverId: serverId,
+            comment: comment.current
+        })
+    );
 
-    const delayCommand = () =>
-        requestWrapper(
-            commandDelay({
-                serverId: serverId,
-                comment: comment.current,
-                delaySeconds: parseInt(delay.current)
-            })
-        );
+    const delayCommand = () => requestWrapper(
+        commandDelay({
+            serverId: serverId,
+            comment: comment.current,
+            delaySeconds: parseInt(delay.current)
+        })
+    );
+
+    const commandScheduled = infoQuery?.data?.scheduledCommand;
+    const commandExecuting = infoQuery?.data?.executingCommand;
 
     const delayActive = (!isEmpty(delay.current)
         && parseInt(delay.current) > 0);
@@ -173,8 +169,11 @@ export function Server({isActive, serverId}: ServerProps) {
         && !delayActive
         && getCommand(commandId)?.blocks != "NONE";
 
+    const wsadminUnavailable = getCommand(commandId)?.blocks != "NONE"
+        && !infoQuery?.data?.wsAdminShell;
+
     let errorMessages = new Array<string>;
-    if (!infoQuery?.data?.wsAdminShell) {
+    if (wsadminUnavailable) {
         errorMessages.push("WsAdmin недоступен");
     }
     if (cantSchedule) {
@@ -233,6 +232,7 @@ export function Server({isActive, serverId}: ServerProps) {
                             || cantSchedule
                             || cantExecute
                             || cantExecuteBecauseSchedule
+                            || wsadminUnavailable
                             || isEmpty(commandId)}
                                 onClick={runCommand}
                                 variant="primary">Запустить</Button>

@@ -15,7 +15,7 @@ export type OverviewServerProps = {
 export function OverviewServer({serverId}: OverviewServerProps) {
     const query = useQuery(
         ['getServerInfo', {serverId}],
-        async () => await getServerInfo(serverId),
+        () => getServerInfo(serverId),
         {
             refetchInterval: 3000,
             refetchIntervalInBackground: true
@@ -35,9 +35,11 @@ export function OverviewServer({serverId}: OverviewServerProps) {
             <Form.Text className="component-overview-server-id">{serverId}</Form.Text>
             <div className="component-overview-server-content">
                 <div className="component-overview-server-row">
-                    <Form.Text className="component-overview-server-status">GP: {query?.data?.gpStatus ?? "X (Выключен)"}</Form.Text></div>
+                    <Form.Text className="component-overview-server-status">Сборка: {query?.data?.build ?? "OFF"}</Form.Text></div>
                 <div className="component-overview-server-row">
-                    <Form.Text className="component-overview-server-status">Integ: {query?.data?.integStatus ?? "X (Выключен)"}</Form.Text>
+                    <Form.Text className="component-overview-server-status">GP: {query?.data?.gpBuild ?? "OFF"}</Form.Text></div>
+                <div className="component-overview-server-row">
+                    <Form.Text className="component-overview-server-status">Integ: {query?.data?.integBuild ?? "OFF"}</Form.Text>
                 </div>
                 <div className="component-overview-server-row">
                     <Form.Text className="component-overview-server-status">Операция: {commandText}</Form.Text>

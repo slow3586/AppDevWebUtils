@@ -8,6 +8,7 @@ public record GetServerInfoResponse(
     Command executingCommand,
     int executingCommandTimer,
     int scheduledCommandTimer,
-    String gpStatus,
-    String integStatus
+    String build,
+    String gpBuild,
+    String integBuild
 ) {}

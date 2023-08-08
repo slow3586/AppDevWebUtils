@@ -1,13 +1,13 @@
 package ru.blogic.muzedodevwebutils.server;
 
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.blogic.muzedodevwebutils.SSHService;
-import ru.blogic.muzedodevwebutils.command.Command;
 import ru.blogic.muzedodevwebutils.command.CommandDao;
 
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 @Service
 @Slf4j
@@ -15,6 +15,7 @@ public class MuzedoServerService {
     private final CommandDao commandDao;
     private final SSHService sshService;
     private final MuzedoServerDao muzedoServerDao;
+    private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(4);
 
     public MuzedoServerService(
         CommandDao commandDao,
@@ -26,15 +27,18 @@ public class MuzedoServerService {
         this.muzedoServerDao = muzedoServerDao;
     }
 
-    @PostConstruct
-    public void postConstruct() {
+    @Scheduled(fixedDelay = 1000 * 60 * 60, initialDelay = 0)
+    public void scheduleReconnect() {
         try {
-            final var executorService = Executors.newCachedThreadPool();
+            log.debug("#scheduleReconnect");
             muzedoServerDao.getAll()
-                .forEach(server -> executorService
-                    .submit(() -> reconnectSshSession(server)));
+                .stream()
+                .filter(server ->
+                    server.getExecutingCommand() == null && server.getScheduledCommand() == null)
+                .forEach(server -> executorService.submit(
+                    () -> reconnectSshSession(server)));
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("#scheduleReconnect " + e.getMessage(), e);
         }
     }
 
@@ -85,16 +89,6 @@ public class MuzedoServerService {
             log.warn("#reconnectWsadminShell {}: уже в процессе", muzedoServer.host);
             return;
         }
-        /*if (muzedoServer.getExecutingCommand().blocks().equals(Command.Block.SERVER)) {
-            new Thread(() -> {
-                try {
-                    Thread.sleep(10000);
-                } catch (InterruptedException ex) {
-                    throw new RuntimeException(ex);
-                }
-                reconnectWsadminShell(muzedoServer);
-            }).start();
-        }*/
         try {
             if (muzedoServer.getSshClientSession() == null
                 || muzedoServer.getSshClientSession().isClosing()) {

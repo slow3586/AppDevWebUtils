@@ -1,7 +1,7 @@
 package ru.blogic.muzedodevwebutils.info;
 
-import io.vavr.Tuple;
 import io.vavr.control.Option;
+import io.vavr.control.Try;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -24,16 +24,19 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+
+import static ru.blogic.muzedodevwebutils.server.MuzedoServer.UNKNOWN_BUILD;
 
 @Service
 @Slf4j
 public class InfoService {
     private final MuzedoServerService muzedoServerService;
     private final MuzedoServerDao muzedoServerDao;
-    private static final ThreadLocal<SimpleDateFormat> dateTimeFormat_ddMM_HHmmss = ThreadLocal.withInitial(
-        () -> new SimpleDateFormat("dd.MM HH:mm:ss"));
+    private static final ThreadLocal<SimpleDateFormat> dateTimeFormat_muzedoBuildInfo = ThreadLocal.withInitial(
+        () -> new SimpleDateFormat("HH:mm:ss dd.MM.yyyy z Z"));
+    private static final ThreadLocal<SimpleDateFormat> dateTimeFormat_appBuildInfo = ThreadLocal.withInitial(
+        () -> new SimpleDateFormat("dd.MM.yy_HH.mm"));
     private WebClient client = WebClient.create();
     private static final String path0 = "UZDO/api/app/buildInfo";
     private static final String path1 = "UZDO-ui/rest/app/buildInfo";
@@ -51,7 +54,9 @@ public class InfoService {
     public void postConstruct() {
         try {
             Hooks.onErrorDropped(error -> {
-                log.error("Hooks.onErrorDropped: " + error.getMessage());
+                if (!StringUtils.containsIgnoreCase(error.getMessage(), "503 Service Unavailable")) {
+                    log.error("Hooks.onErrorDropped: " + error.getMessage());
+                }
             });
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -81,9 +86,63 @@ public class InfoService {
                 .map(f -> f.getDelay(TimeUnit.SECONDS))
                 .map(Math::toIntExact)
                 .getOrElse(0),
-            muzedoServer.getGpStatus(),
-            muzedoServer.getIntegStatus()
+            muzedoServer.getBuild(),
+            muzedoServer.getGpBuildInfo().shortInfo(),
+            muzedoServer.getIntegBuildInfo().shortInfo()
         );
+    }
+
+    private MuzedoServer.MuzedoBuildInfo parseBuildInfoLines(
+        final String buildInfo
+    ) {
+        final var lines = Arrays.stream(
+                StringUtils.split(
+                    StringUtils.defaultString(buildInfo),
+                    "\n"))
+            .map(l -> StringUtils
+                .substringAfter(l, ":").trim())
+            .toList();
+        if (lines.size() < 3) {
+            return new MuzedoServer.MuzedoBuildInfo(null,
+                null,
+                null,
+                null,
+                UNKNOWN_BUILD);
+        }
+        return new MuzedoServer.MuzedoBuildInfo(lines.get(1),
+            lines.get(2),
+            Try.of(() ->
+                    dateTimeFormat_muzedoBuildInfo.get()
+                        .parse(lines.get(2)))
+                .getOrNull(),
+            lines.get(3),
+            lines.get(1)
+                + " @ "
+                + StringUtils.substring(lines.get(2),
+                    0,
+                    22)
+                .trim());
+    }
+
+    private void doOnErr(
+        final MuzedoServer server,
+        final Throwable err
+    ) {
+        server.setGpBuildInfo(null);
+        if (!StringUtils.startsWith(err.getMessage(), "503 Service Unavailable")) {
+            log.error("#updateInfo {} {}",
+                server.getId(),
+                err.getMessage());
+        }
+    }
+
+    private String buildInfoToBuild(
+        final MuzedoServer.MuzedoBuildInfo buildInfo
+    ) {
+        return StringUtils.substringAfterLast(
+            buildInfo.branch(), "/")
+            + "_" +
+            dateTimeFormat_appBuildInfo.get().format(buildInfo.date());
     }
 
     @Scheduled(fixedDelay = 3000)
@@ -93,58 +152,38 @@ public class InfoService {
             .getAll()
             .parallelStream()
             .forEach(server -> {
-                client.get()
+                final var getGP = client.get()
                     .uri(server.getUri() + "/" + path0)
                     .retrieve()
                     .bodyToMono(String.class)
-                    .doOnSuccess(answer -> {
-                        final var kvLines = Arrays.stream(
-                                StringUtils.split(
-                                    StringUtils.defaultString(answer),
-                                    "\n"))
-                            .map(l -> StringUtils
-                                .substringAfter(l, ":").trim())
-                            .toList();
-                        server.setGpStatus((kvLines.size() < 3)
-                            ? "Неизвестная сборка"
-                            : kvLines.get(1)
-                                + " @ "
-                                + StringUtils.substring(kvLines.get(2), 0, 22).trim()
-                        );
-                    })
-                    .doOnError(err -> {
-                        server.setGpStatus(null);
-                        log.error("#updateInfo {} {}",
-                            server.getId(),
-                            err.getMessage());
-                    })
-                    .subscribe();
+                    .doOnSuccess(answer -> server.setGpBuildInfo(parseBuildInfoLines(answer)))
+                    .doOnError(e -> this.doOnErr(server, e))
+                    .then();
 
-                client.get()
+                final var getInteg = client.get()
                     .uri(server.getUri() + "/" + path1)
                     .retrieve()
                     .bodyToMono(String.class)
-                    .doOnSuccess(answer -> {
-                        final var kvLines = Arrays.stream(
-                                StringUtils.split(
-                                    StringUtils.defaultString(answer),
-                                    "\n"))
-                            .map(l -> StringUtils
-                                .substringAfter(l, ":").trim())
-                            .toList();
-                        server.setIntegStatus((kvLines.size() < 3)
-                            ? "Неизвестная сборка"
-                            : kvLines.get(1)
-                                + " @ "
-                                + StringUtils.substring(kvLines.get(2), 0, 22).trim()
-                        );
+                    .doOnSuccess(answer -> server.setIntegBuildInfo(parseBuildInfoLines(answer)))
+                    .doOnError(e -> this.doOnErr(server, e))
+                    .then();
+
+                getGP.and(getInteg)
+                    .then()
+                    .doOnSuccess(a -> {
+                        final var gpBuildInfo = server.getGpBuildInfo();
+                        final var integBuildInfo = server.getIntegBuildInfo();
+                        if (gpBuildInfo != null && gpBuildInfo.date() != null
+                            && integBuildInfo != null && integBuildInfo.date() != null) {
+                            server.setBuild(buildInfoToBuild(
+                                (gpBuildInfo.date().compareTo(integBuildInfo.date()) > 0)
+                                    ? gpBuildInfo
+                                    : integBuildInfo));
+                        } else {
+                            server.setBuild(UNKNOWN_BUILD);
+                        }
                     })
-                    .doOnError(err -> {
-                        server.setIntegStatus(null);
-                        log.error("#updateInfo {} {}",
-                            server.getId(),
-                            err.getMessage());
-                    })
+                    .doOnError(e -> server.setBuild(null))
                     .subscribe();
             });
     }
