@@ -222,6 +222,8 @@ public class InfoService {
             .get(serverId)
             .getLogs()
             .add(infoEntry);
+        clearGetServerInfoCache();
+        clearGetServerLogCache();
     }
 
     @DisableLoggingAspect

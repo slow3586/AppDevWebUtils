@@ -37,3 +37,4 @@ yarn.lock
 **/built/*
 built.ls
 log.txt
+h2.trace.db

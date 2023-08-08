@@ -14,7 +14,7 @@ export type OverviewServerProps = {
 
 export function OverviewServer({serverId}: OverviewServerProps) {
     const query = useQuery(
-        ['getServerInfo', {serverId}],
+        ['getServerInfo', serverId],
         () => getServerInfo(serverId),
         {
             refetchInterval: 3000,

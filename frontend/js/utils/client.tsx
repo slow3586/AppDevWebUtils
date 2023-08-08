@@ -21,10 +21,10 @@ const common = (
                 console.error(error);
                 let text = error.message;
                 if (startsWith(error.message, `Failed to fetch`)) {
-                    text = "Потеряно соединение, необходимо перезагрузить страницу"
+                    text = "Потеряна связь, переподключаюсь..."
                 }
                 if (startsWith(error.message, `Unexpected token '<'`)) {
-                    text = "Было потеряно и восстановлено соединение, необходимо перезагрузить страницу"
+                    text = "Необходимо перезагрузить страницу"
                 }
                 toast.warn(text, {
                     toastId: "clienterr",

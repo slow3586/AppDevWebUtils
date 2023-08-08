@@ -22,7 +22,7 @@ export function Overview() {
 
     const queries = useQueries(
         servers.map(serverId => ({
-                queryKey: ['getServerLog', {serverId: serverId, logLast: last.current.get(serverId) ?? 0}],
+                queryKey: ['getServerLog', serverId, last.current.get(serverId) ?? 0],
                 queryFn: async () => await getServerLog(serverId, last.current.get(serverId) ?? 0),
                 refetchInterval: 3000,
                 refetchIntervalInBackground: true

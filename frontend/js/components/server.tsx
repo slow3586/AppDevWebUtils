@@ -24,6 +24,7 @@ export function Server({isActive, serverId}: ServerProps) {
     const info = useRef("");
     const comment = useRef("");
     const delay = useRef("0");
+    const allowEnableAll = useRef(true);
     const [disableAll, setDisableAll] = useState(false);
     const [commandId, setCommandId] = useState("");
 
@@ -53,22 +54,22 @@ export function Server({isActive, serverId}: ServerProps) {
     const getCommand = (id: string) => commands.find(c => c.id == id);
 
     const logQuery = useQuery(
-        ['getServerLog', {serverId: serverId, logLast: logLast.current}],
+        ['getServerLog', serverId, logLast.current],
         () => getServerLog(serverId, logLast.current),
         {
             refetchInterval: 3000,
             refetchIntervalInBackground: true,
-            enabled: isActive,
-            staleTime: Infinity
+            enabled: isActive && allowEnableAll.current,
+            staleTime: Infinity,
         });
 
     const infoQuery = useQuery(
-        ['getServerInfo', {serverId: serverId}],
+        ['getServerInfo', serverId],
         () => getServerInfo(serverId),
         {
             refetchInterval: 3000,
             refetchIntervalInBackground: true,
-            enabled: isActive,
+            enabled: isActive && allowEnableAll.current,
             staleTime: Infinity
         });
 
@@ -77,15 +78,6 @@ export function Server({isActive, serverId}: ServerProps) {
             info.current += add + "\n";
         }
     }
-    if (logQuery.isError) {
-        // @ts-ignore
-        addInfo(logQuery.error.message);
-    }
-    if (infoQuery.isError) {
-        // @ts-ignore
-        addInfo(infoQuery.error.message);
-    }
-
     if (!logQuery.isLoading && !logQuery.isError) {
         logLast.current = logQuery.data.logLast;
         addInfo(
@@ -95,37 +87,32 @@ export function Server({isActive, serverId}: ServerProps) {
         );
     }
 
-    if (!infoQuery.isRefetching
-        && !logQuery.isRefetching
-        && !infoQuery.isLoading
+    if (!infoQuery.isLoading
         && !logQuery.isLoading
         && !logQuery.isError
         && !infoQuery.isError
         && !logQuery.isStale
         && !infoQuery.isStale
+        && !logQuery.isFetching
+        && !infoQuery.isFetching
+        && !logQuery.isRefetching
+        && !infoQuery.isRefetching
+        && allowEnableAll.current
         && disableAll == true) {
         setDisableAll(false);
     }
 
     const requestWrapper = (promise: Promise<string>) => {
         setDisableAll(true);
+        queryClient.invalidateQueries(['getServerLog', serverId], {active: true, fetching: true, stale: true});
+        queryClient.invalidateQueries(['getServerInfo', serverId], {active: true, fetching: true, stale: true});
+        allowEnableAll.current = false;
         promise.then((r) => {
-            // toast.success("Запрос отправлен!", {
-            //     position: "top-right",
-            //     autoClose: 3000,
-            //     hideProgressBar: true,
-            //     closeOnClick: true,
-            //     pauseOnHover: false,
-            //     draggable: true,
-            //     theme: "light",
-            //     closeButton: false
-            // });
             console.log(r);
         }).catch((e) => {
             console.error(e);
         }).finally(() => {
-            queryClient.invalidateQueries(['getServerLog', {serverId: serverId}]);
-            queryClient.invalidateQueries(['getServerInfo', {serverId: serverId}]);
+            allowEnableAll.current = true;
         })
     }
 
@@ -247,7 +234,7 @@ export function Server({isActive, serverId}: ServerProps) {
                     </div>
                 </div>
                 <Form.Text className="comp-error">
-                    {errorMessages.join("\n")}</Form.Text>
+                    {errorMessages.join("; ")}</Form.Text>
             </div>
         </div>
     );
