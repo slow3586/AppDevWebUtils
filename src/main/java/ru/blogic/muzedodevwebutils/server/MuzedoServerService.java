@@ -15,7 +15,7 @@ public class MuzedoServerService {
     private final CommandDao commandDao;
     private final SSHService sshService;
     private final MuzedoServerDao muzedoServerDao;
-    private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(4);
+    private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(8);
 
     public MuzedoServerService(
         CommandDao commandDao,
@@ -27,7 +27,7 @@ public class MuzedoServerService {
         this.muzedoServerDao = muzedoServerDao;
     }
 
-    @Scheduled(fixedDelay = 1000 * 60 * 60, initialDelay = 0)
+    @Scheduled(fixedDelay = 1000 * 60 * 30, initialDelay = 0)
     public void scheduleReconnect() {
         try {
             log.debug("#scheduleReconnect");
@@ -58,7 +58,7 @@ public class MuzedoServerService {
                 muzedoServer.getWsadminShell().close();
             }
 
-            final var session = sshService.createSession(muzedoServer.getHost());
+            final var session = sshService.createSession(muzedoServer);
             session.addCloseFutureListener((future) -> {
                 log.warn(muzedoServer.getHost() + ": закрыт SshSession!");
                 reconnectSshSession(muzedoServer);

@@ -1,18 +1,21 @@
-import React, {useRef} from "react";
+import React, {useContext, useRef} from "react";
 import {Col, Container, Form, Row} from "react-bootstrap";
 import {OverviewServer} from "./overview_server";
 import {getServerLog, Severity} from "../clients/info_client";
 import dateFormat from "dateformat";
 import {useQueries} from "react-query";
-import {isEmpty, trim} from "lodash";
+import {isEmpty, isNil, trim} from "lodash";
 import {runNotification} from "../utils/notification";
+import {ServerContext, ServersContext} from "./app";
+import {useCookies} from "react-cookie";
 
 export function Overview() {
     const last = useRef(new Map<number, number>());
     const info = useRef("");
     const firstRun = useRef(true);
-
-    const servers = [58, 59, 60, 61];
+    const [cookies, setCookies] = useCookies(['servers']);
+    //const servers = useContext(ServersContext);
+    const servers: ServerContext[] = cookies.servers;
 
     const addInfo = (add: string) => {
         if (!isEmpty(trim(add))) {
@@ -21,14 +24,15 @@ export function Overview() {
     }
 
     const queries = useQueries(
-        servers.map(serverId => ({
-                queryKey: ['getServerLog', serverId, last.current.get(serverId) ?? 0],
-                queryFn: async () => await getServerLog(serverId, last.current.get(serverId) ?? 0),
+        servers.map(server => ({
+                queryKey: ['getServerLog', server.id, last.current.get(server.id) ?? 0],
+                queryFn: async () => await getServerLog(server.id, last.current.get(server.id) ?? 0),
                 refetchInterval: 3000,
-                refetchIntervalInBackground: true
+                refetchIntervalInBackground: true,
+                enabled: server.enabled
             })
         ))
-        .map((q, index) => ({serverId: servers[index], query: q}));
+        .map((q, index) => ({serverId: servers[index].id, query: q}));
 
     const errored = queries.filter(q => q.query.isError);
     const loading = queries.filter(q => q.query.isLoading);
@@ -39,13 +43,14 @@ export function Overview() {
     }
 
     if (isEmpty(loading) && isEmpty(errored)) {
-        const logs = queries
+        const goodQueries = queries.filter(q => !isNil(q.query.data));
+        const logs = goodQueries
             .filter(q => last.current.get(q.serverId) != q.query.data.logLast)
             .flatMap(q => q.query.data.logs.flatMap(l => ({serverId: q.serverId, data: l})))
             .sort((a, b) => new Date(a.data.date)?.getTime?.() - new Date(b.data.date)?.getTime?.())
             .map(e => ({
                 severity: e.data.severity, text:
-                    `${dateFormat(e.data.date, "hh:MM:ss")} [${e.serverId}] [${e.data.user}] ${e.data.text}` // [${e.data.severity}]
+                    `${dateFormat(e.data.date, "dd.mm HH:MM:ss")} [${e.serverId}] [${e.data.user}] ${e.data.text}` // [${e.data.severity}]
             }));
         if (!isEmpty(logs)) {
             addInfo(logs
@@ -56,7 +61,7 @@ export function Overview() {
                 runNotification("МЮЗ ЭДО DEV", crits);
             }
         }
-        queries.forEach(q => {
+        goodQueries.forEach(q => {
             last.current.set(q.serverId, q.query.data.logLast);
         })
         firstRun.current = false;
@@ -72,7 +77,12 @@ export function Overview() {
                 </Form.Group>
             </div>
             <div className="comp-col">
-                {servers.map(s => (<OverviewServer key={`k${s}`} serverId={s}/>))}
+                {servers
+                    .filter(s => s.enabled)
+                    .map(s => (<OverviewServer key={`k${s.id}`} serverId={s.id}/>))}
+                {servers
+                    .filter(s => !s.enabled)
+                    .map(s => (<OverviewServer key={`k${s.id}`} serverId={s.id}/>))}
             </div>
         </div>
     );

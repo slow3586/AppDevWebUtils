@@ -92,32 +92,42 @@
   border-radius: var(--bs-border-radius);
   min-width: 300px;
   padding: 5px 10px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
 
-  > .comp-id {
-    font-size: 16px;
-    color: black;
+  > .comp-enabled {
+    position: relative;
+    float: right;
   }
 
-  > .comp-content {
+  > .comp-info {
     display: flex;
-    flex-direction: column;
-    padding-left: 10px;
-    border-left: 1px solid var(--bs-border-color);
-    > .comp-row {
-      > .comp-status {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        display: block;
-        color: black;
-        font-size: 14px;
-        letter-spacing: 0.2px;
-        > .comp-status-bold {
-          font-weight: 600;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+
+    > .comp-id {
+      font-size: 16px;
+      color: black;
+    }
+
+    > .comp-content {
+      display: flex;
+      flex-direction: column;
+      padding-left: 10px;
+      border-left: 1px solid var(--bs-border-color);
+
+      > .comp-row {
+        > .comp-status {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          display: block;
+          color: black;
+          font-size: 14px;
+          letter-spacing: 0.2px;
+
+          > .comp-status-bold {
+            font-weight: 600;
+          }
         }
       }
     }

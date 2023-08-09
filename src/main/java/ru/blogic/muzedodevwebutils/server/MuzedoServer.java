@@ -20,6 +20,7 @@ public class MuzedoServer {
     final int id;
     final String host;
     final String uri;
+    final String p;
 
     String build;
     MuzedoBuildInfo gpBuildInfo;

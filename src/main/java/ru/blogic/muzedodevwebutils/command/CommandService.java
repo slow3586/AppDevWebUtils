@@ -1,6 +1,7 @@
 package ru.blogic.muzedodevwebutils.command;
 
-import jakarta.annotation.PostConstruct;
+import io.vavr.CheckedFunction0;
+import io.vavr.control.Try;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -105,15 +106,19 @@ public class CommandService {
                         //region ЗАПУСК ОПЕРАЦИИ
                         final String result;
                         if (command.shell().equals(Command.Shell.WSADMIN)) {
-                            try {
-                                result = sshService.executeCommand(
-                                    muzedoServer.getWsadminShell(),
-                                    command,
-                                    muzedoServer.getExecutingCommandTimer());
-                            } catch (Exception e) {
-                                executorService.submit(() -> muzedoServerService.reconnectWsadminShell(muzedoServer));
-                                throw new RuntimeException("#executeCommand ошибка выполнения WsAdmin команды: " + e.getMessage());
-                            }
+                            CheckedFunction0<String> execute = () -> sshService.executeCommand(
+                                muzedoServer.getWsadminShell(),
+                                command,
+                                muzedoServer.getExecutingCommandTimer());
+                            result = Try.of(execute)
+                                .onFailure(e -> log.error("#run ошибка при первом запуске, запускаю вторую попытку...", e))
+                                .getOrElse(() -> {
+                                    muzedoServerService.reconnectWsadminShell(muzedoServer);
+                                    return Try.of(execute)
+                                        .getOrElseThrow((e1) -> new RuntimeException(
+                                            "#executeCommand ошибка выполнения WsAdmin команды: "
+                                                + e1.getMessage(), e1));
+                                });
                         } else if (command.shell().equals(Command.Shell.SSH)) {
                             result = sshService.executeCommand(
                                 muzedoServer.getSshClientSession(),

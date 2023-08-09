@@ -14,7 +14,7 @@
         <file>log.txt</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>logs/%d{yyyy-MM-dd}.%i.txt</fileNamePattern>
-            <maxFileSize>10MB</maxFileSize>
+            <maxFileSize>1MB</maxFileSize>
             <maxHistory>30</maxHistory>
             <totalSizeCap>1GB</totalSizeCap>
         </rollingPolicy>
@@ -24,6 +24,7 @@
     </appender>
 
     <logger name="ru.blogic.muzedodevwebutils" level="TRACE"/>
+    <!--<logger name="org.apache.sshd.client" level="DEBUG"/>-->
     <root level="INFO">
         <appender-ref ref="MDWUConsole" />
         <appender-ref ref="MDWUFile" />

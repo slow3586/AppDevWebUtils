@@ -27,8 +27,8 @@ public record Command(
         NONE
     }
 
-    public static final String SSH_READY = "#";
-    public static final String WSADMIN_READY = ">";
+    public static final String SSH_READY = "]#";
+    public static final String WSADMIN_READY = "n>";
     public static final List<String> WSADMIN_ERRTEXTS
         = List.of("com.ibm.ws.scripting.ScriptingException",
         "Error creating \"SOAP\" connection",

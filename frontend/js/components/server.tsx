@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from "react";
+import React, {useContext, useEffect, useRef, useState} from "react";
 import {Button, Form} from "react-bootstrap";
 import {getServerInfo, getServerLog, LogEntry} from "../clients/info_client";
 import dateFormat from "dateformat";
@@ -6,7 +6,8 @@ import {commandCancel, commandDelay, commandRun, Type} from "../clients/command_
 import {useQuery, useQueryClient} from "react-query";
 import {isEmpty, isNil, trim} from "lodash";
 import {OverviewServer} from "./overview_server";
-import {toast} from "react-toastify";
+import {ServerContext, ServersContext} from "./app";
+import {useCookies} from "react-cookie";
 
 export type ServerProps = {
     isActive: boolean,
@@ -27,6 +28,11 @@ export function Server({isActive, serverId}: ServerProps) {
     const allowEnableAll = useRef(true);
     const [disableAll, setDisableAll] = useState(false);
     const [commandId, setCommandId] = useState("");
+
+    //const servers = useContext(ServersContext);
+    const [cookies, setCookies] = useCookies(['servers']);
+    const servers: ServerContext[] = cookies.servers;
+    const serverEnabled = servers.find(s => s.id == serverId).enabled;
 
     const queryClient = useQueryClient();
 
@@ -59,7 +65,7 @@ export function Server({isActive, serverId}: ServerProps) {
         {
             refetchInterval: 3000,
             refetchIntervalInBackground: true,
-            enabled: isActive && allowEnableAll.current,
+            enabled: isActive && allowEnableAll.current && serverEnabled,
             staleTime: Infinity,
         });
 
@@ -69,7 +75,7 @@ export function Server({isActive, serverId}: ServerProps) {
         {
             refetchInterval: 3000,
             refetchIntervalInBackground: true,
-            enabled: isActive && allowEnableAll.current,
+            enabled: isActive && allowEnableAll.current && serverEnabled,
             staleTime: Infinity
         });
 
@@ -78,11 +84,11 @@ export function Server({isActive, serverId}: ServerProps) {
             info.current += add + "\n";
         }
     }
-    if (!logQuery.isLoading && !logQuery.isError) {
+    if (!logQuery.isLoading && !logQuery.isError && !logQuery.isStale && !isNil(logQuery.data)) {
         logLast.current = logQuery.data.logLast;
         addInfo(
             logQuery.data.logs.map(e =>
-                `${dateFormat(e.date, "hh:MM:ss")} [${e.user}] ${e.text}` // [${e.data.severity}]
+                `${dateFormat(e.date, "dd.mm HH:MM:ss")} [${e.user}] ${e.text}` // [${e.data.severity}]
             ).join("\n")
         );
     }
@@ -150,7 +156,8 @@ export function Server({isActive, serverId}: ServerProps) {
         && delayActive
         && getCommand(commandId)?.blocks != "NONE";
 
-    const cantExecute = !isNil(commandExecuting) && !delayActive;
+    const cantExecute = !isNil(commandExecuting)
+        && getCommand(commandId)?.blocks != "NONE";
 
     const cantExecuteBecauseSchedule = !isNil(commandScheduled)
         && !delayActive
@@ -178,64 +185,66 @@ export function Server({isActive, serverId}: ServerProps) {
 
     return (
         <div className="comp-server">
-            <div className="comp-container">
-                <OverviewServer serverId={serverId}></OverviewServer>
-                <Form.Control className="comp-textarea"
-                              value={info.current}
-                              readOnly as="textarea" rows={10}/>
+            {serverEnabled &&
+                <div className="comp-container">
+                    <OverviewServer serverId={serverId}></OverviewServer>
+                    <Form.Control className="comp-textarea"
+                                  value={info.current}
+                                  readOnly as="textarea" rows={10}/>
 
-                <Form.Text muted>Команда</Form.Text>
-                <Form.Select
-                    aria-label="Выбор команды"
-                    onChange={e => {
-                        setCommandId(e.target.value);
-                        setDisableAll(isNil(getCommand(e.target.value)));
-                    }}>
-                    {(commandId == "") ? (<option key="none" value="">Выберите команду</option>) : ""}
-                    {commands.map(c => (<option key={`k${c.id}`} value={c.id}>{c.name}</option>))}
-                </Form.Select>
+                    <Form.Text muted>Команда</Form.Text>
+                    <Form.Select
+                        aria-label="Выбор команды"
+                        onChange={e => {
+                            setCommandId(e.target.value);
+                            setDisableAll(isNil(getCommand(e.target.value)));
+                        }}>
+                        {(commandId == "") ? (<option key="none" value="">Выберите команду</option>) : ""}
+                        {commands.map(c => (<option key={`k${c.id}`} value={c.id}>{c.name}</option>))}
+                    </Form.Select>
 
-                <Form.Text muted>Комментарий</Form.Text>
-                <Form.Control onChange={e => comment.current = e.target.value}
-                              disabled={disableAll}
-                              type="text"
-                              placeholder=""/>
+                    <Form.Text muted>Комментарий</Form.Text>
+                    <Form.Control onChange={e => comment.current = e.target.value}
+                                  disabled={disableAll}
+                                  type="text"
+                                  placeholder=""/>
 
-                <div className="comp-footer">
-                    <div className="comp-delay">
-                        <Form.Text muted>Задержка (сек)</Form.Text>
-                        <Form.Control onChange={e => delay.current = e.target.value}
-                                      className="comp-textarea"
-                                      disabled={disableAll ||
-                                          isNil(getCommand(commandId)) ||
-                                          getCommand(commandId).blocks == "NONE"}
-                                      type="number"
-                                      min="0"
-                                      max="600"
-                                      placeholder="0"/>
+                    <div className="comp-footer">
+                        <div className="comp-delay">
+                            <Form.Text muted>Задержка (сек)</Form.Text>
+                            <Form.Control onChange={e => delay.current = e.target.value}
+                                          className="comp-textarea"
+                                          disabled={disableAll ||
+                                              isNil(getCommand(commandId)) ||
+                                              getCommand(commandId).blocks == "NONE"}
+                                          type="number"
+                                          min="0"
+                                          max="600"
+                                          placeholder="0"/>
+                        </div>
+                        <div className="comp-buttons">
+                            <Button disabled={disableAll
+                                || cantSchedule
+                                || cantExecute
+                                || cantExecuteBecauseSchedule
+                                || wsadminUnavailable
+                                || isEmpty(commandId)}
+                                    onClick={runCommand}
+                                    variant="primary">Запустить</Button>
+                            <Button disabled={disableAll
+                                || !commandScheduled}
+                                    onClick={delayCommand}
+                                    variant="primary">Отложить</Button>
+                            <Button disabled={disableAll
+                                || !commandScheduled}
+                                    onClick={cancelCommand}
+                                    variant="primary">Отменить</Button>
+                        </div>
                     </div>
-                    <div className="comp-buttons">
-                        <Button disabled={disableAll
-                            || cantSchedule
-                            || cantExecute
-                            || cantExecuteBecauseSchedule
-                            || wsadminUnavailable
-                            || isEmpty(commandId)}
-                                onClick={runCommand}
-                                variant="primary">Запустить</Button>
-                        <Button disabled={disableAll
-                            || !commandScheduled}
-                                onClick={delayCommand}
-                                variant="primary">Отложить</Button>
-                        <Button disabled={disableAll
-                            || !commandScheduled}
-                                onClick={cancelCommand}
-                                variant="primary">Отменить</Button>
-                    </div>
+                    <Form.Text className="comp-error">
+                        {errorMessages.join("; ")}</Form.Text>
                 </div>
-                <Form.Text className="comp-error">
-                    {errorMessages.join("; ")}</Form.Text>
-            </div>
+            }
         </div>
     );
 }

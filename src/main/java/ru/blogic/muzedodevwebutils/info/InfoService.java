@@ -6,6 +6,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -40,6 +41,9 @@ public class InfoService {
     private WebClient client = WebClient.create();
     private static final String path0 = "UZDO/api/app/buildInfo";
     private static final String path1 = "UZDO-ui/rest/app/buildInfo";
+
+    @Value("${app.buildVersion:}")
+    private String buildVersion;
 
     public InfoService(
         MuzedoServerService muzedoServerService,
@@ -132,6 +136,7 @@ public class InfoService {
         final Throwable err
     ) {
         server.setGpBuildInfo(null);
+        server.setIntegBuildInfo(null);
         if (!StringUtils.startsWith(err.getMessage(), "503 Service Unavailable")) {
             log.error("#updateInfo {} {}",
                 server.getId(),
@@ -140,10 +145,12 @@ public class InfoService {
     }
 
     private String buildInfoToBuild(
+        final String branch,
         final MuzedoServer.MuzedoBuildInfo buildInfo
     ) {
-        return StringUtils.substringAfterLast(
-            buildInfo.branch(), "/")
+        return Option.of(this.buildVersion)
+            .filter(StringUtils::isNotBlank)
+            .getOrElse(StringUtils.substringAfterLast(branch, "/"))
             + "_" +
             dateTimeFormat_appBuildInfo.get().format(buildInfo.date());
     }
@@ -178,7 +185,7 @@ public class InfoService {
                         final var integBuildInfo = server.getIntegBuildInfo();
                         if (gpBuildInfo != null && gpBuildInfo.date() != null
                             && integBuildInfo != null && integBuildInfo.date() != null) {
-                            server.setBuild(buildInfoToBuild(
+                            server.setBuild(buildInfoToBuild(integBuildInfo.branch(),
                                 (gpBuildInfo.date().compareTo(integBuildInfo.date()) > 0)
                                     ? gpBuildInfo
                                     : integBuildInfo));

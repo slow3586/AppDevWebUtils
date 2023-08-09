@@ -5,16 +5,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.channel.ChannelShell;
+import org.apache.sshd.client.channel.ClientChannelEvent;
 import org.apache.sshd.client.channel.PtyCapableChannelSession;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.channel.RequestHandler;
+import org.apache.sshd.common.session.SessionListener;
 import org.apache.sshd.common.util.io.output.NoCloseOutputStream;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.blogic.muzedodevwebutils.command.Command;
+import ru.blogic.muzedodevwebutils.server.MuzedoServer;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
+import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -22,6 +27,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SSHService {
     private static final long TIMEOUT = 5000;
     private final SshClient client = SshClient.setUpDefaultClient();
+
+    @Value("${app.p0}")
+    private String p0;
+
+    @Value("${app.p1}")
+    private String p1;
 
     @PostConstruct
     public void postConstruct() {
@@ -33,19 +44,20 @@ public class SSHService {
     }
 
     public ClientSession createSession(
-        final String host
+        final MuzedoServer muzedoServer
     ) {
         try {
-            final var session = client.connect("root", host, 22)
+            final var session = client.connect("root", muzedoServer.getHost(), 22)
                 .verify(TIMEOUT)
                 .getSession();
-            session.addPasswordIdentity("");
+
+            session.addPasswordIdentity(muzedoServer.getP());
             session.auth().verify(TIMEOUT);
 
             return session;
         } catch (Exception e) {
             throw new RuntimeException(
-                "#createSession " + host + " Не удалось создать SSH сессию: " + e.getMessage(), e);
+                "#createSession " + muzedoServer.getHost() + " Не удалось создать SSH сессию: " + e.getMessage(), e);
         }
     }
 
@@ -93,13 +105,14 @@ public class SSHService {
         ) {
             channelShell.setOut(baos);
 
+            channelShell.getInvertedIn().write(25);
+            channelShell.getInvertedIn().flush();
             writer.write(command.command());
-            writer.write("\n");
+            writer.write(";\n");
             writer.flush();
 
             var count = 1;
             var substringBegin = 0;
-            Thread.sleep(1000);
             while (true) {
                 Thread.sleep(1000);
                 final var entireOutput = baos.toString().trim();
