@@ -5,7 +5,6 @@ import io.vavr.control.Try;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -24,7 +23,6 @@ import ru.blogic.muzedodevwebutils.server.MuzedoServerService;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static ru.blogic.muzedodevwebutils.server.MuzedoServer.UNKNOWN_BUILD;
@@ -57,7 +55,9 @@ public class InfoService {
     public void postConstruct() {
         try {
             Hooks.onErrorDropped(error -> {
-                if (!StringUtils.containsIgnoreCase(error.getMessage(), "503 Service Unavailable")) {
+                if (!StringUtils.containsAnyIgnoreCase(error.getMessage(),
+                    "503 Service Unavailable",
+                    "Connection refused: no further information")) {
                     log.error("Hooks.onErrorDropped: " + error.getMessage());
                 }
             });
@@ -90,12 +90,8 @@ public class InfoService {
                 .map(Math::toIntExact)
                 .getOrElse(0),
             muzedoServer.getBuild(),
-            Option.of(muzedoServer.getGpBuildInfo())
-                .map(MuzedoServer.MuzedoBuildInfo::shortInfo)
-                .getOrNull(),
-            Option.of(muzedoServer.getIntegBuildInfo())
-                .map(MuzedoServer.MuzedoBuildInfo::shortInfo)
-                .getOrNull()
+            muzedoServer.getGpBuildInfo(),
+            muzedoServer.getIntegBuildInfo()
         );
     }
 
@@ -109,26 +105,16 @@ public class InfoService {
             .map(l -> StringUtils
                 .substringAfter(l, ":").trim())
             .toList();
-        if (lines.size() < 3) {
+        if (lines.size() < 4) {
             return new MuzedoServer.MuzedoBuildInfo(null,
                 null,
                 null,
-                null,
-                UNKNOWN_BUILD);
+                null);
         }
         return new MuzedoServer.MuzedoBuildInfo(lines.get(1),
             lines.get(2),
-            Try.of(() ->
-                    dateTimeFormat_muzedoBuildInfo.get()
-                        .parse(lines.get(2)))
-                .getOrNull(),
             lines.get(3),
-            lines.get(1)
-                + " @ "
-                + StringUtils.substring(lines.get(2),
-                    0,
-                    22)
-                .trim());
+            StringUtils.substring(lines.get(4), 0, 5));
     }
 
     private void doOnErr(
@@ -137,7 +123,9 @@ public class InfoService {
     ) {
         server.setGpBuildInfo(null);
         server.setIntegBuildInfo(null);
-        if (!StringUtils.startsWith(err.getMessage(), "503 Service Unavailable")) {
+        if (!StringUtils.containsAnyIgnoreCase(err.getMessage(),
+            "503 Service Unavailable",
+            "Connection refused: no further information")) {
             log.error("#updateInfo {} {}",
                 server.getId(),
                 err.getMessage());
@@ -152,7 +140,11 @@ public class InfoService {
             .filter(StringUtils::isNotBlank)
             .getOrElse(StringUtils.substringAfterLast(branch, "/"))
             + "_" +
-            dateTimeFormat_appBuildInfo.get().format(buildInfo.date());
+            Try.of(() ->
+                dateTimeFormat_appBuildInfo.get().format(
+                    dateTimeFormat_muzedoBuildInfo.get().parse(buildInfo.date())
+                )
+            ).getOrNull();
     }
 
     @Scheduled(fixedDelay = 3000)

@@ -1,5 +1,5 @@
 import React, {ReactElement, useContext, useEffect, useRef, useState} from "react";
-import {Form, Container, Row} from "react-bootstrap";
+import {Form, Container, Row, Tooltip, OverlayTrigger} from "react-bootstrap";
 import {useQuery, useQueryClient} from "react-query";
 import {getServerInfo, getServerLog} from "../clients/info_client";
 import {isEmpty, isNil} from "lodash";
@@ -45,6 +45,26 @@ export function OverviewServer({serverId}: OverviewServerProps) {
         }));
     }
 
+    const gpBuild = query?.data?.gpBuild;
+    const gpShort = isNil(gpBuild)
+        ? "OFF"
+        : !isNil(gpBuild?.date)
+            ? `${gpBuild.author} @ ${gpBuild.date.substring(0, 22)}`
+            : "Неизвестная сборка";
+    const gpFull = gpBuild?.date
+        ? `(${gpBuild.branch}, ${gpBuild.hash})`
+        : '';
+
+    const integBuild = query?.data?.integBuild;
+    const integShort = isNil(integBuild)
+        ? "OFF"
+        : !isNil(integBuild?.date)
+            ? `${integBuild.author} @ ${integBuild.date.substring(0, 22)}`
+            : "Неизвестная сборка";
+    const integFull = integBuild?.date
+        ? `(${integBuild.branch}, ${integBuild.hash})`
+        : '';
+
     return (
         <div className="comp-overview-server">
             <Form.Check className="comp-enabled"
@@ -60,10 +80,11 @@ export function OverviewServer({serverId}: OverviewServerProps) {
                         <div className="comp-row">
                             <Form.Text className="comp-status">Сборка: <span className="comp-status-bold">{query?.data?.build ?? "OFF"}</span></Form.Text>
                         </div>
-                        <div className="comp-row">
-                            <Form.Text className="comp-status">GP: {query?.data?.gpBuild ?? "OFF"}</Form.Text></div>
-                        <div className="comp-row">
-                            <Form.Text className="comp-status">Integ: {query?.data?.integBuild ?? "OFF"}</Form.Text>
+                        <div title={gpFull} className="comp-row">
+                            <Form.Text className="comp-status">GP: {gpShort}</Form.Text>
+                        </div>
+                        <div title={integFull} className="comp-row">
+                            <Form.Text className="comp-status">Integ: {integShort}</Form.Text>
                         </div>
                         <div className="comp-row">
                             <Form.Text className="comp-status">Операция: {commandText}</Form.Text>

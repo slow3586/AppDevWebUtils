@@ -36,6 +36,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(cust ->
+            cust.requestMatchers("/api/info/**").permitAll());
+
+        http.authorizeHttpRequests(cust ->
                 cust.anyRequest().authenticated())
             .formLogin(withDefaults())
             .rememberMe(cust -> cust

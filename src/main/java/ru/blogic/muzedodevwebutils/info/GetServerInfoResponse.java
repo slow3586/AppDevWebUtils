@@ -1,6 +1,7 @@
 package ru.blogic.muzedodevwebutils.info;
 
 import ru.blogic.muzedodevwebutils.command.Command;
+import ru.blogic.muzedodevwebutils.server.MuzedoServer;
 
 public record GetServerInfoResponse(
     boolean wsAdminShell,
@@ -9,6 +10,7 @@ public record GetServerInfoResponse(
     int executingCommandTimer,
     int scheduledCommandTimer,
     String build,
-    String gpBuild,
-    String integBuild
-) {}
+    MuzedoServer.MuzedoBuildInfo gpBuild,
+    MuzedoServer.MuzedoBuildInfo integBuild
+) {
+}

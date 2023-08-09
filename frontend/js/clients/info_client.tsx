@@ -29,8 +29,15 @@ export type GetServerInfoResponse = {
     scheduledCommand: Command,
     scheduledCommandTimer: number,
     build: string,
-    gpBuild: string,
-    integBuild: string
+    gpBuild: MuzedoBuildInfo,
+    integBuild: MuzedoBuildInfo
+}
+
+export type MuzedoBuildInfo = {
+    author: string,
+    date: string,
+    branch: string,
+    hash: string
 }
 
 export type GetServerLogResponse = {

@@ -50,7 +50,7 @@ export function App() {
                          title="Общее">
                         <Overview></Overview>
                     </Tab>
-                    {cookieServers
+                    {(cookieServers ?? [])
                         .filter(s => s.enabled)
                         .map(s => (
                             <Tab key={`key${s.id}`}

@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.sshd.client.channel.ChannelShell;
 import org.apache.sshd.client.session.ClientSession;
 import ru.blogic.muzedodevwebutils.command.Command;
+import ru.blogic.muzedodevwebutils.info.GetServerInfoResponse;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -57,10 +58,9 @@ public class MuzedoServer {
 
     public record MuzedoBuildInfo(
         String author,
-        String dateString,
-        Date date,
+        String date,
         String branch,
-        String shortInfo
+        String hash
     ) {}
 
     public record ScheduledCommand(
