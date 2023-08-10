@@ -9,7 +9,7 @@ import {ToastContainer} from "react-toastify";
 
 require('../less/index.less')
 
-console.log("v0.5");
+console.log("v0.6");
 
 const queryClient = new QueryClient()
 Notification.requestPermission();

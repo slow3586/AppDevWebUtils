@@ -33,5 +33,6 @@ public record Command(
         = List.of("com.ibm.ws.scripting.ScriptingException",
         "Error creating \"SOAP\" connection",
         "syntax error",
+        "SyntaxError",
         "root@edo-dev");
 }

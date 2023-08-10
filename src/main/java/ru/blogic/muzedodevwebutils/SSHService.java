@@ -5,21 +5,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.channel.ChannelShell;
-import org.apache.sshd.client.channel.ClientChannelEvent;
 import org.apache.sshd.client.channel.PtyCapableChannelSession;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.channel.RequestHandler;
-import org.apache.sshd.common.session.SessionListener;
 import org.apache.sshd.common.util.io.output.NoCloseOutputStream;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.blogic.muzedodevwebutils.command.Command;
 import ru.blogic.muzedodevwebutils.server.MuzedoServer;
 
-import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
-import java.io.OutputStreamWriter;
-import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -98,18 +93,15 @@ public class SSHService {
         final AtomicInteger timerOut
     ) {
         try (
-            final var writer = new BufferedWriter(
-                new OutputStreamWriter(
-                    new NoCloseOutputStream(channelShell.getInvertedIn())));
+            final var in = new NoCloseOutputStream(channelShell.getInvertedIn());
             final var baos = new ByteArrayOutputStream()
         ) {
             channelShell.setOut(baos);
 
-            channelShell.getInvertedIn().write(25);
-            channelShell.getInvertedIn().flush();
-            writer.write(command.command());
-            writer.write(";\n");
-            writer.flush();
+            in.write(21);
+            in.write(command.command().getBytes());
+            in.write("\n".getBytes());
+            in.flush();
 
             var count = 1;
             var substringBegin = 0;
