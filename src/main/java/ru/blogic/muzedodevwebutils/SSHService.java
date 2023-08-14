@@ -7,7 +7,9 @@ import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.channel.ChannelShell;
 import org.apache.sshd.client.channel.PtyCapableChannelSession;
 import org.apache.sshd.client.session.ClientSession;
+import org.apache.sshd.common.channel.ChannelListener;
 import org.apache.sshd.common.channel.RequestHandler;
+import org.apache.sshd.common.session.SessionListener;
 import org.apache.sshd.common.util.io.output.NoCloseOutputStream;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -48,6 +50,7 @@ public class SSHService {
 
             session.addPasswordIdentity(muzedoServer.getP());
             session.auth().verify(TIMEOUT);
+            session.addChannelListener(new ChannelListener() {});
 
             return session;
         } catch (Exception e) {

@@ -47,15 +47,16 @@ public class MuzedoServerService {
     }
 
     public void reconnectSshSession(MuzedoServer muzedoServer) {
-        if (!muzedoServer.getSessionConnectLock().tryLock()) {
+        if (muzedoServer.getSessionConnectLock().isLocked()
+            || !muzedoServer.getSessionConnectLock().tryLock()) {
             log.warn("#reconnectSshSession {}: уже в процессе", muzedoServer.host);
             return;
         }
         try {
             if (muzedoServer.getSshClientSession() != null
-                && !muzedoServer.getSshClientSession().isClosing()
+                && muzedoServer.getSshClientSession().isOpen()
             ) {
-                muzedoServer.getWsadminShell().close();
+                muzedoServer.getSshClientSession().close();
             }
 
             final var session = sshService.createSession(muzedoServer);
@@ -76,7 +77,7 @@ public class MuzedoServerService {
                 }
                 reconnectSshSession(muzedoServer);
             }).start();
-            return;
+            throw new RuntimeException(e);
         } finally {
             muzedoServer.getSessionConnectLock().unlock();
         }
@@ -89,18 +90,19 @@ public class MuzedoServerService {
             log.warn("#reconnectWsadminShell {}: reconnectSshSession в процессе", muzedoServer.host);
             return;
         }
-        if (!muzedoServer.getWsadminConnectLock().tryLock()) {
+        if (muzedoServer.getWsadminConnectLock().isLocked()
+            || !muzedoServer.getWsadminConnectLock().tryLock()) {
             log.warn("#reconnectWsadminShell {}: уже в процессе", muzedoServer.host);
             return;
         }
         try {
             if (muzedoServer.getSshClientSession() == null
-                || muzedoServer.getSshClientSession().isClosing()) {
+                || !muzedoServer.getSshClientSession().isOpen()) {
                 reconnectSshSession(muzedoServer);
             }
 
             if (muzedoServer.getWsadminShell() != null
-                && !muzedoServer.getWsadminShell().isClosing()
+                && muzedoServer.getWsadminShell().isOpen()
             ) {
                 muzedoServer.getWsadminShell().close();
             }
@@ -133,6 +135,7 @@ public class MuzedoServerService {
                 }
                 reconnectWsadminShell(muzedoServer);
             }).start();
+            throw new RuntimeException(e);
         } finally {
             muzedoServer.getWsadminConnectLock().unlock();
         }
