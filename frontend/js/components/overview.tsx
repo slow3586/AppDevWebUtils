@@ -17,6 +17,9 @@ export function Overview() {
     //const servers = useContext(ServersContext);
     const servers: ServerContext[] = cookies.servers;
 
+    servers.filter(s => !last.current.has(s.id))
+        .forEach(s => last.current.set(s.id, 0));
+
     const addInfo = (add: string) => {
         if (!isEmpty(trim(add))) {
             info.current += add + "\n";
@@ -44,8 +47,10 @@ export function Overview() {
 
     if (isEmpty(loading) && isEmpty(errored)) {
         const goodQueries = queries.filter(q => !isNil(q.query.data));
+        goodQueries.filter(q => last.current.get(q.serverId) > q.query.data.logLast)
+            .forEach(q => last.current.set(q.serverId, q.query.data.logLast))
         const logs = goodQueries
-            .filter(q => last.current.get(q.serverId) != q.query.data.logLast)
+            .filter(q => last.current.get(q.serverId) < q.query.data.logLast)
             .flatMap(q => q.query.data.logs.flatMap(l => ({serverId: q.serverId, data: l})))
             .sort((a, b) => new Date(a.data.date)?.getTime?.() - new Date(b.data.date)?.getTime?.())
             .map(e => ({

@@ -17,28 +17,22 @@ export class ServerContext {
 }
 
 const _servers = [58, 59, 60, 61, 146, 147].map(s => new ServerContext(s, true));
-export const ServersContext = createContext({
-    servers: new Array<ServerContext>,
-    setServers: (a: any) => {
-    }
-})
+export const ServersContext = createContext({})
 
 export function App() {
     const [activeTab, setActiveTab] = useState("overview");
     const [servers, setServers] = useState(_servers);
     const firstLoad = useRef(true);
     const [cookies, setCookies] = useCookies(['servers']);
-    const cookieServers: ServerContext[] = cookies.servers;
 
+    let cookieServers: ServerContext[] = cookies.servers;
     if (isEmpty(cookies.servers)) {
         setCookies('servers', _servers);
+        cookieServers = _servers;
     }
 
     return (
-        <ServersContext.Provider value={{
-            servers,
-            setServers
-        }}>
+        <ServersContext.Provider value={{}}>
             <div className="comp-app">
                 <Tabs
                     defaultActiveKey="overview"
