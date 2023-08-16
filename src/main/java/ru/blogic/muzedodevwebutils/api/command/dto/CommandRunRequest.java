@@ -1,4 +1,4 @@
-package ru.blogic.muzedodevwebutils.command;
+package ru.blogic.muzedodevwebutils.api.command.dto;
 
 public record CommandRunRequest(
     int serverId,

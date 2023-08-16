@@ -1,10 +1,9 @@
-import React, {createContext, ReactNode, useContext, useRef, useState} from "react";
-import {Col, Form, Tab, Tabs, Container, Row} from "react-bootstrap";
+import React, {createContext, useRef, useState} from "react";
+import {Tab, Tabs} from "react-bootstrap";
 import {Overview} from "./overview";
-import {Server} from "./server";
-import {useQueryClient} from "react-query";
 import {useCookies} from "react-cookie";
 import {isEmpty} from "lodash";
+import {Server} from "./server";
 
 export class ServerContext {
     id: number;

@@ -1,31 +1,28 @@
-package ru.blogic.muzedodevwebutils.server;
+package ru.blogic.muzedodevwebutils.api.muzedo;
 
+import io.vavr.collection.List;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import ru.blogic.muzedodevwebutils.SSHService;
-import ru.blogic.muzedodevwebutils.command.CommandDao;
+import ru.blogic.muzedodevwebutils.api.command.CommandDao;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class MuzedoServerService {
-    private final CommandDao commandDao;
-    private final SSHService sshService;
-    private final MuzedoServerDao muzedoServerDao;
-    private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(8);
-
-    public MuzedoServerService(
-        CommandDao commandDao,
-        SSHService sshService,
-        MuzedoServerDao muzedoServerDao
-    ) {
-        this.commandDao = commandDao;
-        this.sshService = sshService;
-        this.muzedoServerDao = muzedoServerDao;
-    }
+    CommandDao commandDao;
+    SSHService sshService;
+    MuzedoServerDao muzedoServerDao;
+    ScheduledExecutorService executorService =
+        Executors.newScheduledThreadPool(8);
 
     @Scheduled(fixedDelay = 1000 * 60 * 30, initialDelay = 0)
     public void scheduleReconnect() {
@@ -59,7 +56,7 @@ public class MuzedoServerService {
                 muzedoServer.getSshClientSession().close();
             }
 
-            final var session = sshService.createSession(muzedoServer);
+            val session = sshService.createSession(muzedoServer);
             session.addCloseFutureListener((future) -> {
                 log.warn(muzedoServer.getHost() + ": закрыт SshSession!");
                 reconnectSshSession(muzedoServer);
@@ -107,7 +104,7 @@ public class MuzedoServerService {
                 muzedoServer.getWsadminShell().close();
             }
 
-            final var shell = sshService.createShellChannel(muzedoServer.getSshClientSession());
+            val shell = sshService.createShellChannel(muzedoServer.getSshClientSession());
             shell.addCloseFutureListener((future) -> {
                 log.warn(muzedoServer.getHost() + ": закрыт WsAdminShell!");
                 reconnectWsadminShell(muzedoServer);
@@ -117,10 +114,12 @@ public class MuzedoServerService {
             sshService.executeCommand(
                 shell,
                 commandDao.get("cd_root_deploy"),
+                List.empty(),
                 null);
             sshService.executeCommand(
                 shell,
                 commandDao.get("wsadmin_start"),
+                List.empty(),
                 null);
 
             muzedoServer.setWsadminShell(shell);

@@ -1,19 +1,17 @@
-package ru.blogic.muzedodevwebutils.command;
+package ru.blogic.muzedodevwebutils.api.command;
 
 import java.util.List;
-import java.util.Optional;
 
 public record Command(
     String id,
     String name,
-    Optional<String> text,
     Shell shell,
-    Block blocks,
+    boolean blocksWsadmin,
     String command,
-    String readySymbol,
+    String readyPattern,
     int timeout,
     boolean announce,
-    List<String> errTexts
+    List<String> errPatterns
 ) {
     public enum Shell {
         NONE,
@@ -27,12 +25,14 @@ public record Command(
         NONE
     }
 
-    public static final String SSH_READY = "]#";
-    public static final String WSADMIN_READY = "n>";
-    public static final List<String> WSADMIN_ERRTEXTS
+    public static final String SSH_READY_PATTERN = "]#";
+    public static final String WSADMIN_READY_PATTERN = "n>";
+    public static final List<String> WSADMIN_ERR_PATTERNS
         = List.of("com.ibm.ws.scripting.ScriptingException",
         "Error creating \"SOAP\" connection",
         "syntax error",
         "SyntaxError",
         "root@edo-dev");
+    public static final List<String> SSH_ERR_PATTERNS
+        = List.of();
 }

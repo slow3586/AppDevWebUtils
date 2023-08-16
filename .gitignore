@@ -39,3 +39,4 @@ built.ls
 log.txt
 h2.trace.db
 logs/**
+node_modules/**

@@ -1,9 +1,9 @@
-import React, {ReactElement, useContext, useEffect, useRef, useState} from "react";
-import {Form, Container, Row, Tooltip, OverlayTrigger} from "react-bootstrap";
+import React from "react";
+import {Form} from "react-bootstrap";
 import {useQuery, useQueryClient} from "react-query";
-import {getServerInfo, getServerLog} from "../clients/info_client";
+import {getServerInfo} from "../clients/info_client";
 import {isEmpty, isNil} from "lodash";
-import {ServerContext, ServersContext} from "./app";
+import {ServerContext} from "./app";
 import {useCookies} from "react-cookie";
 
 export type OverviewServerProps = {

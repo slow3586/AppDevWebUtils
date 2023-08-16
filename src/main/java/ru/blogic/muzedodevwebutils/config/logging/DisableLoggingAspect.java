@@ -1,4 +1,4 @@
-package ru.blogic.muzedodevwebutils.logging;
+package ru.blogic.muzedodevwebutils.config.logging;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

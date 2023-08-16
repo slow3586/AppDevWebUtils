@@ -1,6 +1,7 @@
-package ru.blogic.muzedodevwebutils;
+package ru.blogic.muzedodevwebutils.config;
 
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +18,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         final RuntimeException ex,
         final WebRequest request
     ) {
-        final var text = "Ошибка: " + ex.toString() + ": " + ex.getMessage();
+        val text = "Ошибка: " + ex.toString() + ": " + ex.getMessage();
         log.error("Ошибка от запроса REST: {}", ex.getMessage(), ex);
         return handleExceptionInternal(
             ex,

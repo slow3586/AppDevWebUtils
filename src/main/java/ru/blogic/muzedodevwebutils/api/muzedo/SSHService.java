@@ -1,7 +1,12 @@
-package ru.blogic.muzedodevwebutils;
+package ru.blogic.muzedodevwebutils.api.muzedo;
 
+import io.vavr.collection.List;
 import jakarta.annotation.PostConstruct;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.channel.ChannelShell;
@@ -9,27 +14,20 @@ import org.apache.sshd.client.channel.PtyCapableChannelSession;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.channel.ChannelListener;
 import org.apache.sshd.common.channel.RequestHandler;
-import org.apache.sshd.common.session.SessionListener;
 import org.apache.sshd.common.util.io.output.NoCloseOutputStream;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import ru.blogic.muzedodevwebutils.command.Command;
-import ru.blogic.muzedodevwebutils.server.MuzedoServer;
+import ru.blogic.muzedodevwebutils.api.command.Command;
 
 import java.io.ByteArrayOutputStream;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SSHService {
-    private static final long TIMEOUT = 5000;
-    private final SshClient client = SshClient.setUpDefaultClient();
-
-    @Value("${app.p0}")
-    private String p0;
-
-    @Value("${app.p1}")
-    private String p1;
+    static long TIMEOUT = 5000;
+    SshClient client = SshClient.setUpDefaultClient();
 
     @PostConstruct
     public void postConstruct() {
@@ -44,11 +42,11 @@ public class SSHService {
         final MuzedoServer muzedoServer
     ) {
         try {
-            final var session = client.connect("root", muzedoServer.getHost(), 22)
+            val session = client.connect("root", muzedoServer.getHost(), 22)
                 .verify(TIMEOUT)
                 .getSession();
 
-            session.addPasswordIdentity(muzedoServer.getP());
+            session.addPasswordIdentity(muzedoServer.getPassword());
             session.auth().verify(TIMEOUT);
             session.addChannelListener(new ChannelListener() {});
 
@@ -63,7 +61,7 @@ public class SSHService {
         final ClientSession clientSession
     ) {
         try {
-            final var channelShell = clientSession.createShellChannel();
+            val channelShell = clientSession.createShellChannel();
             channelShell.setRedirectErrorStream(true);
             channelShell.open().verify(TIMEOUT);
             channelShell.addRequestHandler((channel, request, wantReply, buffer) -> {
@@ -81,10 +79,11 @@ public class SSHService {
     public String executeCommand(
         final ClientSession clientSession,
         final Command command,
+        final List<String> arguments,
         final AtomicInteger timerOut
     ) {
-        try (final var channelShell = createShellChannel(clientSession)) {
-            return executeCommand(channelShell, command, timerOut);
+        try (val channelShell = createShellChannel(clientSession)) {
+            return executeCommand(channelShell, command, arguments, timerOut);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -93,16 +92,21 @@ public class SSHService {
     public String executeCommand(
         final PtyCapableChannelSession channelShell,
         final Command command,
+        final List<String> arguments,
         final AtomicInteger timerOut
     ) {
         try (
-            final var in = new NoCloseOutputStream(channelShell.getInvertedIn());
-            final var baos = new ByteArrayOutputStream()
+            val in = new NoCloseOutputStream(channelShell.getInvertedIn());
+            val baos = new ByteArrayOutputStream()
         ) {
             channelShell.setOut(baos);
 
             in.write(21);
             in.write(command.command().getBytes());
+            if (arguments != null && !arguments.isEmpty()) {
+                in.write(" ".getBytes());
+                in.write(arguments.mkString(" ").getBytes());
+            }
             in.write("\n".getBytes());
             in.flush();
 
@@ -110,8 +114,8 @@ public class SSHService {
             var substringBegin = 0;
             while (true) {
                 Thread.sleep(1000);
-                final var entireOutput = baos.toString().trim();
-                final var newOutputPart = entireOutput.substring(substringBegin);
+                val entireOutput = baos.toString().trim();
+                val newOutputPart = entireOutput.substring(substringBegin);
                 if (!newOutputPart.isEmpty()) {
                     substringBegin += newOutputPart.length();
                     log.debug("{}: {}: ({}s) {}",
@@ -121,7 +125,7 @@ public class SSHService {
                         newOutputPart
                     );
                 }
-                final var err = command.errTexts()
+                val err = command.errPatterns()
                     .stream()
                     .filter(e ->
                         StringUtils.containsIgnoreCase(
@@ -136,7 +140,7 @@ public class SSHService {
                         + channelShell.getSession().getRemoteAddress()
                         + ": " + err.get());
                 }
-                if (entireOutput.endsWith(command.readySymbol())) {
+                if (entireOutput.endsWith(command.readyPattern())) {
                     log.debug("{}: {}: complete @ {}s",
                         channelShell.getSession().getRemoteAddress(),
                         command.command(),

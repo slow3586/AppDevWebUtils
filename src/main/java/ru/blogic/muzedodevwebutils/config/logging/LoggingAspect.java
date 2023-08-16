@@ -1,6 +1,7 @@
-package ru.blogic.muzedodevwebutils.logging;
+package ru.blogic.muzedodevwebutils.config.logging;
 
 import io.vavr.control.Option;
+import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -30,8 +31,8 @@ public class LoggingAspect {
         //"|| @within(org.springframework.web.bind.annotation.RestController) " +
         ")")*/
     public Object around(ProceedingJoinPoint point) throws Throwable {
-        final var logger = LoggerFactory.getLogger(point.getSignature().getDeclaringType());
-        final var methodName = ((MethodSignature) point.getSignature()).getMethod().getName();
+        val logger = LoggerFactory.getLogger(point.getSignature().getDeclaringType());
+        val methodName = ((MethodSignature) point.getSignature()).getMethod().getName();
         logger.debug(methodName + " <- " +
             Option.of(point.getArgs())
                 .map(Arrays::stream)

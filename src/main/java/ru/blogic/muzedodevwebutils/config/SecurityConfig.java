@@ -1,6 +1,7 @@
 package ru.blogic.muzedodevwebutils.config;
 
 import io.vavr.collection.List;
+import lombok.val;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -44,7 +45,7 @@ public class SecurityConfig {
 
     @Bean
     public PersistentTokenRepository persistentTokenRepository() {
-        final var tokenRepository = new JdbcTokenRepositoryImpl();
+        val tokenRepository = new JdbcTokenRepositoryImpl();
         tokenRepository.setDataSource(dataSource);
         //tokenRepository.setCreateTableOnStartup(true);
         return tokenRepository;
@@ -52,7 +53,7 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        final var users = List.of(
+        val users = List.of(
                 "Багрянцев Дмитрий",
                 "Власов Павел",
                 "Дымко Андрей",

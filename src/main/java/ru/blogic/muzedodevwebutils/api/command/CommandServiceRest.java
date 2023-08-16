@@ -1,23 +1,21 @@
-package ru.blogic.muzedodevwebutils.command;
+package ru.blogic.muzedodevwebutils.api.command;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.blogic.muzedodevwebutils.api.command.dto.CommandCancelRequest;
+import ru.blogic.muzedodevwebutils.api.command.dto.CommandDelayRequest;
+import ru.blogic.muzedodevwebutils.api.command.dto.CommandRunRequest;
 
 @RestController
 @RequestMapping("api/command")
+@RequiredArgsConstructor
 public class CommandServiceRest {
     private final CommandService commandService;
-
-    public CommandServiceRest(
-        CommandService commandService
-    ) {
-        this.commandService = commandService;
-    }
 
     @GetMapping(path = "run/{host}/{command}", produces = "application/json")
     public String runGet(

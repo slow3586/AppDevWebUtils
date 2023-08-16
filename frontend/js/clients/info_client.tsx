@@ -1,17 +1,4 @@
-import {get} from "../utils/client";
-
-export enum Severity {
-    CRIT = "CRIT",
-    INFO = "INFO",
-    TRACE = "TRACE"
-}
-
-export type LogEntry = {
-    date: Date,
-    text: string,
-    severity: Severity,
-    user: string
-}
+import {getWrapper} from "../utils/client";
 
 export type Command = {
     id: string,
@@ -40,18 +27,7 @@ export type MuzedoBuildInfo = {
     hash: string
 }
 
-export type GetServerLogResponse = {
-    logs: LogEntry[],
-    logLast: number
-}
-
 export const getServerInfo = (
     serverId: number
 ): Promise<GetServerInfoResponse> =>
-    get(`api/info/getServerInfo/${serverId}`)
-
-export const getServerLog = (
-    serverId: number,
-    last: number
-): Promise<GetServerLogResponse> =>
-    get(`api/info/getServerLog/${serverId}?last=${last}`)
+    getWrapper(`api/info/${serverId}`)

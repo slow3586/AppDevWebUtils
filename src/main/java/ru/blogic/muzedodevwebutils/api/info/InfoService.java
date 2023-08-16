@@ -1,55 +1,50 @@
-package ru.blogic.muzedodevwebutils.info;
+package ru.blogic.muzedodevwebutils.api.info;
 
 import io.vavr.control.Option;
 import io.vavr.control.Try;
 import jakarta.annotation.PostConstruct;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Hooks;
-import ru.blogic.muzedodevwebutils.command.Command;
-import ru.blogic.muzedodevwebutils.logging.DisableLoggingAspect;
-import ru.blogic.muzedodevwebutils.server.MuzedoServer;
-import ru.blogic.muzedodevwebutils.server.MuzedoServerDao;
-import ru.blogic.muzedodevwebutils.server.MuzedoServerService;
+import ru.blogic.muzedodevwebutils.api.command.Command;
+import ru.blogic.muzedodevwebutils.config.logging.DisableLoggingAspect;
+import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
+import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerDao;
 
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-import static ru.blogic.muzedodevwebutils.server.MuzedoServer.UNKNOWN_BUILD;
+import static ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer.UNKNOWN_BUILD;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class InfoService {
-    private final MuzedoServerService muzedoServerService;
-    private final MuzedoServerDao muzedoServerDao;
-    private static final ThreadLocal<SimpleDateFormat> dateTimeFormat_muzedoBuildInfo = ThreadLocal.withInitial(
+    MuzedoServerDao muzedoServerDao;
+    static ThreadLocal<SimpleDateFormat> dateTimeFormat_muzedoBuildInfo = ThreadLocal.withInitial(
         () -> new SimpleDateFormat("HH:mm:ss dd.MM.yyyy z Z"));
-    private static final ThreadLocal<SimpleDateFormat> dateTimeFormat_appBuildInfo = ThreadLocal.withInitial(
+    static ThreadLocal<SimpleDateFormat> dateTimeFormat_appBuildInfo = ThreadLocal.withInitial(
         () -> new SimpleDateFormat("dd.MM.yy_HH.mm"));
-    private WebClient client = WebClient.create();
-    private static final String path0 = "UZDO/api/app/buildInfo";
-    private static final String path1 = "UZDO-ui/rest/app/buildInfo";
+    WebClient client = WebClient.create();
+    static String path0 = "UZDO/api/app/buildInfo";
+    static String path1 = "UZDO-ui/rest/app/buildInfo";
 
+    @NonFinal
     @Value("${app.buildVersion:}")
-    private String buildVersion;
-
-    public InfoService(
-        MuzedoServerService muzedoServerService,
-        MuzedoServerDao muzedoServerDao
-    ) {
-        this.muzedoServerService = muzedoServerService;
-        this.muzedoServerDao = muzedoServerDao;
-    }
+    String buildVersion;
 
     @PostConstruct
     public void postConstruct() {
@@ -69,7 +64,7 @@ public class InfoService {
     @DisableLoggingAspect
     @Cacheable(value = "getServerInfo")
     public GetServerInfoResponse getServerInfo(int serverId) {
-        final var muzedoServer = muzedoServerDao.get(serverId);
+        val muzedoServer = muzedoServerDao.get(serverId);
 
         return new GetServerInfoResponse(
             muzedoServer.getSshClientSession() != null
@@ -77,8 +72,7 @@ public class InfoService {
                 && muzedoServer.getWsadminShell() != null
                 && muzedoServer.getWsadminShell().isOpen()
                 && !Option.of(muzedoServer.getExecutingCommand())
-                .map(Command::blocks)
-                .contains(Command.Block.SERVER),
+                .exists(Command::blocksWsadmin),
             Option.of(muzedoServer.getScheduledCommand())
                 .map(MuzedoServer.ScheduledCommand::command)
                 .getOrNull(),
@@ -98,7 +92,7 @@ public class InfoService {
     private MuzedoServer.MuzedoBuildInfo parseBuildInfoLines(
         final String buildInfo
     ) {
-        final var lines = Arrays.stream(
+        val lines = Arrays.stream(
                 StringUtils.split(
                     StringUtils.defaultString(buildInfo),
                     "\n"))
@@ -154,7 +148,7 @@ public class InfoService {
             .getAll()
             .parallelStream()
             .forEach(server -> {
-                final var getGP = client.get()
+                val getGP = client.get()
                     .uri(server.getUri() + "/" + path0)
                     .retrieve()
                     .bodyToMono(String.class)
@@ -162,7 +156,7 @@ public class InfoService {
                     .doOnError(e -> this.doOnErr(server, e))
                     .then();
 
-                final var getInteg = client.get()
+                val getInteg = client.get()
                     .uri(server.getUri() + "/" + path1)
                     .retrieve()
                     .bodyToMono(String.class)
@@ -173,8 +167,8 @@ public class InfoService {
                 getGP.and(getInteg)
                     .then()
                     .doOnSuccess(a -> {
-                        final var gpBuildInfo = server.getGpBuildInfo();
-                        final var integBuildInfo = server.getIntegBuildInfo();
+                        val gpBuildInfo = server.getGpBuildInfo();
+                        val integBuildInfo = server.getIntegBuildInfo();
                         if (gpBuildInfo != null && gpBuildInfo.date() != null
                             && integBuildInfo != null && integBuildInfo.date() != null) {
                             server.setBuild(buildInfoToBuild(integBuildInfo.branch(),
@@ -195,54 +189,14 @@ public class InfoService {
     @DisableLoggingAspect
     public void clearGetServerInfoCache() {}
 
-    @CacheEvict(allEntries = true, value = "getServerLog")
-    @Scheduled(fixedDelay = 3000)
-    @DisableLoggingAspect
-    public void clearGetServerLogCache() {}
-
-    public void writeInfo(
-        final int serverId,
-        final MuzedoServer.LogEntry.Severity severity,
-        final String text
-    ) {
-        final var auth = SecurityContextHolder.getContext().getAuthentication();
-        final var user = auth == null
-            ? "Система"
-            : ((User) auth.getPrincipal()).getUsername();
-
-        final var infoEntry = new MuzedoServer.LogEntry(
-            new Date(),
-            text,
-            severity,
-            user
-        );
-
-        muzedoServerDao
-            .get(serverId)
-            .getLogs()
-            .add(infoEntry);
-        clearGetServerInfoCache();
-        clearGetServerLogCache();
-    }
-
-    @DisableLoggingAspect
-    @Cacheable(value = "getServerLog")
-    public GetServerLogResponse getServerLog(
-        final int serverId,
-        final int last
-    ) {
-        final var log = muzedoServerDao
-            .get(serverId)
-            .getLogs();
-        final var infoEntries = log
-            .stream()
-            .skip(Math.min(log.size(),
-                Math.max(log.size() - last < 100 ? last : log.size() - 100, 0)))
-            .toList();
-
-        return new GetServerLogResponse(
-            infoEntries,
-            log.size()
-        );
-    }
+    public record GetServerInfoResponse(
+        boolean wsAdminShell,
+        Command scheduledCommand,
+        Command executingCommand,
+        int executingCommandTimer,
+        int scheduledCommandTimer,
+        String build,
+        MuzedoServer.MuzedoBuildInfo gpBuild,
+        MuzedoServer.MuzedoBuildInfo integBuild
+    ) {}
 }

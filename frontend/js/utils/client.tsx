@@ -46,7 +46,7 @@ const common = (
     }
 }
 
-export const get = (
+export const getWrapper = (
     path: string,
     textResponse = false
 ): Promise<any> =>
@@ -57,7 +57,7 @@ export const get = (
         },
         textResponse);
 
-export const post = (
+export const postWrapper = (
     path: string,
     body: any,
     textResponse = false

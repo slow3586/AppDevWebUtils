@@ -1,10 +1,7 @@
 import {createRoot} from "react-dom/client";
-import React, {createContext} from "react";
+import React from "react";
 import {App} from "./components/app";
-import {
-    QueryClient,
-    QueryClientProvider,
-} from 'react-query'
+import {QueryClient, QueryClientProvider,} from 'react-query'
 import {ToastContainer} from "react-toastify";
 
 require('../less/index.less')

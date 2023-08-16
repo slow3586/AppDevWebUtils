@@ -1,11 +1,10 @@
-package ru.blogic.muzedodevwebutils.server;
+package ru.blogic.muzedodevwebutils.api.muzedo;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.apache.sshd.client.channel.ChannelShell;
 import org.apache.sshd.client.session.ClientSession;
-import ru.blogic.muzedodevwebutils.command.Command;
-import ru.blogic.muzedodevwebutils.info.GetServerInfoResponse;
+import ru.blogic.muzedodevwebutils.api.command.Command;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -21,7 +20,7 @@ public class MuzedoServer {
     final int id;
     final String host;
     final String uri;
-    final String p;
+    final String password;
 
     String build;
     MuzedoBuildInfo gpBuildInfo;
@@ -30,7 +29,7 @@ public class MuzedoServer {
     ClientSession sshClientSession;
     ChannelShell wsadminShell;
 
-    List<LogEntry> logs = new ArrayList<>();
+    List<HistoryEntry> history = new ArrayList<>();
 
     final ReentrantLock commandSchedulingLock = new ReentrantLock();
     final ReentrantLock wsadminConnectLock = new ReentrantLock();
@@ -43,7 +42,7 @@ public class MuzedoServer {
 
     public static String UNKNOWN_BUILD = "Неизвестная сборка";
 
-    public record LogEntry(
+    public record HistoryEntry(
         Date date,
         String text,
         Severity severity,

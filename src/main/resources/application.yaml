@@ -1,0 +1,140 @@
+spring:
+  devtools:
+    livereload:
+      enabled: true
+  web:
+    resources:
+      static-locations:
+        - 'file:src/main/resources/static/'
+        - 'classpath:/static/'
+  main:
+    allow-bean-definition-overriding: true
+    banner-mode: 'off'
+  output:
+    ansi:
+      enabled: ALWAYS
+  cache:
+    jcache:
+      config: 'classpath:ehcache.xml'
+  datasource:
+    url: 'jdbc:h2:file:./h2'
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.H2Dialect
+  h2:
+    console:
+      enabled: true
+logging:
+  config: 'classpath:logback-spring.xml'
+server:
+  ssl:
+    enabled: true
+    key-store-type: PKCS12
+    key-store: 'classpath:cert.p12'
+    key-store-password: changeit
+    key-alias: '1'
+  port: '8443'
+
+app:
+  buildVersion: '1.3-FP11'
+  muzedo:
+    servers:
+      - id: '58'
+        host: '172.19.203.58'
+        uri: 'http://172.19.203.58/'
+        password: '${pw_58}'
+      - id: '59'
+        host: '172.19.203.59'
+        uri: 'http://172.19.203.59/'
+        password: '${pw_59}'
+      - id: '60'
+        host: '172.19.203.60'
+        uri: 'http://172.19.203.60/'
+        password: '${pw_60}'
+      - id: '61'
+        host: '172.19.203.61'
+        uri: 'http://172.19.203.61/'
+        password: '${pw_61}'
+      - id: '146'
+        host: '172.19.203.146'
+        uri: 'http://172.19.203.146/'
+        password: '${pw_146}'
+      - id: '147'
+        host: '172.19.203.147'
+        uri: 'http://172.19.203.147/'
+        password: '${pw_147}'
+  files:
+    configs:
+      - id: 'uzdo'
+        path: 'uzdo.properties'
+    logs:
+      - id: 'integ'
+        path: 'UZDO-integration.log'
+  command:
+    commands:
+      - id: 'announce'
+        name: 'Оповещение'
+        command: ''
+        timeout: 10
+        shell: none
+        flags:
+          - announce_execution
+      - id: 'hostname'
+        name: 'Проверка SSH'
+        command: ''
+        timeout: 10
+        shell: ssh
+        flags:
+          - ssh_ready_pattern
+      - id: 'ra'
+        name: 'Рестарт'
+        command: 'ra(1)'
+        timeout: 180
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
+      - id: 'ura'
+        name: 'Обновление (gp + integ + cfg)'
+        command: 'ura(1)'
+        timeout: 480
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
+      - id: 'uric'
+        name: 'Обновление (integ + cfg)'
+        command: 'uric()'
+        timeout: 480
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
+      - id: 'clear_cache'
+        name: 'Клир кэш'
+        command: '/root/deploy/clear_cache_shortcut.sh'
+        timeout: 900
+        shell: wsadmin
+        flags:
+          - ssh_ready_pattern
+          - ssh_block
+          - ssh_err_patterns
+          - announce_execution
+      - id: 'clear_cache'
+        name: 'Клир кэш'
+        command: '/root/deploy/clear_cache_shortcut.sh'
+        timeout: 900
+        shell: wsadmin
+        flags:
+          - ssh_ready_pattern
+          - ssh_block
+          - ssh_err_patterns
+          - announce_execution

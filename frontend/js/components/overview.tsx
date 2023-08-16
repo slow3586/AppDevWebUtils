@@ -1,13 +1,13 @@
-import React, {useContext, useRef} from "react";
-import {Col, Container, Form, Row} from "react-bootstrap";
+import React, {useRef} from "react";
+import {Form} from "react-bootstrap";
 import {OverviewServer} from "./overview_server";
-import {getServerLog, Severity} from "../clients/info_client";
 import dateFormat from "dateformat";
 import {useQueries} from "react-query";
 import {isEmpty, isNil, trim} from "lodash";
 import {runNotification} from "../utils/notification";
-import {ServerContext, ServersContext} from "./app";
+import {ServerContext} from "./app";
 import {useCookies} from "react-cookie";
+import {getServerHistory, Severity} from "../clients/history_client";
 
 export function Overview() {
     const last = useRef(new Map<number, number>());
@@ -29,7 +29,7 @@ export function Overview() {
     const queries = useQueries(
         servers.map(server => ({
                 queryKey: ['getServerLog', server.id, last.current.get(server.id) ?? 0],
-                queryFn: async () => await getServerLog(server.id, last.current.get(server.id) ?? 0),
+                queryFn: async () => await getServerHistory(server.id, last.current.get(server.id) ?? 0),
                 refetchInterval: 3000,
                 refetchIntervalInBackground: true,
                 enabled: server.enabled
