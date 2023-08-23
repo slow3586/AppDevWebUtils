@@ -1,5 +1,6 @@
 package ru.blogic.muzedodevwebutils.api.info;
 
+import io.vavr.Function2;
 import io.vavr.control.Option;
 import io.vavr.control.Try;
 import jakarta.annotation.PostConstruct;
@@ -17,6 +18,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Hooks;
+import reactor.core.publisher.Mono;
 import ru.blogic.muzedodevwebutils.api.command.Command;
 import ru.blogic.muzedodevwebutils.config.logging.DisableLoggingAspect;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
@@ -25,6 +27,7 @@ import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerDao;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer.UNKNOWN_BUILD;
 
@@ -39,8 +42,8 @@ public class InfoService {
     static ThreadLocal<SimpleDateFormat> dateTimeFormat_appBuildInfo = ThreadLocal.withInitial(
         () -> new SimpleDateFormat("dd.MM.yy_HH.mm"));
     WebClient client = WebClient.create();
-    static String path0 = "UZDO/api/app/buildInfo";
-    static String path1 = "UZDO-ui/rest/app/buildInfo";
+    static String GP_BUILD_INFO_URI = "UZDO/api/app/buildInfo";
+    static String INTEG_BUILD_INFO_URI = "UZDO-ui/rest/app/buildInfo";
 
     @NonFinal
     @Value("${app.buildVersion:}")
@@ -146,31 +149,26 @@ public class InfoService {
     public void updateInfo() {
         muzedoServerDao
             .getAll()
-            .parallelStream()
             .forEach(server -> {
-                val getGP = client.get()
-                    .uri(server.getUri() + "/" + path0)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .doOnSuccess(answer -> server.setGpBuildInfo(parseBuildInfoLines(answer)))
-                    .doOnError(e -> this.doOnErr(server, e))
-                    .then();
+                final Function2<String, Consumer<MuzedoServer.MuzedoBuildInfo>, Mono<Void>>
+                    getBuildInfo = (uri, setBuildInfo) ->
+                    client.get()
+                        .uri("http://" + server.getHost() + "/" + GP_BUILD_INFO_URI)
+                        .retrieve()
+                        .bodyToMono(String.class)
+                        .doOnError(e -> this.doOnErr(server, e))
+                        .doOnSuccess(answer -> setBuildInfo.accept(parseBuildInfoLines(answer)))
+                        .then();
 
-                val getInteg = client.get()
-                    .uri(server.getUri() + "/" + path1)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .doOnSuccess(answer -> server.setIntegBuildInfo(parseBuildInfoLines(answer)))
-                    .doOnError(e -> this.doOnErr(server, e))
-                    .then();
-
-                getGP.and(getInteg)
+                getBuildInfo.apply(GP_BUILD_INFO_URI, server::setGpBuildInfo)
+                    .and(getBuildInfo.apply(INTEG_BUILD_INFO_URI, server::setIntegBuildInfo))
                     .then()
                     .doOnSuccess(a -> {
                         val gpBuildInfo = server.getGpBuildInfo();
                         val integBuildInfo = server.getIntegBuildInfo();
                         if (gpBuildInfo != null && gpBuildInfo.date() != null
-                            && integBuildInfo != null && integBuildInfo.date() != null) {
+                            && integBuildInfo != null && integBuildInfo.date() != null
+                        ) {
                             server.setBuild(buildInfoToBuild(integBuildInfo.branch(),
                                 (gpBuildInfo.date().compareTo(integBuildInfo.date()) > 0)
                                     ? gpBuildInfo
@@ -178,8 +176,7 @@ public class InfoService {
                         } else {
                             server.setBuild(UNKNOWN_BUILD);
                         }
-                    })
-                    .doOnError(e -> server.setBuild(null))
+                    }).doOnError(e -> server.setBuild(null))
                     .subscribe();
             });
     }

@@ -1,6 +1,6 @@
 // @ts-ignore
 import {toast} from 'react-toastify';
-import {startsWith} from "lodash";
+import {startsWith} from 'lodash';
 
 const common = (
     path: string,

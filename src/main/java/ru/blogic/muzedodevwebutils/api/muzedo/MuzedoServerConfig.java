@@ -17,7 +17,6 @@ public class MuzedoServerConfig {
     public static class MuzedoServerConfigDto {
         int id;
         String host;
-        String uri;
         String password;
     }
 }

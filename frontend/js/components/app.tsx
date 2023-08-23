@@ -1,9 +1,11 @@
-import React, {createContext, useRef, useState} from "react";
+import React, {createContext, useState} from "react";
 import {Tab, Tabs} from "react-bootstrap";
 import {Overview} from "./overview";
 import {useCookies} from "react-cookie";
 import {isEmpty} from "lodash";
 import {Server} from "./server";
+import {useQuery} from "react-query";
+import {getFrontendConfig} from "../clients/frontend_client";
 
 export class ServerContext {
     id: number;
@@ -14,20 +16,28 @@ export class ServerContext {
         this.enabled = enabled;
     }
 }
-
-const _servers = [58, 59, 60, 61, 146, 147].map(s => new ServerContext(s, true));
 export const ServersContext = createContext({})
 
 export function App() {
     const [activeTab, setActiveTab] = useState("overview");
-    const [servers, setServers] = useState(_servers);
-    const firstLoad = useRef(true);
+    //const firstLoad = useRef(true);
     const [cookies, setCookies] = useCookies(['servers']);
 
-    let cookieServers: ServerContext[] = cookies.servers;
-    if (isEmpty(cookies.servers)) {
-        setCookies('servers', _servers);
-        cookieServers = _servers;
+    const frontendConfigQuery = useQuery(
+        ['getFrontendConfig'],
+        () => getFrontendConfig(),
+        {
+            staleTime: Infinity,
+        });
+
+    let cookieServers: ServerContext[] = [];
+    const configServers = frontendConfigQuery?.data?.servers
+    if (!isEmpty(configServers)) {
+        cookieServers = cookies.servers;
+        if (isEmpty(cookies.servers)) {
+            setCookies('servers', configServers);
+            cookieServers = configServers.map(s => new ServerContext(s, true));
+        }
     }
 
     return (

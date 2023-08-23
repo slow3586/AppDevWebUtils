@@ -29,6 +29,7 @@ public class CommandDao {
                 c.getName(),
                 c.getShell(),
                 c.getFlags().contains(CommandConfigDtoFlags.WSADMIN_BLOCK),
+                false,
                 c.getCommand(),
                 c.getFlags().contains(CommandConfigDtoFlags.SSH_READY_PATTERN)
                     ? Command.SSH_READY_PATTERN
@@ -49,6 +50,7 @@ public class CommandDao {
             "cd_root_deploy",
             Command.Shell.SSH,
             true,
+            true,
             "cd /root/deploy/",
             Command.SSH_READY_PATTERN,
             10,
@@ -57,6 +59,7 @@ public class CommandDao {
         commands.add(new Command("wsadmin_start",
             "wsadmin_start",
             Command.Shell.SSH,
+            true,
             true,
             "./wsadmin_extra.sh",
             Command.WSADMIN_READY_PATTERN,
@@ -72,5 +75,9 @@ public class CommandDao {
             .findFirst()
             .orElseThrow(() -> new RuntimeException(
                 "Не найдена команда " + id));
+    }
+
+    public io.vavr.collection.List<Command> getAll(){
+        return io.vavr.collection.List.ofAll(commands);
     }
 }

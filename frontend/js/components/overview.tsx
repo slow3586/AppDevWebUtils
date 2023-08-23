@@ -13,8 +13,7 @@ export function Overview() {
     const last = useRef(new Map<number, number>());
     const info = useRef("");
     const firstRun = useRef(true);
-    const [cookies, setCookies] = useCookies(['servers']);
-    //const servers = useContext(ServersContext);
+    const [cookies] = useCookies(['servers']);
     const servers: ServerContext[] = cookies.servers;
 
     servers.filter(s => !last.current.has(s.id))

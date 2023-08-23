@@ -29,7 +29,6 @@ public class MuzedoServerService {
         try {
             log.debug("#scheduleReconnect");
             muzedoServerDao.getAll()
-                .stream()
                 .filter(server ->
                     server.getExecutingCommand() == null
                         && server.getScheduledCommand() == null

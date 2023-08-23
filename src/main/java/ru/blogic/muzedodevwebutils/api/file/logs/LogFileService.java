@@ -33,6 +33,7 @@ public class LogFileService {
             "Tail",
             Command.Shell.SSH,
             false,
+            true,
             "tail 100 /workdir/logs/UZDO-integration.log",
             Command.SSH_READY_PATTERN,
             10,

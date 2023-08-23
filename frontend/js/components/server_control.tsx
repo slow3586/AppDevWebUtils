@@ -9,6 +9,7 @@ import {OverviewServer} from "./overview_server";
 import {ServerContext} from "./app";
 import {useCookies} from "react-cookie";
 import {getServerHistory} from "../clients/history_client";
+import {getFrontendConfig} from "../clients/frontend_client";
 
 export type ServerControlProps = {
     isActive: boolean,
@@ -29,35 +30,19 @@ export function ServerControl({isActive, serverId}: ServerControlProps) {
     const allowEnableAll = useRef(true);
     const [disableAll, setDisableAll] = useState(false);
     const [commandId, setCommandId] = useState("");
-
-    //const servers = useContext(ServersContext);
-    const [cookies, setCookies] = useCookies(['servers']);
+    const [cookies] = useCookies(['servers']);
     const servers: ServerContext[] = cookies.servers;
     const serverEnabled = servers.find(s => s.id == serverId).enabled;
 
     const queryClient = useQueryClient();
 
-    const commands = [{
-        id: "announce",
-        name: "Оповещение",
-        blocks: "NONE"
-    }, {
-        id: "ra",
-        name: "Рестарт",
-        blocks: "WS_BLOCK"
-    }, {
-        id: "uric",
-        name: "Обновление (integ + cfg)",
-        blocks: "WS_BLOCK"
-    }, {
-        id: "ura",
-        name: "Обновление (gp + integ + cfg)",
-        blocks: "WS_BLOCK"
-    }, {
-        id: "clear_cache",
-        name: "Клир кэш",
-        blocks: "SERVER_BLOCK"
-    }];
+    const frontendConfigQuery = useQuery(
+        ['getFrontendConfig'],
+        () => getFrontendConfig(),
+        {
+            staleTime: Infinity
+        });
+    const commands = frontendConfigQuery?.data?.commands ?? [];
     const getCommand = (id: string) => commands.find(c => c.id == id);
 
     const logQuery = useQuery(
@@ -155,16 +140,16 @@ export function ServerControl({isActive, serverId}: ServerControlProps) {
 
     const cantSchedule = !isNil(commandScheduled)
         && delayActive
-        && getCommand(commandId)?.blocks != "NONE";
+        && getCommand(commandId)?.blocksWsadmin;
 
     const cantExecute = !isNil(commandExecuting)
-        && getCommand(commandId)?.blocks != "NONE";
+        && getCommand(commandId)?.blocksWsadmin;
 
     const cantExecuteBecauseSchedule = !isNil(commandScheduled)
         && !delayActive
-        && getCommand(commandId)?.blocks != "NONE";
+        && getCommand(commandId)?.blocksWsadmin;
 
-    const wsadminUnavailable = getCommand(commandId)?.blocks != "NONE"
+    const wsadminUnavailable = getCommand(commandId)?.blocksWsadmin
         && !infoQuery?.data?.wsAdminShell;
 
     let errorMessages = new Array<string>;
@@ -217,7 +202,7 @@ export function ServerControl({isActive, serverId}: ServerControlProps) {
                                           className="comp-textarea"
                                           disabled={disableAll ||
                                               isNil(getCommand(commandId)) ||
-                                              getCommand(commandId).blocks == "NONE"}
+                                              getCommand(commandId).blocksWsadmin}
                                           type="number"
                                           min="0"
                                           max="600"

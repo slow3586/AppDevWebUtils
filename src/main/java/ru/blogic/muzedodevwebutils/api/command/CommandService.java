@@ -150,7 +150,7 @@ public class CommandService {
                     } finally {
                         if (isBlockingCommand)
                             muzedoServer.setExecutingCommand(null);
-                        if (command.blocksWsadmin() == Command.Block.SERVER)
+                        if (command.blocksWsadmin())
                             muzedoServerService.reconnectWsadminShell(muzedoServer);
                     }
                 };

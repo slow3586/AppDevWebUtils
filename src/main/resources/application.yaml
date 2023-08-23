@@ -17,7 +17,9 @@ spring:
     jcache:
       config: 'classpath:ehcache.xml'
   datasource:
-    url: 'jdbc:h2:file:./h2'
+    url: jdbc:h2:file:~/h2
+    username: sa
+    password:
     driver-class-name: org.h2.Driver
   jpa:
     hibernate:
@@ -38,33 +40,30 @@ server:
   port: '8443'
 
 app:
+  version: 'v0.7'
   buildVersion: '1.3-FP11'
+  security:
+    users:
+      - 'Багрянцев Дмитрий'
+      - 'Власов Павел'
+      - 'Дымко Андрей'
+      - 'Ермолаева Екатерина'
+      - 'Ермош Константин'
+      - 'Кравцов Павел'
+      - 'Скворцов Демьян'
+      - 'Чанчиков Сергей'
+      - 'Саитова Ильсияр'
+      - 'Каюмов Камиль'
+      - 'Климов Максим'
+      - 'Беркутов Алмаз'
+      - 'Габдуллина Гузель'
+      - 'Чурсин Владимир'
+      - 'Смирнова Наталья'
   muzedo:
     servers:
-      - id: '58'
-        host: '172.19.203.58'
-        uri: 'http://172.19.203.58/'
-        password: '${pw_58}'
-      - id: '59'
-        host: '172.19.203.59'
-        uri: 'http://172.19.203.59/'
-        password: '${pw_59}'
-      - id: '60'
-        host: '172.19.203.60'
-        uri: 'http://172.19.203.60/'
-        password: '${pw_60}'
-      - id: '61'
-        host: '172.19.203.61'
-        uri: 'http://172.19.203.61/'
-        password: '${pw_61}'
       - id: '146'
         host: '172.19.203.146'
-        uri: 'http://172.19.203.146/'
         password: '${pw_146}'
-      - id: '147'
-        host: '172.19.203.147'
-        uri: 'http://172.19.203.147/'
-        password: '${pw_147}'
   files:
     configs:
       - id: 'uzdo'
@@ -83,7 +82,7 @@ app:
           - announce_execution
       - id: 'hostname'
         name: 'Проверка SSH'
-        command: ''
+        command: 'hostname'
         timeout: 10
         shell: ssh
         flags:
@@ -117,16 +116,6 @@ app:
           - wsadmin_ready_pattern
           - wsadmin_block
           - wsadmin_err_patterns
-          - announce_execution
-      - id: 'clear_cache'
-        name: 'Клир кэш'
-        command: '/root/deploy/clear_cache_shortcut.sh'
-        timeout: 900
-        shell: wsadmin
-        flags:
-          - ssh_ready_pattern
-          - ssh_block
-          - ssh_err_patterns
           - announce_execution
       - id: 'clear_cache'
         name: 'Клир кэш'

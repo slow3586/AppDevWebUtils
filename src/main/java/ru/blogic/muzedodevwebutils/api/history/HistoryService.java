@@ -1,5 +1,6 @@
 package ru.blogic.muzedodevwebutils.api.history;
 
+import io.vavr.collection.Vector;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -50,7 +51,7 @@ public class HistoryService {
         muzedoServerDao
             .get(serverId)
             .getHistory()
-            .add(infoEntry);
+            .append(infoEntry);
 
         this.clearGetServerLogCache();
     }
@@ -65,10 +66,8 @@ public class HistoryService {
             .get(serverId)
             .getHistory();
         val infoEntries = log
-            .stream()
-            .skip(Math.min(log.size(),
-                Math.max(log.size() - last < 100 ? last : log.size() - 100, 0)))
-            .toList();
+            .drop(Math.min(log.size(),
+                Math.max(0, log.size() - last < 100 ? last : log.size() - 100)));
 
         return new GetServerHistoryResponse(
             infoEntries,
@@ -77,7 +76,7 @@ public class HistoryService {
     }
 
     public record GetServerHistoryResponse(
-        List<MuzedoServer.HistoryEntry> logs,
+        Vector<MuzedoServer.HistoryEntry> logs,
         int logLast
     ) {}
 }

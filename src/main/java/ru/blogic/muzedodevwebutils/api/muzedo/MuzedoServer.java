@@ -1,5 +1,6 @@
 package ru.blogic.muzedodevwebutils.api.muzedo;
 
+import io.vavr.collection.Vector;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.apache.sshd.client.channel.ChannelShell;
@@ -19,7 +20,6 @@ import java.util.concurrent.locks.ReentrantLock;
 public class MuzedoServer {
     final int id;
     final String host;
-    final String uri;
     final String password;
 
     String build;
@@ -29,7 +29,7 @@ public class MuzedoServer {
     ClientSession sshClientSession;
     ChannelShell wsadminShell;
 
-    List<HistoryEntry> history = new ArrayList<>();
+    final Vector<HistoryEntry> history = Vector.empty();
 
     final ReentrantLock commandSchedulingLock = new ReentrantLock();
     final ReentrantLock wsadminConnectLock = new ReentrantLock();

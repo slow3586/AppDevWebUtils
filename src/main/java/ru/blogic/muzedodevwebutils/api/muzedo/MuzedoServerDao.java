@@ -4,7 +4,6 @@ import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Repository;
 import ru.blogic.muzedodevwebutils.config.logging.DisableLoggingAspect;
 
@@ -27,7 +26,6 @@ public class MuzedoServerDao {
                 .map(dto -> new MuzedoServer(
                     dto.getId(),
                     dto.getHost(),
-                    dto.getUri(),
                     dto.getPassword()
                 ))
                 .toList());
@@ -37,14 +35,12 @@ public class MuzedoServerDao {
         final int id
     ) {
         return this.getAll()
-            .stream()
-            .filter(s -> s.getId() == id)
-            .findFirst()
-            .orElseThrow(() ->
+            .find(s -> s.getId() == id)
+            .getOrElseThrow(() ->
                 new RuntimeException("Не найден: " + id));
     }
 
-    public List<MuzedoServer> getAll() {
-        return new ArrayList<>(servers);
+    public io.vavr.collection.List<MuzedoServer> getAll() {
+        return io.vavr.collection.List.ofAll(servers);
     }
 }

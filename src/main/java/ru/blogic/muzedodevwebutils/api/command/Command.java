@@ -7,6 +7,7 @@ public record Command(
     String name,
     Shell shell,
     boolean blocksWsadmin,
+    boolean hidden,
     String command,
     String readyPattern,
     int timeout,
