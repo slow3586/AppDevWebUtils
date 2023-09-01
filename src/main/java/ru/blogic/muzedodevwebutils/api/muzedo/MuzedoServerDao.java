@@ -26,7 +26,11 @@ public class MuzedoServerDao {
                 .map(dto -> new MuzedoServer(
                     dto.getId(),
                     dto.getHost(),
-                    dto.getPassword()
+                    dto.getPassword(),
+                    new MuzedoServer.FilePaths(
+                        dto.getFilePaths().getConfigs(),
+                        dto.getFilePaths().getLogs()
+                    )
                 ))
                 .toList());
     }

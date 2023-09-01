@@ -7,11 +7,10 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 import ru.blogic.muzedodevwebutils.api.command.Command;
-import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
+import ru.blogic.muzedodevwebutils.api.file.configs.dao.ConfigFileDao;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerDao;
-import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerService;
-import ru.blogic.muzedodevwebutils.api.command.CommandService;
 import ru.blogic.muzedodevwebutils.api.muzedo.SSHService;
 
 @Service
@@ -19,36 +18,49 @@ import ru.blogic.muzedodevwebutils.api.muzedo.SSHService;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ConfigFileService {
-    CommandService commandService;
-    MuzedoServerService muzedoServerService;
     MuzedoServerDao muzedoServerDao;
     SSHService sshService;
+    ConfigFileDao configFileDao;
 
-    public GetConfigFileResponse getConfigFile(int serverId) {
+    static Command command = new Command(
+        "cat",
+        "Cat",
+        Command.Shell.SSH,
+        false,
+        true,
+        "cat",
+        Command.SSH_READY_PATTERN,
+        10,
+        false,
+        Command.SSH_ERR_PATTERNS
+    );
+
+    public Mono<GetConfigFileResponse> getServerConfigFile(
+        final int serverId,
+        final String configId
+    ) {
         val muzedoServer = muzedoServerDao.get(serverId);
-
-        val tail = new Command(
-            "tail_100",
-            "Tail",
-            Command.Shell.SSH,
-            false,
-            true,
-            "tail 100 /workdir/logs/UZDO-integration.log",
-            Command.SSH_READY_PATTERN,
-            10,
-            false,
-            Command.SSH_ERR_PATTERNS
-        );
+        val serverConfig = configFileDao.get(configId);
 
         val response = sshService.executeCommand(
             muzedoServer.getSshClientSession(),
-            tail,
-            List.empty(),
-            null);
+            command,
+            List.of(
+                muzedoServer.getFilePaths().configsFilePath()
+                    + serverConfig.getPath()));
 
-        return new GetConfigFileResponse();
+        return response.map(r ->
+            new GetConfigFileResponse(r.commandOutput()));
     }
 
-    public static class GetConfigFileResponse {
+    public record GetConfigFileRequest(
+        int serverId,
+        String configId
+    ) {
+    }
+
+    public record GetConfigFileResponse(
+        String text
+    ) {
     }
 }

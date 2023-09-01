@@ -1,4 +1,4 @@
-package ru.blogic.muzedodevwebutils.api.file.logs;
+package ru.blogic.muzedodevwebutils.api.file.logs.dao;
 
 import lombok.Data;
 import lombok.Getter;
@@ -10,12 +10,13 @@ import java.util.List;
 @ConfigurationProperties(prefix = "app.files.logs")
 @RequiredArgsConstructor
 @Getter
-public class LogFileConfig {
-    final List<LogFileConfigDto> servers;
+class LogFileConfig {
+    private final List<LogFileConfigDto> list;
 
     @Data
-    public static class LogFileConfigDto {
+    static class LogFileConfigDto {
         String id;
+        String name;
         String path;
     }
 }

@@ -30,14 +30,17 @@ export function App() {
             staleTime: Infinity,
         });
 
-    let cookieServers: ServerContext[] = [];
-    const configServers = frontendConfigQuery?.data?.servers
-    if (!isEmpty(configServers)) {
-        cookieServers = cookies.servers;
-        if (isEmpty(cookies.servers)) {
-            setCookies('servers', configServers);
-            cookieServers = configServers.map(s => new ServerContext(s, true));
-        }
+    const cookiesServers: ServerContext[] = cookies.servers ?? [];
+    const configServers: number[] = frontendConfigQuery?.data?.servers ?? [];
+    const servers = !isEmpty(configServers)
+        ? cookiesServers.filter(s => configServers.includes(s.id))
+            .concat(
+                configServers.filter(s => !cookiesServers.some(cs => cs.id == s))
+                    .map(s => new ServerContext(s, true))
+            )
+        : [];
+    if (!isEmpty(servers) && !servers.every(s => cookiesServers.some(cs => cs.id == s.id))) {
+        setCookies('servers', servers);
     }
 
     return (
@@ -53,7 +56,7 @@ export function App() {
                          title="Общее">
                         <Overview></Overview>
                     </Tab>
-                    {(cookieServers ?? [])
+                    {(servers)
                         .filter(s => s.enabled)
                         .map(s => (
                             <Tab key={`key${s.id}`}

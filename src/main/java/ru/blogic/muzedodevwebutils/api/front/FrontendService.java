@@ -10,7 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.blogic.muzedodevwebutils.api.command.Command;
-import ru.blogic.muzedodevwebutils.api.command.CommandDao;
+import ru.blogic.muzedodevwebutils.api.command.dao.CommandDao;
+import ru.blogic.muzedodevwebutils.api.file.configs.dao.ConfigFileDao;
+import ru.blogic.muzedodevwebutils.api.file.logs.dao.LogFileDao;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerDao;
 import ru.blogic.muzedodevwebutils.config.logging.DisableLoggingAspect;
@@ -22,6 +24,8 @@ import ru.blogic.muzedodevwebutils.config.logging.DisableLoggingAspect;
 public class FrontendService {
     CommandDao commandDao;
     MuzedoServerDao muzedoServerDao;
+    LogFileDao logFileDao;
+    ConfigFileDao configFileDao;
 
     @NonFinal
     @Value("${app.version}")
@@ -38,7 +42,17 @@ public class FrontendService {
                     c.name(),
                     c.blocksWsadmin()
                 )),
-            muzedoServerDao.getAll().map(MuzedoServer::getId)
+            muzedoServerDao.getAll().map(MuzedoServer::getId),
+            configFileDao.getAll().map(c ->
+                new GetFrontendConfigResponse.GetFrontendConfigResponseConfig(
+                    c.getId(),
+                    c.getName()
+                )),
+            logFileDao.getAll().map(c ->
+                new GetFrontendConfigResponse.GetFrontendConfigResponseLog(
+                    c.getId(),
+                    c.getName()
+                ))
         );
     }
 
@@ -46,13 +60,25 @@ public class FrontendService {
     public record GetFrontendConfigResponse(
         String version,
         List<GetFrontendConfigResponseCommand> commands,
-        List<Integer> servers
+        List<Integer> servers,
+        List<GetFrontendConfigResponseConfig> configs,
+        List<GetFrontendConfigResponseLog> logs
     ) {
 
         public record GetFrontendConfigResponseCommand(
             String id,
             String name,
             boolean blocksWsadmin
+        ){}
+
+        public record GetFrontendConfigResponseConfig(
+            String id,
+            String name
+        ){}
+
+        public record GetFrontendConfigResponseLog(
+            String id,
+            String name
         ){}
     }
 }

@@ -5,9 +5,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.blogic.muzedodevwebutils.api.info.InfoService;
+import reactor.core.publisher.Mono;
+import ru.blogic.muzedodevwebutils.api.command.dto.CommandRunRequest;
 
 @RestController
 @RequestMapping("api/file/log")
@@ -16,10 +19,10 @@ import ru.blogic.muzedodevwebutils.api.info.InfoService;
 public class LogFileServiceRest {
     LogFileService logFileService;
 
-    @GetMapping(path = "{serverId}", produces = "application/json")
-    public LogFileService.GetLogFileResponse getServerLog(
-        @PathVariable final int serverId
+    @PostMapping(produces = "application/json")
+    public Mono<LogFileService.GetLogFileResponse> getServerLogFile(
+        @RequestBody final LogFileService.GetLogFileRequest getLogFileRequest
     ) {
-        return logFileService.getServerLog(serverId);
+        return logFileService.getServerLogFile(getLogFileRequest);
     }
 }

@@ -31,7 +31,7 @@ export function ServerControl({isActive, serverId}: ServerControlProps) {
     const [disableAll, setDisableAll] = useState(false);
     const [commandId, setCommandId] = useState("");
     const [cookies] = useCookies(['servers']);
-    const servers: ServerContext[] = cookies.servers;
+    const servers: ServerContext[] = cookies.servers ?? [];
     const serverEnabled = servers.find(s => s.id == serverId).enabled;
 
     const queryClient = useQueryClient();

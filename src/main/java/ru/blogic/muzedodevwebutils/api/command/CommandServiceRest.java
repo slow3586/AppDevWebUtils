@@ -18,11 +18,11 @@ public class CommandServiceRest {
     private final CommandService commandService;
 
     @GetMapping(path = "run/{host}/{command}", produces = "application/json")
-    public String runGet(
+    public void runGet(
         @PathVariable("host") int serverId,
         @PathVariable("command") String commandId
     ) {
-        return commandService.run(
+        commandService.run(
             new CommandRunRequest(
                 serverId,
                 commandId,
@@ -31,11 +31,10 @@ public class CommandServiceRest {
     }
 
     @PostMapping(path = "run", produces = "application/json")
-    public String runPost(
+    public void runPost(
         @RequestBody final CommandRunRequest commandRunRequest
     ) {
-        return commandService.run(
-            commandRunRequest);
+        commandService.run(commandRunRequest);
     }
 
     @PostMapping(path = "delay", produces = "application/json")

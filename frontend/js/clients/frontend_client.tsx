@@ -6,10 +6,22 @@ export type FrontendConfigCommand = {
     blocksWsadmin: boolean
 }
 
+export type FrontendConfigConfig = {
+    id: string,
+    name: string
+}
+
+export type FrontendConfigLog = {
+    id: string,
+    name: string
+}
+
 export type GetFrontendConfigResponse = {
     version: string,
     commands: FrontendConfigCommand[],
-    servers: number[]
+    servers: number[],
+    configs: FrontendConfigConfig[],
+    logs: FrontendConfigLog[]
 }
 
 export const getFrontendConfig = (

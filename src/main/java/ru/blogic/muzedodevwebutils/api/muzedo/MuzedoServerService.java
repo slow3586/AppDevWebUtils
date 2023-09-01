@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import ru.blogic.muzedodevwebutils.api.command.CommandDao;
+import ru.blogic.muzedodevwebutils.api.command.dao.CommandDao;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -113,13 +113,11 @@ public class MuzedoServerService {
             sshService.executeCommand(
                 shell,
                 commandDao.get("cd_root_deploy"),
-                List.empty(),
-                null);
+                List.empty());
             sshService.executeCommand(
                 shell,
                 commandDao.get("wsadmin_start"),
-                List.empty(),
-                null);
+                List.empty());
 
             muzedoServer.setWsadminShell(shell);
             log.debug("{}: WsAdmin запущен!", muzedoServer.getHost());

@@ -1,11 +1,12 @@
-package ru.blogic.muzedodevwebutils.api.command;
+package ru.blogic.muzedodevwebutils.api.command.dao;
 
 import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Repository;
-import ru.blogic.muzedodevwebutils.api.command.CommandConfig.CommandConfigDto.CommandConfigDtoFlags;
+import ru.blogic.muzedodevwebutils.api.command.Command;
+import ru.blogic.muzedodevwebutils.api.command.dao.CommandConfig.CommandConfigDto.CommandConfigDtoFlags;
 import ru.blogic.muzedodevwebutils.config.logging.DisableLoggingAspect;
 
 import java.util.ArrayList;

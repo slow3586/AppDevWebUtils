@@ -6,13 +6,10 @@ import lombok.RequiredArgsConstructor;
 import org.apache.sshd.client.channel.ChannelShell;
 import org.apache.sshd.client.session.ClientSession;
 import ru.blogic.muzedodevwebutils.api.command.Command;
+import ru.blogic.muzedodevwebutils.utils.Timer;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Data
@@ -21,6 +18,7 @@ public class MuzedoServer {
     final int id;
     final String host;
     final String password;
+    final FilePaths filePaths;
 
     String build;
     MuzedoBuildInfo gpBuildInfo;
@@ -38,7 +36,7 @@ public class MuzedoServer {
     ScheduledCommand scheduledCommand = null;
 
     Command executingCommand = null;
-    final AtomicInteger executingCommandTimer = new AtomicInteger(0);
+    Timer executingCommandTimer = new Timer();
 
     public static String UNKNOWN_BUILD = "Неизвестная сборка";
 
@@ -64,7 +62,12 @@ public class MuzedoServer {
 
     public record ScheduledCommand(
         Command command,
-        ScheduledFuture<String> future,
-        Callable<String> callable
+        ScheduledFuture<?> future,
+        Runnable callable
     ) {}
+
+    public record FilePaths(
+        String configsFilePath,
+        String logsFilePath
+    ){}
 }

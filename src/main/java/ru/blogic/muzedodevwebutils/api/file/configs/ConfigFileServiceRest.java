@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.async.DeferredResult;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("api/file/config")
@@ -15,10 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class ConfigFileServiceRest {
     ConfigFileService configFileService;
 
-    @GetMapping(path = "{serverId}", produces = "application/json")
-    public ConfigFileService.GetConfigFileResponse get(
-        @PathVariable final int serverId
+    @GetMapping(path = "{serverId}/{configId}", produces = "application/json")
+    public Mono<ConfigFileService.GetConfigFileResponse> getServerConfigFile(
+        @PathVariable final int serverId,
+        @PathVariable final String configId
     ) {
-        return configFileService.getConfigFile(serverId);
+        return configFileService.getServerConfigFile(serverId, configId);
     }
 }

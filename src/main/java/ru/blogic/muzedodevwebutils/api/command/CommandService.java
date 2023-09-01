@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import ru.blogic.muzedodevwebutils.api.command.dao.CommandDao;
 import ru.blogic.muzedodevwebutils.api.history.HistoryService;
 import ru.blogic.muzedodevwebutils.api.muzedo.SSHService;
 import ru.blogic.muzedodevwebutils.api.command.dto.CommandCancelRequest;
@@ -18,8 +19,8 @@ import ru.blogic.muzedodevwebutils.api.command.dto.CommandRunRequest;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerDao;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerService;
+import ru.blogic.muzedodevwebutils.utils.Timer;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -37,13 +38,13 @@ public class CommandService {
     ScheduledExecutorService executorService =
         Executors.newScheduledThreadPool(4);
 
-    public String run(
+    public void run(
         final CommandRunRequest commandRunRequest
     ) {
         val muzedoServer = muzedoServerDao.get(commandRunRequest.serverId());
         val command = commandDao.get(commandRunRequest.commandId());
 
-        try {
+        try (final Timer runTimer = muzedoServer.getExecutingCommandTimer().start()) {
             if (muzedoServer.getWsadminShell() == null
                 || muzedoServer.getWsadminShell().isClosing()
                 || !muzedoServer.getWsadminShell().isOpen()) {
@@ -78,7 +79,7 @@ public class CommandService {
                 }
                 //endregion
 
-                final Callable<String> commandCallable = () -> {
+                final Runnable commandRunnable = () -> {
                     try {
                         if (isBlockingCommand)
                             muzedoServer.setExecutingCommand(command);
@@ -100,14 +101,13 @@ public class CommandService {
                         //endregion
 
                         //region ЗАПУСК ОПЕРАЦИИ
-                        final String result;
                         if (command.shell().equals(Command.Shell.WSADMIN)) {
-                            CheckedFunction0<String> execute = () -> sshService.executeCommand(
+                            CheckedFunction0<SSHService.ExecuteCommandResult> execute = () ->
+                                sshService.executeCommand(
                                 muzedoServer.getWsadminShell(),
                                 command,
-                                List.empty(),
-                                muzedoServer.getExecutingCommandTimer());
-                            result = Try.of(execute)
+                                List.empty()).block();
+                            Try.of(execute)
                                 .onFailure(e -> log.error("#run ошибка при первом запуске, запускаю вторую попытку...", e))
                                 .getOrElse(() -> {
                                     muzedoServerService.reconnectWsadminShell(muzedoServer);
@@ -117,13 +117,12 @@ public class CommandService {
                                                 + e1.getMessage(), e1));
                                 });
                         } else if (command.shell().equals(Command.Shell.SSH)) {
-                            result = sshService.executeCommand(
+                            sshService.executeCommand(
                                 muzedoServer.getSshClientSession(),
                                 command,
-                                List.empty(),
-                                muzedoServer.getExecutingCommandTimer());
+                                List.empty());
                         } else {
-                            result = "";
+                            return;
                         }
                         //endregion
 
@@ -134,12 +133,9 @@ public class CommandService {
                                 command.announce()
                                     ? MuzedoServer.HistoryEntry.Severity.CRIT
                                     : MuzedoServer.HistoryEntry.Severity.INFO,
-                                "Завершено \"" + command.name() + "\" за " + muzedoServer.getExecutingCommandTimer().get() + " сек.");
-                            muzedoServer.getExecutingCommandTimer().set(0);
+                                "Завершено \"" + command.name() + "\" за " + muzedoServer.getExecutingCommandTimer().getTime() + " сек.");
                         }
                         //endregion
-
-                        return result;
                     } catch (Exception e) {
                         historyService.writeInfo(
                             muzedoServer.getId(),
@@ -170,15 +166,14 @@ public class CommandService {
                     muzedoServer.setScheduledCommand(new MuzedoServer.ScheduledCommand(
                         command,
                         executorService.schedule(
-                            commandCallable,
+                            commandRunnable,
                             commandDelay,
                             TimeUnit.SECONDS),
-                        commandCallable
+                        commandRunnable
                     ));
-                    return "Scheduled";
                     //endregion
                 } else {
-                    return commandCallable.call();
+                    commandRunnable.run();
                 }
             } finally {
                 muzedoServer.getCommandSchedulingLock().unlock();

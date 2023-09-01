@@ -61,16 +61,23 @@ app:
       - 'Смирнова Наталья'
   muzedo:
     servers:
-      - id: '146'
-        host: '172.19.203.146'
-        password: '${pw_146}'
+      - id: '61'
+        host: '172.19.203.61'
+        password: '${pw_61}'
+        file-paths:
+          configs: '/fs/it/gp-uzdo/'
+          logs: '/workdir/logs/'
   files:
     configs:
-      - id: 'uzdo'
-        path: 'uzdo.properties'
+      list:
+        - id: 'uzdo.properties'
+          name: 'Конфиг приложения'
+          path: 'uzdo/uzdo.properties'
     logs:
-      - id: 'integ'
-        path: 'UZDO-integration.log'
+      list:
+        - id: 'UZDO-integration'
+          name: 'Логи integration'
+          path: 'UZDO-integration.log'
   command:
     commands:
       - id: 'announce'
@@ -100,7 +107,7 @@ app:
       - id: 'ura'
         name: 'Обновление (gp + integ + cfg)'
         command: 'ura(1)'
-        timeout: 480
+        timeout: 300
         shell: wsadmin
         flags:
           - wsadmin_ready_pattern
@@ -110,7 +117,7 @@ app:
       - id: 'uric'
         name: 'Обновление (integ + cfg)'
         command: 'uric()'
-        timeout: 480
+        timeout: 240
         shell: wsadmin
         flags:
           - wsadmin_ready_pattern

@@ -10,13 +10,20 @@ import java.util.List;
 @ConfigurationProperties(prefix = "app.muzedo")
 @RequiredArgsConstructor
 @Getter
-public class MuzedoServerConfig {
+class MuzedoServerConfig {
     final List<MuzedoServerConfigDto> servers;
 
     @Data
-    public static class MuzedoServerConfigDto {
+    protected static class MuzedoServerConfigDto {
         int id;
         String host;
         String password;
+        FilePaths filePaths;
+
+        @Data
+        protected static class FilePaths {
+            String configs;
+            String logs;
+        }
     }
 }

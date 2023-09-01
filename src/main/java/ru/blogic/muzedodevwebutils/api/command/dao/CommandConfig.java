@@ -1,20 +1,21 @@
-package ru.blogic.muzedodevwebutils.api.command;
+package ru.blogic.muzedodevwebutils.api.command.dao;
 
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import ru.blogic.muzedodevwebutils.api.command.Command;
 
 import java.util.List;
 
 @ConfigurationProperties(prefix = "app.command")
 @RequiredArgsConstructor
 @Getter
-public class CommandConfig {
+class CommandConfig {
     final List<CommandConfigDto> commands;
 
     @Data
-    public static class CommandConfigDto {
+    static class CommandConfigDto {
         String id;
         String name;
         String command;

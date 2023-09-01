@@ -9,12 +9,14 @@ import org.springframework.boot.autoconfigure.h2.H2ConsoleAutoConfiguration;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(exclude = H2ConsoleAutoConfiguration.class)
 @EnableScheduling
 @EnableConfigurationProperties
 @ConfigurationPropertiesScan
+@EnableAsync
 public class Application {
 
     public static void main(String[] args) {

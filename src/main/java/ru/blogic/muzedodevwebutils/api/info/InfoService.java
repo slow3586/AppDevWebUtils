@@ -80,7 +80,7 @@ public class InfoService {
                 .map(MuzedoServer.ScheduledCommand::command)
                 .getOrNull(),
             muzedoServer.getExecutingCommand(),
-            muzedoServer.getExecutingCommandTimer().get(),
+            muzedoServer.getExecutingCommandTimer().getTime(),
             Option.of(muzedoServer.getScheduledCommand())
                 .map(MuzedoServer.ScheduledCommand::future)
                 .map(f -> f.getDelay(TimeUnit.SECONDS))

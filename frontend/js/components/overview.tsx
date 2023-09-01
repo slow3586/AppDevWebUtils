@@ -14,7 +14,7 @@ export function Overview() {
     const info = useRef("");
     const firstRun = useRef(true);
     const [cookies] = useCookies(['servers']);
-    const servers: ServerContext[] = cookies.servers;
+    const servers: ServerContext[] = cookies.servers ?? [];
 
     servers.filter(s => !last.current.has(s.id))
         .forEach(s => last.current.set(s.id, 0));

@@ -3,6 +3,7 @@ package ru.blogic.muzedodevwebutils.api.muzedo;
 import io.vavr.collection.List;
 import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -16,10 +17,10 @@ import org.apache.sshd.common.channel.ChannelListener;
 import org.apache.sshd.common.channel.RequestHandler;
 import org.apache.sshd.common.util.io.output.NoCloseOutputStream;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 import ru.blogic.muzedodevwebutils.api.command.Command;
 
 import java.io.ByteArrayOutputStream;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @Slf4j
@@ -76,24 +77,27 @@ public class SSHService {
         }
     }
 
-    public String executeCommand(
+    public Mono<ExecuteCommandResult> executeCommand(
         final ClientSession clientSession,
         final Command command,
-        final List<String> arguments,
-        final AtomicInteger timerOut
+        final List<String> arguments
     ) {
         try (val channelShell = createShellChannel(clientSession)) {
-            return executeCommand(channelShell, command, arguments, timerOut);
+            return executeCommand(channelShell, command, arguments);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public String executeCommand(
-        final PtyCapableChannelSession channelShell,
-        final Command command,
-        final List<String> arguments,
-        final AtomicInteger timerOut
+    public record ExecuteCommandResult(
+        String entireOutput,
+        String commandOutput
+    ) {}
+
+    public Mono<ExecuteCommandResult> executeCommand(
+        @NonNull final PtyCapableChannelSession channelShell,
+        @NonNull final Command command,
+        @NonNull final List<String> arguments
     ) {
         try (
             val in = new NoCloseOutputStream(channelShell.getInvertedIn());
@@ -101,19 +105,21 @@ public class SSHService {
         ) {
             channelShell.setOut(baos);
 
+            val commandText = List.of(
+                command.command(),
+                arguments.mkString(" ")
+            ).mkString(" ");
+
             in.write(21);
-            in.write(command.command().getBytes());
-            if (arguments != null && !arguments.isEmpty()) {
-                in.write(" ".getBytes());
-                in.write(arguments.mkString(" ").getBytes());
-            }
+            in.write(commandText.getBytes());
             in.write("\n".getBytes());
             in.flush();
 
-            var count = 1;
             var substringBegin = 0;
+            var timer = 0;
             while (true) {
                 Thread.sleep(1000);
+                timer++;
                 val entireOutput = baos.toString().trim();
                 val newOutputPart = entireOutput.substring(substringBegin);
                 if (!newOutputPart.isEmpty()) {
@@ -121,7 +127,7 @@ public class SSHService {
                     log.debug("{}: {}: ({}s) {}",
                         channelShell.getSession().getRemoteAddress(),
                         command.command(),
-                        count,
+                        timer,
                         newOutputPart
                     );
                 }
@@ -136,7 +142,7 @@ public class SSHService {
                         channelShell.getSession().getRemoteAddress(),
                         command.command(),
                         err.get());
-                    throw new RuntimeException("#executeCommand ошибка: "
+                    throw new RuntimeException("Ошибка: "
                         + channelShell.getSession().getRemoteAddress()
                         + ": " + err.get());
                 }
@@ -144,21 +150,28 @@ public class SSHService {
                     log.debug("{}: {}: complete @ {}s",
                         channelShell.getSession().getRemoteAddress(),
                         command.command(),
-                        count);
-                    return StringUtils.substringBeforeLast(entireOutput, "\n");
+                        timer);
+
+                    val entireOutputResult = StringUtils.substringBeforeLast(entireOutput, "\n");
+                    val commandOutputResult = StringUtils.substringAfter(
+                            StringUtils.substringAfter(
+                                entireOutputResult,
+                                commandText),
+                            "\n");
+
+                    return Mono.just(new ExecuteCommandResult(
+                        entireOutputResult,
+                        commandOutputResult
+                    ));
                 }
-                count++;
-                if (timerOut != null) {
-                    timerOut.set(count);
-                }
-                if (command.timeout() != 0 && count > command.timeout()) {
-                    throw new RuntimeException("#executeCommand Таймаут: "
+                if (command.timeout() != 0 && timer > command.timeout()) {
+                    throw new RuntimeException("Таймаут: "
                         + channelShell.getSession().getRemoteAddress()
                         + ": " + command);
                 }
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("#executeCommand: " + e.getMessage(), e);
         }
     }
 }

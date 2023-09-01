@@ -5,7 +5,7 @@ export enum Type {
     SSH = "SSH"
 }
 
-export interface CommandRunRequest {
+export type CommandRunRequest = {
     serverId: number,
     commandId: string,
     comment: string,
