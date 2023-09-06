@@ -16,7 +16,7 @@ class ConfigFileConfig {
     @Data
     static class ConfigFileConfigDto {
         String id;
-        String name;
         String path;
+        boolean skipChangesCheck;
     }
 }

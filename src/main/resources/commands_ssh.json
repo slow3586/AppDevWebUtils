@@ -1,8 +1,0 @@
-{
-  "commands_ssh": [
-    {
-      "id": "clear_cache",
-      "name": "Полный рестарт Вебсферы (Clear cache)"
-    }
-  ]
-}

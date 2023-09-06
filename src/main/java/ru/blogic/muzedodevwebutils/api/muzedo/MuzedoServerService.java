@@ -6,6 +6,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.apache.sshd.client.channel.ChannelShell;
+import org.apache.sshd.client.session.ClientSession;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.blogic.muzedodevwebutils.api.command.dao.CommandDao;
@@ -55,7 +57,7 @@ public class MuzedoServerService {
                 muzedoServer.getSshClientSession().close();
             }
 
-            val session = sshService.createSession(muzedoServer);
+            final ClientSession session = sshService.createSession(muzedoServer);
             session.addCloseFutureListener((future) -> {
                 log.warn(muzedoServer.getHost() + ": закрыт SshSession!");
                 reconnectSshSession(muzedoServer);
@@ -103,7 +105,7 @@ public class MuzedoServerService {
                 muzedoServer.getWsadminShell().close();
             }
 
-            val shell = sshService.createShellChannel(muzedoServer.getSshClientSession());
+            final ChannelShell shell = sshService.createShellChannel(muzedoServer.getSshClientSession());
             shell.addCloseFutureListener((future) -> {
                 log.warn(muzedoServer.getHost() + ": закрыт WsAdminShell!");
                 reconnectWsadminShell(muzedoServer);

@@ -1,5 +1,6 @@
 package ru.blogic.muzedodevwebutils.config;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -8,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
@@ -26,6 +28,11 @@ import java.util.List;
 public class SecurityConfig {
     final DataSource dataSource;
     final SecurityConfigConfig securityConfigConfig;
+
+    @PostConstruct
+    public void postConstruct() {
+        SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -46,7 +53,7 @@ public class SecurityConfig {
     }
 
     public PersistentTokenRepository persistentTokenRepository() {
-        val tokenRepository = new JdbcTokenRepositoryImpl();
+        final JdbcTokenRepositoryImpl tokenRepository = new JdbcTokenRepositoryImpl();
         tokenRepository.setDataSource(dataSource);
         //tokenRepository.setCreateTableOnStartup(true);
         return tokenRepository;

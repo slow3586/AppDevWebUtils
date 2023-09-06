@@ -26,6 +26,7 @@ import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerDao;
 
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -67,7 +68,7 @@ public class InfoService {
     @DisableLoggingAspect
     @Cacheable(value = "getServerInfo")
     public GetServerInfoResponse getServerInfo(int serverId) {
-        val muzedoServer = muzedoServerDao.get(serverId);
+        final MuzedoServer muzedoServer = muzedoServerDao.get(serverId);
 
         return new GetServerInfoResponse(
             muzedoServer.getSshClientSession() != null
@@ -95,7 +96,7 @@ public class InfoService {
     private MuzedoServer.MuzedoBuildInfo parseBuildInfoLines(
         final String buildInfo
     ) {
-        val lines = Arrays.stream(
+        final List<String> lines = Arrays.stream(
                 StringUtils.split(
                     StringUtils.defaultString(buildInfo),
                     "\n"))
@@ -153,7 +154,7 @@ public class InfoService {
                 final Function2<String, Consumer<MuzedoServer.MuzedoBuildInfo>, Mono<Void>>
                     getBuildInfo = (uri, setBuildInfo) ->
                     client.get()
-                        .uri("http://" + server.getHost() + "/" + GP_BUILD_INFO_URI)
+                        .uri("http://" + server.getHost() + "/" + uri)
                         .retrieve()
                         .bodyToMono(String.class)
                         .doOnError(e -> this.doOnErr(server, e))
@@ -164,8 +165,8 @@ public class InfoService {
                     .and(getBuildInfo.apply(INTEG_BUILD_INFO_URI, server::setIntegBuildInfo))
                     .then()
                     .doOnSuccess(a -> {
-                        val gpBuildInfo = server.getGpBuildInfo();
-                        val integBuildInfo = server.getIntegBuildInfo();
+                        final MuzedoServer.MuzedoBuildInfo gpBuildInfo = server.getGpBuildInfo();
+                        final MuzedoServer.MuzedoBuildInfo integBuildInfo = server.getIntegBuildInfo();
                         if (gpBuildInfo != null && gpBuildInfo.date() != null
                             && integBuildInfo != null && integBuildInfo.date() != null
                         ) {

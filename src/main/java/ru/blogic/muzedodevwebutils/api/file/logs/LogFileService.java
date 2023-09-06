@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.blogic.muzedodevwebutils.api.command.Command;
 import ru.blogic.muzedodevwebutils.api.file.logs.dao.LogFileDao;
+import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerDao;
 import ru.blogic.muzedodevwebutils.api.muzedo.SSHService;
 
@@ -38,16 +39,17 @@ public class LogFileService {
     public Mono<GetLogFileResponse> getServerLogFile(
         final GetLogFileRequest request
     ) {
-        val muzedoServer = muzedoServerDao.get(request.serverId());
-        val serverLog = logFileDao.get(request.logId());
+        final MuzedoServer muzedoServer = muzedoServerDao.get(request.serverId());
+        final LogFile serverLog = logFileDao.get(request.logId());
 
-        val response = sshService.executeCommand(
+        final Mono<SSHService.ExecuteCommandResult> response = sshService.executeCommand(
             muzedoServer.getSshClientSession(),
             command,
             List.of(
                 "-n " + request.linesCount(),
                 muzedoServer.getFilePaths().logsFilePath()
-                    + serverLog.getPath()));
+                    + "/"
+                    + serverLog.path()));
 
         return response.map(r ->
             new GetLogFileResponse(r.commandOutput()));

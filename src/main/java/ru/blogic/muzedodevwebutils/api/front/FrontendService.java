@@ -45,13 +45,11 @@ public class FrontendService {
             muzedoServerDao.getAll().map(MuzedoServer::getId),
             configFileDao.getAll().map(c ->
                 new GetFrontendConfigResponse.GetFrontendConfigResponseConfig(
-                    c.getId(),
-                    c.getName()
+                    c.id()
                 )),
             logFileDao.getAll().map(c ->
                 new GetFrontendConfigResponse.GetFrontendConfigResponseLog(
-                    c.getId(),
-                    c.getName()
+                    c.id()
                 ))
         );
     }
@@ -72,13 +70,11 @@ public class FrontendService {
         ){}
 
         public record GetFrontendConfigResponseConfig(
-            String id,
-            String name
+            String id
         ){}
 
         public record GetFrontendConfigResponseLog(
-            String id,
-            String name
+            String id
         ){}
     }
 }

@@ -1,17 +1,24 @@
 package ru.blogic.muzedodevwebutils.api.file.configs;
 
+import io.vavr.Patterns;
+import io.vavr.Tuple2;
 import io.vavr.collection.List;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.blogic.muzedodevwebutils.api.command.Command;
 import ru.blogic.muzedodevwebutils.api.file.configs.dao.ConfigFileDao;
+import ru.blogic.muzedodevwebutils.api.history.HistoryService;
+import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerDao;
 import ru.blogic.muzedodevwebutils.api.muzedo.SSHService;
+
+import java.util.Arrays;
+import java.util.regex.Pattern;
 
 @Service
 @Slf4j
@@ -21,14 +28,30 @@ public class ConfigFileService {
     MuzedoServerDao muzedoServerDao;
     SSHService sshService;
     ConfigFileDao configFileDao;
+    HistoryService historyService;
 
-    static Command command = new Command(
-        "cat",
-        "Cat",
+    static Pattern NEW_LINE = Pattern.compile("(\r\n|\r|\n)", Pattern.MULTILINE);
+
+    static Command GET_CONFIG_COMMAND = new Command(
+        "awk",
+        "Awk",
         Command.Shell.SSH,
         false,
         true,
-        "cat",
+        "awk 1",
+        Command.SSH_READY_PATTERN,
+        10,
+        false,
+        Command.SSH_ERR_PATTERNS
+    );
+
+    static Command SAVE_CONFIG_COMMAND = new Command(
+        "echo",
+        "Echo",
+        Command.Shell.SSH,
+        false,
+        true,
+        "echo",
         Command.SSH_READY_PATTERN,
         10,
         false,
@@ -39,28 +62,100 @@ public class ConfigFileService {
         final int serverId,
         final String configId
     ) {
-        val muzedoServer = muzedoServerDao.get(serverId);
-        val serverConfig = configFileDao.get(configId);
+        final MuzedoServer muzedoServer = muzedoServerDao.get(serverId);
+        final ConfigFile serverConfig = configFileDao.get(configId);
 
-        val response = sshService.executeCommand(
+        final Mono<SSHService.ExecuteCommandResult> response = sshService.executeCommand(
             muzedoServer.getSshClientSession(),
-            command,
+            GET_CONFIG_COMMAND,
             List.of(
                 muzedoServer.getFilePaths().configsFilePath()
-                    + serverConfig.getPath()));
+                    + "/"
+                    + serverConfig.path()));
 
-        return response.map(r ->
-            new GetConfigFileResponse(r.commandOutput()));
+
+        return response
+            .map(r ->
+                new GetConfigFileResponse(r.commandOutput()));
+    }
+
+    public void saveServerConfigFile(
+        final SaveConfigFileRequest saveConfigFileRequest
+    ) {
+        final MuzedoServer muzedoServer = muzedoServerDao.get(saveConfigFileRequest.serverId());
+        try {
+            final ConfigFile serverConfig = configFileDao.get(saveConfigFileRequest.configId());
+            final String serverConfigFile = this.getServerConfigFile(
+                    saveConfigFileRequest.serverId(),
+                    saveConfigFileRequest.configId()
+                ).map(GetConfigFileResponse::text)
+                .block();
+
+            if (StringUtils.isBlank(serverConfigFile)) {
+                throw new RuntimeException("При запросе конфиг со стенда пришел пустым или не пришел");
+            }
+
+            final List<String> previousVersion = List.ofAll(
+                Arrays.asList(NEW_LINE.split(StringUtils.defaultString(serverConfigFile))));
+            final List<String> newVersion = List.ofAll(
+                Arrays.asList(NEW_LINE.split(StringUtils.defaultString(saveConfigFileRequest.configText()))));
+
+            final int sizeDifference = newVersion.size() - previousVersion.size();
+            if (sizeDifference > 1 || sizeDifference < -1) {
+                throw new RuntimeException("В конфиге было ДОБАВЛЕНО/УБРАНО более 1 строки: " +
+                    "изменено " + sizeDifference + " строк");
+            }
+
+            final List<Tuple2<Tuple2<String, String>, Integer>> differentLines = previousVersion
+                .zip(newVersion)
+                .zipWithIndex()
+                .filter(t -> !StringUtils.equalsIgnoreCase(t._1._1, t._1._2));
+            if (sizeDifference == 0 && differentLines.size() != 1) {
+                throw new RuntimeException("В конфиге было ИЗМЕНЕНО более/менее 1 строки: "
+                    + "изменено " + sizeDifference + " строк: "
+                    + differentLines.map(l -> "№" + l._2).mkString(", "));
+            }
+            final Tuple2<Tuple2<String, String>, Integer> changedLine = differentLines.head();
+
+            final SSHService.ExecuteCommandResult saveResult = sshService.executeCommand(
+                muzedoServer.getSshClientSession(),
+                SAVE_CONFIG_COMMAND,
+                List.of(
+                    "'" + saveConfigFileRequest.configText()
+                        + "' >| "
+                        + muzedoServer.getFilePaths().configsFilePath()
+                        + "/"
+                        + serverConfig.path())
+            ).block();
+
+            historyService.writeInfo(
+                muzedoServer.getId(),
+                MuzedoServer.HistoryEntry.Severity.CRIT,
+                "Изменена строка конфига " +
+                    "\"" + serverConfig.id() + "\": " +
+                    "№" + changedLine._2() + " "
+                    + "\"" + changedLine._1()._2 + "\"");
+        } catch (Exception e) {
+            historyService.writeInfo(
+                muzedoServer.getId(),
+                MuzedoServer.HistoryEntry.Severity.INFO,
+                "Ошибка изменения конфига: " + e.getMessage());
+            throw new RuntimeException("#saveServerConfigFile", e);
+        }
     }
 
     public record GetConfigFileRequest(
         int serverId,
         String configId
-    ) {
-    }
+    ) {}
 
     public record GetConfigFileResponse(
         String text
-    ) {
-    }
+    ) {}
+
+    public record SaveConfigFileRequest(
+        int serverId,
+        String configId,
+        String configText
+    ) {}
 }

@@ -8,7 +8,11 @@ import org.apache.sshd.client.session.ClientSession;
 import ru.blogic.muzedodevwebutils.api.command.Command;
 import ru.blogic.muzedodevwebutils.utils.Timer;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -27,7 +31,7 @@ public class MuzedoServer {
     ClientSession sshClientSession;
     ChannelShell wsadminShell;
 
-    final Vector<HistoryEntry> history = Vector.empty();
+    final ConcurrentLinkedQueue<HistoryEntry> history = new ConcurrentLinkedQueue<>();
 
     final ReentrantLock commandSchedulingLock = new ReentrantLock();
     final ReentrantLock wsadminConnectLock = new ReentrantLock();
@@ -37,6 +41,7 @@ public class MuzedoServer {
 
     Command executingCommand = null;
     Timer executingCommandTimer = new Timer();
+    Timer delayBetweenCommands = new Timer();
 
     public static String UNKNOWN_BUILD = "Неизвестная сборка";
 

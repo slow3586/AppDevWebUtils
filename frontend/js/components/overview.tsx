@@ -74,11 +74,9 @@ export function Overview() {
     return (
         <div className="comp-overview">
             <div className="comp-col">
-                <Form.Group controlId="exampleForm.ControlTextarea1">
-                    <Form.Control className="comp-textarea"
-                                  value={info.current}
-                                  readOnly as="textarea" rows={15}/>
-                </Form.Group>
+                <Form.Control className="comp-textarea"
+                              value={info.current}
+                              readOnly as="textarea" rows={15}/>
             </div>
             <div className="comp-col">
                 {servers

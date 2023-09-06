@@ -202,7 +202,7 @@ export function ServerControl({isActive, serverId}: ServerControlProps) {
                                           className="comp-textarea"
                                           disabled={disableAll ||
                                               isNil(getCommand(commandId)) ||
-                                              getCommand(commandId).blocksWsadmin}
+                                              !getCommand(commandId).blocksWsadmin}
                                           type="number"
                                           min="0"
                                           max="600"

@@ -20,6 +20,7 @@ import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerDao;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerService;
 import ru.blogic.muzedodevwebutils.utils.Timer;
+import ru.blogic.muzedodevwebutils.utils.TimerScheduler;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -35,16 +36,17 @@ public class CommandService {
     MuzedoServerService muzedoServerService;
     HistoryService historyService;
     CommandDao commandDao;
+    TimerScheduler timerScheduler;
     ScheduledExecutorService executorService =
         Executors.newScheduledThreadPool(4);
 
     public void run(
         final CommandRunRequest commandRunRequest
     ) {
-        val muzedoServer = muzedoServerDao.get(commandRunRequest.serverId());
-        val command = commandDao.get(commandRunRequest.commandId());
+        final MuzedoServer muzedoServer = muzedoServerDao.get(commandRunRequest.serverId());
+        final Command command = commandDao.get(commandRunRequest.commandId());
 
-        try (final Timer runTimer = muzedoServer.getExecutingCommandTimer().start()) {
+        try {
             if (muzedoServer.getWsadminShell() == null
                 || muzedoServer.getWsadminShell().isClosing()
                 || !muzedoServer.getWsadminShell().isOpen()) {
@@ -56,21 +58,21 @@ public class CommandService {
             }
 
             try {
-                val commandDelay = !command.blocksWsadmin()
+                final int commandDelay = !command.blocksWsadmin()
                     ? 0
                     : Math.min(Math.max(0, commandRunRequest.delaySeconds()), 600);
-                val isBlockingCommand = command.blocksWsadmin();
-                val isScheduledCommand = commandDelay > 0;
+                final boolean isBlockingCommand = command.blocksWsadmin();
+                final boolean isScheduledCommand = commandDelay > 0;
 
                 //region ПРОВЕРКА БЛОКИРОВАНИЯ ОПЕРАЦИИ
                 if (isBlockingCommand) {
-                    val executingCommand = muzedoServer.getExecutingCommand();
+                    final Command executingCommand = muzedoServer.getExecutingCommand();
                     if (executingCommand != null) {
                         throw new RuntimeException("В данный момент выполняется операция: " + executingCommand.name());
                     }
 
                     if (isScheduledCommand) {
-                        val scheduledCommand = muzedoServer.getScheduledCommand();
+                        final MuzedoServer.ScheduledCommand scheduledCommand = muzedoServer.getScheduledCommand();
                         if (scheduledCommand != null) {
                             throw new RuntimeException("В данный момент запланирована операция: "
                                 + scheduledCommand.command().name());
@@ -81,10 +83,13 @@ public class CommandService {
 
                 final Runnable commandRunnable = () -> {
                     try {
-                        if (isBlockingCommand)
+                        if (isBlockingCommand) {
                             muzedoServer.setExecutingCommand(command);
-                        if (isScheduledCommand)
+                            muzedoServer.setExecutingCommandTimer(timerScheduler.start());
+                        }
+                        if (isScheduledCommand) {
                             muzedoServer.setScheduledCommand(null);
+                        }
 
                         //region ЗАПИСЬ СТАРТА ОПЕРАЦИИ
                         historyService.writeInfo(
@@ -104,9 +109,9 @@ public class CommandService {
                         if (command.shell().equals(Command.Shell.WSADMIN)) {
                             CheckedFunction0<SSHService.ExecuteCommandResult> execute = () ->
                                 sshService.executeCommand(
-                                muzedoServer.getWsadminShell(),
-                                command,
-                                List.empty()).block();
+                                    muzedoServer.getWsadminShell(),
+                                    command,
+                                    List.empty()).block();
                             Try.of(execute)
                                 .onFailure(e -> log.error("#run ошибка при первом запуске, запускаю вторую попытку...", e))
                                 .getOrElse(() -> {
@@ -133,7 +138,11 @@ public class CommandService {
                                 command.announce()
                                     ? MuzedoServer.HistoryEntry.Severity.CRIT
                                     : MuzedoServer.HistoryEntry.Severity.INFO,
-                                "Завершено \"" + command.name() + "\" за " + muzedoServer.getExecutingCommandTimer().getTime() + " сек.");
+                                "Завершено \""
+                                    + command.name()
+                                    + "\" за "
+                                    + muzedoServer.getExecutingCommandTimer().getTime()
+                                    + " сек.");
                         }
                         //endregion
                     } catch (Exception e) {
@@ -144,8 +153,10 @@ public class CommandService {
                                 + "\": " + e.getMessage());
                         throw new RuntimeException(e);
                     } finally {
-                        if (isBlockingCommand)
+                        if (isBlockingCommand) {
                             muzedoServer.setExecutingCommand(null);
+                            timerScheduler.stop(muzedoServer.getExecutingCommandTimer());
+                        }
                         if (command.blocksWsadmin())
                             muzedoServerService.reconnectWsadminShell(muzedoServer);
                     }
@@ -191,17 +202,17 @@ public class CommandService {
     public void delay(
         final CommandDelayRequest commandDelayRequest
     ) {
-        val muzedoServer = muzedoServerDao.get(commandDelayRequest.serverId());
+        final MuzedoServer muzedoServer = muzedoServerDao.get(commandDelayRequest.serverId());
 
         try {
-            val scheduledCommand = muzedoServer.getScheduledCommand();
+            final MuzedoServer.ScheduledCommand scheduledCommand = muzedoServer.getScheduledCommand();
             if (scheduledCommand == null) {
                 throw new RuntimeException("Нет запланированной операции");
             }
 
-            val currentDelay = scheduledCommand.future().getDelay(TimeUnit.SECONDS);
-            val command = muzedoServer.getScheduledCommand().command();
-            val callable = muzedoServer.getScheduledCommand().callable();
+            final long currentDelay = scheduledCommand.future().getDelay(TimeUnit.SECONDS);
+            final Command command = muzedoServer.getScheduledCommand().command();
+            final Runnable callable = muzedoServer.getScheduledCommand().callable();
 
             this.cancel(
                 new CommandCancelRequest(
@@ -209,8 +220,8 @@ public class CommandService {
                     commandDelayRequest.comment(),
                     true));
 
-            val delayPlus = Math.min(600, Math.max(0, commandDelayRequest.delaySeconds()));
-            val newDelay = Math.min(600, currentDelay + delayPlus);
+            final int delayPlus = Math.min(600, Math.max(0, commandDelayRequest.delaySeconds()));
+            final long newDelay = Math.min(600, currentDelay + delayPlus);
 
             muzedoServer.setScheduledCommand(new MuzedoServer.ScheduledCommand(
                 command,
@@ -244,10 +255,10 @@ public class CommandService {
     public void cancel(
         final CommandCancelRequest commandCancelRequest
     ) {
-        val muzedoServer = muzedoServerDao.get(commandCancelRequest.serverId());
+        final MuzedoServer muzedoServer = muzedoServerDao.get(commandCancelRequest.serverId());
 
         try {
-            val scheduledCommand = muzedoServer.getScheduledCommand();
+            final MuzedoServer.ScheduledCommand scheduledCommand = muzedoServer.getScheduledCommand();
             if (scheduledCommand == null) {
                 throw new RuntimeException("В данный момент нет операции на сервере");
             }
@@ -256,12 +267,12 @@ public class CommandService {
                 throw new RuntimeException("Отменять операцию уже поздно");
             }
 
-            val cancelled = scheduledCommand.future().cancel(false);
+            final boolean cancelled = scheduledCommand.future().cancel(false);
             if (!cancelled) {
                 throw new RuntimeException("Не удалось отменить операцию");
             }
 
-            val commandName = muzedoServer.getScheduledCommand().command().name();
+            final String commandName = muzedoServer.getScheduledCommand().command().name();
             muzedoServer.setScheduledCommand(null);
 
             if (!commandCancelRequest.silent()) {

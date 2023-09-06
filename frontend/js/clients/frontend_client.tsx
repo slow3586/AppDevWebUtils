@@ -7,13 +7,11 @@ export type FrontendConfigCommand = {
 }
 
 export type FrontendConfigConfig = {
-    id: string,
-    name: string
+    id: string
 }
 
 export type FrontendConfigLog = {
-    id: string,
-    name: string
+    id: string
 }
 
 export type GetFrontendConfigResponse = {

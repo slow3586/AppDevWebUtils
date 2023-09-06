@@ -39,18 +39,18 @@ export function ServerLogs({serverId}: ServerLogsProps) {
 
     return (
         <div className="comp-server-logs">
-            <Form.Group>
-                <Form.Control className="comp-bigtextarea"
-                              value={logText}
-                              readOnly as="textarea" rows={20}/>
-            </Form.Group>
+            <Form.Control className="comp-bigtextarea"
+                          value={logText}
+                          readOnly
+                          as="textarea"
+                          rows={30}/>
             <div className="comp-controls">
                 <Form.Text muted>Лог</Form.Text>
                 <Form.Select onChange={e => {
                     setLogId(e.target.value);
                 }}>
                     {(logId == "") ? (<option key="none" value="">Выберите лог</option>) : ""}
-                    {logs.map(c => (<option key={`k${c.id}`} value={c.id}>{c.id} ({c.name})</option>))}
+                    {logs.map(c => (<option key={`k${c.id}`} value={c.id}>{c.id}</option>))}
                 </Form.Select>
                 <Form.Text muted>Кол-во строк</Form.Text>
                 <Form.Control onChange={e => linesCount.current = e.target.value}

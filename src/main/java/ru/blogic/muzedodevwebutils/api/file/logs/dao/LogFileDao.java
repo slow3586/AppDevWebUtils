@@ -25,7 +25,6 @@ public class LogFileDao {
             .stream()
             .map(c -> new LogFile(
                 c.getId(),
-                c.getName(),
                 c.getPath()
             )).toList()
         );
@@ -33,7 +32,7 @@ public class LogFileDao {
 
     public LogFile get(String id) {
         return io.vavr.collection.List.ofAll(logFiles)
-            .find(l -> l.getId().equals(id))
+            .find(l -> l.id().equals(id))
             .getOrElseThrow(() -> new RuntimeException(
                 "#getLog: Не найден: " + id));
     }

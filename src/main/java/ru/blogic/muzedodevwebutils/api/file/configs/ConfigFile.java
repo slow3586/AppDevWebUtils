@@ -1,10 +1,7 @@
 package ru.blogic.muzedodevwebutils.api.file.configs;
 
-import lombok.Value;
-
-@Value
-public class ConfigFile {
-    String id;
-    String name;
-    String path;
-}
+public record ConfigFile(
+    String id,
+    String path,
+    boolean skipChangesCheck
+) {}

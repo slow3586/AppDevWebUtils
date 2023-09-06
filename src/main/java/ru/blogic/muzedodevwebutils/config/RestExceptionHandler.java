@@ -18,7 +18,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         final RuntimeException ex,
         final WebRequest request
     ) {
-        val text = "Ошибка: " + ex.toString() + ": " + ex.getMessage();
+        final String text = "Ошибка: " + ex.toString() + ": " + ex.getMessage();
         log.error("Ошибка от запроса REST: {}", ex.getMessage(), ex);
         return handleExceptionInternal(
             ex,

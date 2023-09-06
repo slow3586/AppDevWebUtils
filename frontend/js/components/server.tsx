@@ -19,7 +19,7 @@ export function Server({isActive, serverId}: ServerProps) {
     return (
         <div className="comp-server">
             <Tabs
-                defaultActiveKey="overview"
+                defaultActiveKey="control"
                 transition={false}
             >
                 <Tab eventKey="control"

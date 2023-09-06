@@ -21,6 +21,7 @@ import reactor.core.publisher.Mono;
 import ru.blogic.muzedodevwebutils.api.command.Command;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -43,7 +44,7 @@ public class SSHService {
         final MuzedoServer muzedoServer
     ) {
         try {
-            val session = client.connect("root", muzedoServer.getHost(), 22)
+            final ClientSession session = client.connect("root", muzedoServer.getHost(), 22)
                 .verify(TIMEOUT)
                 .getSession();
 
@@ -62,7 +63,7 @@ public class SSHService {
         final ClientSession clientSession
     ) {
         try {
-            val channelShell = clientSession.createShellChannel();
+            final ChannelShell channelShell = clientSession.createShellChannel();
             channelShell.setRedirectErrorStream(true);
             channelShell.open().verify(TIMEOUT);
             channelShell.addRequestHandler((channel, request, wantReply, buffer) -> {
@@ -101,16 +102,18 @@ public class SSHService {
     ) {
         try (
             val in = new NoCloseOutputStream(channelShell.getInvertedIn());
-            val baos = new ByteArrayOutputStream()
+            final ByteArrayOutputStream baos = new ByteArrayOutputStream()
         ) {
+            in.write(21);
+            in.flush();
+
             channelShell.setOut(baos);
 
-            val commandText = List.of(
+            final String commandText = List.of(
                 command.command(),
                 arguments.mkString(" ")
             ).mkString(" ");
-
-            in.write(21);
+            log.debug("commandText: " + commandText);
             in.write(commandText.getBytes());
             in.write("\n".getBytes());
             in.flush();
@@ -120,8 +123,8 @@ public class SSHService {
             while (true) {
                 Thread.sleep(1000);
                 timer++;
-                val entireOutput = baos.toString().trim();
-                val newOutputPart = entireOutput.substring(substringBegin);
+                final String entireOutput = baos.toString().trim();
+                final String newOutputPart = entireOutput.substring(substringBegin);
                 if (!newOutputPart.isEmpty()) {
                     substringBegin += newOutputPart.length();
                     log.debug("{}: {}: ({}s) {}",
@@ -131,7 +134,7 @@ public class SSHService {
                         newOutputPart
                     );
                 }
-                val err = command.errPatterns()
+                final Optional<String> err = command.errPatterns()
                     .stream()
                     .filter(e ->
                         StringUtils.containsIgnoreCase(
@@ -146,28 +149,34 @@ public class SSHService {
                         + channelShell.getSession().getRemoteAddress()
                         + ": " + err.get());
                 }
-                if (entireOutput.endsWith(command.readyPattern())) {
+                if (StringUtils.isBlank(command.readyPattern())
+                    || entireOutput.endsWith(command.readyPattern())
+                ) {
                     log.debug("{}: {}: complete @ {}s",
                         channelShell.getSession().getRemoteAddress(),
                         command.command(),
                         timer);
 
-                    val entireOutputResult = StringUtils.substringBeforeLast(entireOutput, "\n");
-                    val commandOutputResult = StringUtils.substringAfter(
+                    final String commandOutputResult =
+                        StringUtils.substringAfter(
                             StringUtils.substringAfter(
-                                entireOutputResult,
-                                commandText),
+                                StringUtils.substringAfter(
+                                    StringUtils.substringBeforeLast(
+                                        entireOutput,
+                                        "\n"),
+                                    commandText),
+                                "\n"),
                             "\n");
 
                     return Mono.just(new ExecuteCommandResult(
-                        entireOutputResult,
+                        entireOutput,
                         commandOutputResult
                     ));
                 }
                 if (command.timeout() != 0 && timer > command.timeout()) {
                     throw new RuntimeException("Таймаут: "
                         + channelShell.getSession().getRemoteAddress()
-                        + ": " + command);
+                        + ": " + command.name());
                 }
             }
         } catch (Exception e) {

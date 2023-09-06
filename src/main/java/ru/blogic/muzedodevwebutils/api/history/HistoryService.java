@@ -1,14 +1,14 @@
 package ru.blogic.muzedodevwebutils.api.history;
 
-import io.vavr.collection.Vector;
+import io.vavr.collection.List;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
@@ -17,7 +17,7 @@ import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerDao;
 import ru.blogic.muzedodevwebutils.config.logging.DisableLoggingAspect;
 
 import java.util.Date;
-import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Service
 @Slf4j
@@ -36,12 +36,12 @@ public class HistoryService {
         final MuzedoServer.HistoryEntry.Severity severity,
         final String text
     ) {
-        val auth = SecurityContextHolder.getContext().getAuthentication();
-        val user = auth == null
+        final Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        final String user = auth == null
             ? "Система"
             : ((User) auth.getPrincipal()).getUsername();
 
-        val infoEntry = new MuzedoServer.HistoryEntry(
+        final MuzedoServer.HistoryEntry infoEntry = new MuzedoServer.HistoryEntry(
             new Date(),
             text,
             severity,
@@ -51,7 +51,7 @@ public class HistoryService {
         muzedoServerDao
             .get(serverId)
             .getHistory()
-            .append(infoEntry);
+            .add(infoEntry);
 
         this.clearGetServerLogCache();
     }
@@ -62,12 +62,13 @@ public class HistoryService {
         final int serverId,
         final int last
     ) {
-        val log = muzedoServerDao
+        final ConcurrentLinkedQueue<MuzedoServer.HistoryEntry> log = muzedoServerDao
             .get(serverId)
             .getHistory();
-        val infoEntries = log
-            .drop(Math.min(log.size(),
-                Math.max(0, log.size() - last < 100 ? last : log.size() - 100)));
+        final List<MuzedoServer.HistoryEntry> infoEntries =
+            List.ofAll(log)
+                .drop(Math.min(log.size(),
+                    Math.max(0, log.size() - last < 100 ? last : log.size() - 100)));
 
         return new GetServerHistoryResponse(
             infoEntries,
@@ -76,7 +77,7 @@ public class HistoryService {
     }
 
     public record GetServerHistoryResponse(
-        Vector<MuzedoServer.HistoryEntry> logs,
+        io.vavr.collection.List<MuzedoServer.HistoryEntry> logs,
         int logLast
     ) {}
 }

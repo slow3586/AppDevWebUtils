@@ -61,23 +61,39 @@ app:
       - 'Смирнова Наталья'
   muzedo:
     servers:
-      - id: '61'
-        host: '172.19.203.61'
-        password: '${pw_61}'
+      - id: '146'
+        host: '172.19.203.146'
+        password: '${pw_146}'
         file-paths:
-          configs: '/fs/it/gp-uzdo/'
-          logs: '/workdir/logs/'
+          configs: '/fs/it/gp-uzdo'
+          logs: '/opt/IBM/WebSphere/AppServer/profiles/APP1/logs'
   files:
     configs:
       list:
         - id: 'uzdo.properties'
-          name: 'Конфиг приложения'
           path: 'uzdo/uzdo.properties'
+        - id: 'environment.xml'
+          path: 'environment.xml'
+        - id: 'departments.xml'
+          path: 'uzdo/departments.xml'
+        - id: 'text.txt'
+          path: 'uzdo/text.txt'
+        - id: 'SEDRequest.xml'
+          path: 'poa-test/SEDRequest.xml'
+        - id: 'successfulAnswer.xml'
+          path: 'uzdo/successfulAnswer.xml'
     logs:
       list:
         - id: 'UZDO-integration'
-          name: 'Логи integration'
           path: 'UZDO-integration.log'
+        - id: 'UZDO-samba-ehd'
+          path: 'UZDO-samba-ehd.log'
+        - id: 'UZDO_GP'
+          path: 'UZDO_GP.log'
+        - id: 'SystemOut'
+          path: 'app/SystemOut.log'
+        - id: 'UZDO-NEW_JAVAGATE_HTTP'
+          path: 'UZDO-NEW_JAVAGATE_HTTP.log'
   command:
     commands:
       - id: 'announce'
@@ -94,6 +110,14 @@ app:
         shell: ssh
         flags:
           - ssh_ready_pattern
+      - id: 'restart_wsadmin'
+        name: 'Рестарт WsAdmin'
+        command: ''
+        timeout: 90
+        shell: wsadmin
+        flags:
+          - wsadmin_block
+          - announce_execution
       - id: 'ra'
         name: 'Рестарт'
         command: 'ra(1)'
@@ -133,4 +157,44 @@ app:
           - ssh_ready_pattern
           - ssh_block
           - ssh_err_patterns
+          - announce_execution
+      - id: 'ba'
+        name: 'Остановка приложения'
+        command: 'ba()'
+        timeout: 180
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
+      - id: 'sa'
+        name: 'Старт приложения'
+        command: 'sa(1)'
+        timeout: 180
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
+      - id: 'cnf'
+        name: 'Обновление (cfg)'
+        command: 'cnf()'
+        timeout: 90
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
+      - id: 'urg'
+        name: 'Обновление (gp)'
+        command: 'urg(1)'
+        timeout: 180
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
           - announce_execution

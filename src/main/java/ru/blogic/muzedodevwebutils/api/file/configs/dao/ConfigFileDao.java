@@ -25,15 +25,15 @@ public class ConfigFileDao {
             .stream()
             .map(c -> new ConfigFile(
                 c.getId(),
-                c.getName(),
-                c.getPath()
+                c.getPath(),
+                c.isSkipChangesCheck()
             )).toList()
         );
     }
 
     public ConfigFile get(String id) {
         return io.vavr.collection.List.ofAll(configFiles)
-            .find(l -> l.getId().equals(id))
+            .find(l -> l.id().equals(id))
             .getOrElseThrow(() -> new RuntimeException(
                 "#getConfig: Не найден: " + id));
     }

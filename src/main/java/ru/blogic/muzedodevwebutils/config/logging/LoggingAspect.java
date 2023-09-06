@@ -7,6 +7,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
@@ -31,8 +32,8 @@ public class LoggingAspect {
         //"|| @within(org.springframework.web.bind.annotation.RestController) " +
         ")")*/
     public Object around(ProceedingJoinPoint point) throws Throwable {
-        val logger = LoggerFactory.getLogger(point.getSignature().getDeclaringType());
-        val methodName = ((MethodSignature) point.getSignature()).getMethod().getName();
+        final Logger logger = LoggerFactory.getLogger(point.getSignature().getDeclaringType());
+        final String methodName = ((MethodSignature) point.getSignature()).getMethod().getName();
         logger.debug(methodName + " <- " +
             Option.of(point.getArgs())
                 .map(Arrays::stream)

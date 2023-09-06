@@ -16,7 +16,6 @@ class LogFileConfig {
     @Data
     static class LogFileConfigDto {
         String id;
-        String name;
         String path;
     }
 }
