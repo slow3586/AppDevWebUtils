@@ -7,20 +7,19 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import ru.blogic.muzedodevwebutils.api.command.dao.CommandDao;
 import ru.blogic.muzedodevwebutils.api.history.HistoryService;
-import ru.blogic.muzedodevwebutils.api.muzedo.SSHService;
+import ru.blogic.muzedodevwebutils.api.muzedo.ssh.SSHService;
 import ru.blogic.muzedodevwebutils.api.command.dto.CommandCancelRequest;
 import ru.blogic.muzedodevwebutils.api.command.dto.CommandDelayRequest;
 import ru.blogic.muzedodevwebutils.api.command.dto.CommandRunRequest;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerDao;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerService;
-import ru.blogic.muzedodevwebutils.utils.Timer;
 import ru.blogic.muzedodevwebutils.utils.TimerScheduler;
+import ru.blogic.muzedodevwebutils.utils.Utils;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -60,7 +59,7 @@ public class CommandService {
             try {
                 final int commandDelay = !command.blocksWsadmin()
                     ? 0
-                    : Math.min(Math.max(0, commandRunRequest.delaySeconds()), 600);
+                    : Utils.clamp(commandRunRequest.delaySeconds(), 0, 600);
                 final boolean isBlockingCommand = command.blocksWsadmin();
                 final boolean isScheduledCommand = commandDelay > 0;
 
@@ -92,7 +91,7 @@ public class CommandService {
                         }
 
                         //region ЗАПИСЬ СТАРТА ОПЕРАЦИИ
-                        historyService.writeInfo(
+                        historyService.addHistoryEntry(
                             muzedoServer.getId(),
                             command.announce()
                                 ? MuzedoServer.HistoryEntry.Severity.CRIT
@@ -133,7 +132,7 @@ public class CommandService {
 
                         //region ЗАПИСЬ ЗАВЕРШЕНИЯ ОПЕРАЦИИ
                         if (isBlockingCommand) {
-                            historyService.writeInfo(
+                            historyService.addHistoryEntry(
                                 muzedoServer.getId(),
                                 command.announce()
                                     ? MuzedoServer.HistoryEntry.Severity.CRIT
@@ -146,7 +145,7 @@ public class CommandService {
                         }
                         //endregion
                     } catch (Exception e) {
-                        historyService.writeInfo(
+                        historyService.addHistoryEntry(
                             muzedoServer.getId(),
                             MuzedoServer.HistoryEntry.Severity.CRIT,
                             "Ошибка при выполнении операции \"" + command.name()
@@ -164,7 +163,7 @@ public class CommandService {
 
                 if (isScheduledCommand) {
                     //region ПЛАНИРОВАНИЕ ОПЕРАЦИИ
-                    historyService.writeInfo(
+                    historyService.addHistoryEntry(
                         muzedoServer.getId(),
                         MuzedoServer.HistoryEntry.Severity.CRIT,
                         "Запланирована операция "
@@ -190,7 +189,7 @@ public class CommandService {
                 muzedoServer.getCommandSchedulingLock().unlock();
             }
         } catch (Exception e) {
-            historyService.writeInfo(
+            historyService.addHistoryEntry(
                 muzedoServer.getId(),
                 MuzedoServer.HistoryEntry.Severity.CRIT,
                 "Ошибка при планировании операции \"" + command.name()
@@ -220,8 +219,8 @@ public class CommandService {
                     commandDelayRequest.comment(),
                     true));
 
-            final int delayPlus = Math.min(600, Math.max(0, commandDelayRequest.delaySeconds()));
-            final long newDelay = Math.min(600, currentDelay + delayPlus);
+            final int delayPlus = Utils.clamp(commandDelayRequest.delaySeconds(), 0, 600);
+            final long newDelay = Utils.clamp((int) (currentDelay + delayPlus), 0, 600);
 
             muzedoServer.setScheduledCommand(new MuzedoServer.ScheduledCommand(
                 command,
@@ -232,7 +231,7 @@ public class CommandService {
                 callable
             ));
 
-            historyService.writeInfo(
+            historyService.addHistoryEntry(
                 muzedoServer.getId(),
                 MuzedoServer.HistoryEntry.Severity.CRIT,
                 "Отложена операция \"" + command.name() + "\""
@@ -244,7 +243,7 @@ public class CommandService {
             );
 
         } catch (Exception e) {
-            historyService.writeInfo(
+            historyService.addHistoryEntry(
                 muzedoServer.getId(),
                 MuzedoServer.HistoryEntry.Severity.CRIT,
                 "Ошибка при откладывании операции: " + e.getMessage());
@@ -276,7 +275,7 @@ public class CommandService {
             muzedoServer.setScheduledCommand(null);
 
             if (!commandCancelRequest.silent()) {
-                historyService.writeInfo(
+                historyService.addHistoryEntry(
                     muzedoServer.getId(),
                     MuzedoServer.HistoryEntry.Severity.CRIT,
                     "Отменена операция \"" + commandName + "\""
@@ -286,7 +285,7 @@ public class CommandService {
                 );
             }
         } catch (Exception e) {
-            historyService.writeInfo(
+            historyService.addHistoryEntry(
                 muzedoServer.getId(),
                 MuzedoServer.HistoryEntry.Severity.CRIT,
                 "Ошибка при отмене операции: " + e.getMessage());

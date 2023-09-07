@@ -5,12 +5,12 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.apache.sshd.client.channel.ChannelShell;
 import org.apache.sshd.client.session.ClientSession;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import ru.blogic.muzedodevwebutils.api.command.dao.CommandDao;
+import ru.blogic.muzedodevwebutils.api.muzedo.ssh.SSHService;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;

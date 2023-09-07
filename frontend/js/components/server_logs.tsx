@@ -56,12 +56,14 @@ export function ServerLogs({serverId}: ServerLogsProps) {
                 <Form.Control onChange={e => linesCount.current = e.target.value}
                               className="comp-textarea"
                               type="number"
-                              min="0"
-                              max="600"
+                              min="1"
+                              max="1000"
                               placeholder="25"/>
                 <div className="comp-button-container">
                     <Button onClick={requestLog}
                             variant="primary">Запросить</Button>
+                    <Button onClick={requestLog}
+                            variant="primary">Архив логов</Button>
                 </div>
             </div>
         </div>

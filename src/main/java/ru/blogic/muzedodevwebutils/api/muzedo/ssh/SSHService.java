@@ -1,4 +1,4 @@
-package ru.blogic.muzedodevwebutils.api.muzedo;
+package ru.blogic.muzedodevwebutils.api.muzedo.ssh;
 
 import io.vavr.collection.List;
 import jakarta.annotation.PostConstruct;
@@ -19,8 +19,11 @@ import org.apache.sshd.common.util.io.output.NoCloseOutputStream;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.blogic.muzedodevwebutils.api.command.Command;
+import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
+import ru.blogic.muzedodevwebutils.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.util.Optional;
 
 @Service
@@ -83,7 +86,7 @@ public class SSHService {
         final Command command,
         final List<String> arguments
     ) {
-        try (val channelShell = createShellChannel(clientSession)) {
+        try (ChannelShell channelShell = createShellChannel(clientSession)) {
             return executeCommand(channelShell, command, arguments);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -91,8 +94,8 @@ public class SSHService {
     }
 
     public record ExecuteCommandResult(
-        String entireOutput,
-        String commandOutput
+        List<String> entireOutput,
+        List<String> commandOutput
     ) {}
 
     public Mono<ExecuteCommandResult> executeCommand(
@@ -101,19 +104,18 @@ public class SSHService {
         @NonNull final List<String> arguments
     ) {
         try (
-            val in = new NoCloseOutputStream(channelShell.getInvertedIn());
+            final OutputStream in = new NoCloseOutputStream(channelShell.getInvertedIn());
             final ByteArrayOutputStream baos = new ByteArrayOutputStream()
         ) {
             in.write(21);
             in.flush();
-
-            channelShell.setOut(baos);
 
             final String commandText = List.of(
                 command.command(),
                 arguments.mkString(" ")
             ).mkString(" ");
             log.debug("commandText: " + commandText);
+            channelShell.setOut(baos);
             in.write(commandText.getBytes());
             in.write("\n".getBytes());
             in.flush();
@@ -157,19 +159,13 @@ public class SSHService {
                         command.command(),
                         timer);
 
-                    final String commandOutputResult =
-                        StringUtils.substringAfter(
-                            StringUtils.substringAfter(
-                                StringUtils.substringAfter(
-                                    StringUtils.substringBeforeLast(
-                                        entireOutput,
-                                        "\n"),
-                                    commandText),
-                                "\n"),
-                            "\n");
+                    final List<String> commandOutputResult =
+                        Utils.splitByLines(entireOutput)
+                            .drop(1)
+                            .dropRight(1);
 
                     return Mono.just(new ExecuteCommandResult(
-                        entireOutput,
+                        Utils.splitByLines(entireOutput),
                         commandOutputResult
                     ));
                 }

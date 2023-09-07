@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerDao;
 import ru.blogic.muzedodevwebutils.config.logging.DisableLoggingAspect;
+import ru.blogic.muzedodevwebutils.utils.Utils;
 
 import java.util.Date;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -31,7 +32,7 @@ public class HistoryService {
     @DisableLoggingAspect
     public void clearGetServerLogCache() {}
 
-    public void writeInfo(
+    public void addHistoryEntry(
         final int serverId,
         final MuzedoServer.HistoryEntry.Severity severity,
         final String text
@@ -67,8 +68,10 @@ public class HistoryService {
             .getHistory();
         final List<MuzedoServer.HistoryEntry> infoEntries =
             List.ofAll(log)
-                .drop(Math.min(log.size(),
-                    Math.max(0, log.size() - last < 100 ? last : log.size() - 100)));
+                .drop(Utils.clamp(
+                    log.size() - last < 100 ? last : log.size() - 100,
+                    0,
+                    log.size()));
 
         return new GetServerHistoryResponse(
             infoEntries,
