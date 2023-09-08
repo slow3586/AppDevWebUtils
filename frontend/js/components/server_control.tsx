@@ -168,6 +168,9 @@ export function ServerControl({isActive, serverId}: ServerControlProps) {
     if (disableAll) {
         errorMessages.push("Жду ответа");
     }
+    if(errorMessages.length > 0) {
+        errorMessages.unshift("Кнопка запуска недоступна: ")
+    }
 
     return (
         <div className="comp-server-control">

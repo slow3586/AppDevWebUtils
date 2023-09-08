@@ -7,6 +7,8 @@ spring:
       static-locations:
         - 'file:src/main/resources/static/'
         - 'classpath:/static/'
+  codec:
+    max-in-memory-size: 50MB
   main:
     allow-bean-definition-overriding: true
     banner-mode: 'off'

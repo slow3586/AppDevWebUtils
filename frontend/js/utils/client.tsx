@@ -2,10 +2,21 @@
 import {toast} from 'react-toastify';
 import {startsWith} from 'lodash';
 
+export enum ResponseType {
+    TEXT,
+    JSON,
+    BLOB
+}
+
+export type BlobWrapper = {
+    filename: string;
+    blob: Promise<Blob>;
+}
+
 const common = (
     path: string,
     options: any,
-    textResponse: boolean
+    responseType: ResponseType
 ): Promise<any> => {
     try {
         return fetch(path, options)
@@ -13,9 +24,16 @@ const common = (
                 if (!response.ok) {
                     throw response;
                 }
-                return textResponse
+                return responseType == ResponseType.TEXT
                     ? response.text()
-                    : response.json() as Promise<any>;
+                    : responseType == ResponseType.JSON
+                        ? response.json() as Promise<any>
+                        : responseType == ResponseType.BLOB
+                            ? new Promise((res, rej) => res({
+                                filename: response.headers.get("Content-Disposition"),
+                                blob: response.blob()
+                            })) as Promise<BlobWrapper>
+                            : null;
             })
             .catch((error) => {
                 console.error(error);
@@ -48,19 +66,19 @@ const common = (
 
 export const getWrapper = (
     path: string,
-    textResponse = false
+    responseType = ResponseType.JSON
 ): Promise<any> =>
     common(path,
         {
             method: 'GET',
             redirect: 'follow'
         },
-        textResponse);
+        responseType);
 
 export const postWrapper = (
     path: string,
     body: any,
-    textResponse = false
+    responseType = ResponseType.JSON
 ): Promise<any> =>
     common(path,
         {
@@ -71,4 +89,4 @@ export const postWrapper = (
             },
             redirect: 'follow'
         },
-        textResponse)
+        responseType)

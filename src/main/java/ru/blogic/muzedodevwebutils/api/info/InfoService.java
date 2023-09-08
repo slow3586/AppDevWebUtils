@@ -42,7 +42,7 @@ public class InfoService {
         () -> new SimpleDateFormat("HH:mm:ss dd.MM.yyyy z Z"));
     static ThreadLocal<SimpleDateFormat> dateTimeFormat_appBuildInfo = ThreadLocal.withInitial(
         () -> new SimpleDateFormat("dd.MM.yy_HH.mm"));
-    WebClient client = WebClient.create();
+    static WebClient client = WebClient.create();
     static String GP_BUILD_INFO_URI = "UZDO/api/app/buildInfo";
     static String INTEG_BUILD_INFO_URI = "UZDO-ui/rest/app/buildInfo";
 

@@ -23,7 +23,7 @@ import javax.sql.DataSource;
 import java.util.List;
 
 @EnableWebSecurity
-@Component
+@Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
     final DataSource dataSource;
