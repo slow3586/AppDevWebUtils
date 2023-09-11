@@ -24,4 +24,4 @@ export type GetFrontendConfigResponse = {
 
 export const getFrontendConfig = (
 ): Promise<GetFrontendConfigResponse> =>
-    getWrapper(`api/front`)
+    getWrapper('Запрос конфигурации веб-приложения',`api/front`)

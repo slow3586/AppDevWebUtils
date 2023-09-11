@@ -1,6 +1,5 @@
 package ru.blogic.muzedodevwebutils.api.muzedo;
 
-import io.vavr.collection.Vector;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.apache.sshd.client.channel.ChannelShell;
@@ -8,10 +7,7 @@ import org.apache.sshd.client.session.ClientSession;
 import ru.blogic.muzedodevwebutils.api.command.Command;
 import ru.blogic.muzedodevwebutils.utils.Timer;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantLock;

@@ -16,10 +16,13 @@ export type Command = {
     effect: string
 }
 
+const DEFAULT_LINES_COUNT = "25";
+const MAX_LINES_COUNT = 1000;
+
 export function ServerLogs({serverId}: ServerLogsProps) {
     const [logText, setLogText] = useState("");
     const [logId, setLogId] = useState("");
-    const linesCount = useRef("25");
+    const linesCount = useRef(DEFAULT_LINES_COUNT);
     const [disableAll, setDisableAll] = useState(false);
 
     const frontendConfigQuery = useQuery(
@@ -36,8 +39,8 @@ export function ServerLogs({serverId}: ServerLogsProps) {
             serverId,
             logId,
             linesCount: toInteger(linesCount.current)
-        }).then(log => setLogText(log.text))
-            .finally(() => setDisableAll(false));
+        }).then(log => setLogText(log.text)
+        ).finally(() => setDisableAll(false));
     }
     const requestEntireLogFile = () => {
         setDisableAll(true);
@@ -45,15 +48,17 @@ export function ServerLogs({serverId}: ServerLogsProps) {
             blobWrapper => blobWrapper.blob.then((blob) => {
                     download(blob, blobWrapper.filename, "application/zip");
                 }
-            )).finally(() => setDisableAll(false));
+            )
+        ).finally(() => setDisableAll(false));
     }
     const requestLogsArchive = () => {
-        setDisableAll(false);
+        setDisableAll(true);
         getLogsArchive(serverId).then(
             blobWrapper => blobWrapper.blob.then((blob) => {
                     download(blob, blobWrapper.filename, "application/zip");
                 }
-            )).finally(() => setDisableAll(false));
+            )
+        ).finally(() => setDisableAll(false));
     }
 
     return (
@@ -76,8 +81,8 @@ export function ServerLogs({serverId}: ServerLogsProps) {
                               className="comp-textarea"
                               type="number"
                               min="1"
-                              max="1000"
-                              placeholder="25"/>
+                              max={MAX_LINES_COUNT}
+                              placeholder={DEFAULT_LINES_COUNT}/>
                 <div className="comp-button-container">
                     <Button onClick={requestLog}
                             disabled={isEmpty(logId)

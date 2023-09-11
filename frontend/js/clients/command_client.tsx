@@ -12,28 +12,28 @@ export type CommandRunRequest = {
     delaySeconds: number
 }
 
-export const commandRun = (
-    request: CommandRunRequest
-): Promise<string> =>
-    postWrapper(`api/command/run`, request, ResponseType.TEXT)
-
 export interface CommandDelayRequest {
     serverId: number,
     comment: string,
     delaySeconds: number
 }
 
-export const commandDelay = (
-    request: CommandDelayRequest
-): Promise<string> =>
-    postWrapper(`api/command/delay`, request, ResponseType.TEXT)
-
 export interface CommandCancelRequest {
     serverId: number,
     comment: string
 }
 
+export const commandRun = (
+    request: CommandRunRequest
+): Promise<string> =>
+    postWrapper('Запуск операции', `api/command/run`, request, ResponseType.TEXT)
+
+export const commandDelay = (
+    request: CommandDelayRequest
+): Promise<string> =>
+    postWrapper('Отсрочка операции', `api/command/delay`, request, ResponseType.TEXT)
+
 export const commandCancel = (
     request: CommandCancelRequest
 ): Promise<string> =>
-    postWrapper(`api/command/cancel`, request, ResponseType.TEXT)
+    postWrapper('Отмена операции', `api/command/cancel`, request, ResponseType.TEXT)

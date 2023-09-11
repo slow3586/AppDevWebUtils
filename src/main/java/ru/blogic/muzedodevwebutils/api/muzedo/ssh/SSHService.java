@@ -7,7 +7,6 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.channel.ChannelShell;
@@ -20,7 +19,6 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.blogic.muzedodevwebutils.api.command.Command;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
-import ru.blogic.muzedodevwebutils.utils.Utils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;

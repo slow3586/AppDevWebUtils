@@ -13,15 +13,15 @@ export type GetServerLogFileResponse = {
 export const getServerLogFile = (
     request: GetServerLogFileRequest
 ): Promise<GetServerLogFileResponse> =>
-    postWrapper(`api/file/log`, request)
+    postWrapper('Запрос лога', `api/file/log`, request)
 
 export const getEntireLogFile = (
     serverId: number,
     logId: string
 ): Promise<BlobWrapper> =>
-    getWrapper(`api/file/log/getEntireLogFile/${serverId}/${logId}`, ResponseType.BLOB)
+    getWrapper('Скачивание лога', `api/file/log/getEntireLogFile/${serverId}/${logId}`, ResponseType.BLOB)
 
 export const getLogsArchive = (
     serverId: number
 ): Promise<BlobWrapper> =>
-    getWrapper(`api/file/log/getLogsArchive/${serverId}`, ResponseType.BLOB)
+    getWrapper('Скачивание архива логов', `api/file/log/getLogsArchive/${serverId}`, ResponseType.BLOB)

@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
@@ -20,13 +19,14 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
 import ru.blogic.muzedodevwebutils.api.command.Command;
-import ru.blogic.muzedodevwebutils.config.logging.DisableLoggingAspect;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerDao;
+import ru.blogic.muzedodevwebutils.config.logging.DisableLoggingAspect;
 
-import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -38,10 +38,10 @@ import static ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer.UNKNOWN_BUILD;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class InfoService {
     MuzedoServerDao muzedoServerDao;
-    static ThreadLocal<SimpleDateFormat> dateTimeFormat_muzedoBuildInfo = ThreadLocal.withInitial(
-        () -> new SimpleDateFormat("HH:mm:ss dd.MM.yyyy z Z"));
-    static ThreadLocal<SimpleDateFormat> dateTimeFormat_appBuildInfo = ThreadLocal.withInitial(
-        () -> new SimpleDateFormat("dd.MM.yy_HH.mm"));
+    static DateTimeFormatter DATE_FORMAT_MUZEDO_BUILD_INFO = DateTimeFormatter.ofPattern(
+        "HH:mm:ss dd.MM.yyyy z Z", Locale.ENGLISH);
+    static DateTimeFormatter DATE_FORMAT_APP_BUILD_INFO = DateTimeFormatter.ofPattern(
+        "dd.MM.yy_HH.mm", Locale.ENGLISH);
     static WebClient client = WebClient.create();
     static String GP_BUILD_INFO_URI = "UZDO/api/app/buildInfo";
     static String INTEG_BUILD_INFO_URI = "UZDO-ui/rest/app/buildInfo";
@@ -139,8 +139,8 @@ public class InfoService {
             .getOrElse(StringUtils.substringAfterLast(branch, "/"))
             + "_" +
             Try.of(() ->
-                dateTimeFormat_appBuildInfo.get().format(
-                    dateTimeFormat_muzedoBuildInfo.get().parse(buildInfo.date())
+                DATE_FORMAT_APP_BUILD_INFO.format(
+                    DATE_FORMAT_MUZEDO_BUILD_INFO.parse(buildInfo.date())
                 )
             ).getOrNull();
     }

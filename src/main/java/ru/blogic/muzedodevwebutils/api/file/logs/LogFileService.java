@@ -1,20 +1,15 @@
 package ru.blogic.muzedodevwebutils.api.file.logs;
 
-import io.vavr.collection.HashMap;
 import io.vavr.collection.List;
-import io.vavr.control.Option;
 import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -28,8 +23,10 @@ import ru.blogic.muzedodevwebutils.api.muzedo.ssh.SSHService;
 import ru.blogic.muzedodevwebutils.utils.Utils;
 
 import java.net.URI;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
-import java.util.Objects;
+import java.util.Locale;
 
 @Service
 @Slf4j
@@ -39,6 +36,9 @@ public class LogFileService {
     SSHService sshService;
     LogFileDao logFileDao;
     WebClient client;
+
+    static DateTimeFormatter DATE_FORMAT_LOG_FILE = DateTimeFormatter.ofPattern(
+        "yyyy_MM_dd_HH_mm_ss", Locale.ENGLISH);
 
     public LogFileService(
         MuzedoServerDao muzedoServerDao,
@@ -114,7 +114,9 @@ public class LogFileService {
             )
         ).map(response -> {
             final HttpHeaders responseHeaders = new HttpHeaders();
-            responseHeaders.set(HttpHeaders.CONTENT_DISPOSITION, serverLog.id() + ".zip");
+            responseHeaders.set(HttpHeaders.CONTENT_DISPOSITION, serverLog.id()
+                + "_" + DATE_FORMAT_LOG_FILE.format(LocalDateTime.now())
+                + ".zip");
             final byte[] decoded = Base64.getDecoder().decode(
                 StringUtils.replace(response.commandOutput(), "\r\n", ""));
             return new ResponseEntity<>(
@@ -132,6 +134,7 @@ public class LogFileService {
             .retrieve()
             .toBodilessEntity()
             .doOnError(e -> log.error("Ошибка запроса архива логов", e))
+            .onErrorResume(Mono::error)
             .mapNotNull(HttpEntity::getHeaders)
             .mapNotNull(HttpHeaders::getLocation)
             .mapNotNull(URI::toString)

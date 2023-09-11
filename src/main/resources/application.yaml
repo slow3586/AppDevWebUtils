@@ -40,6 +40,10 @@ server:
     key-store-password: changeit
     key-alias: '1'
   port: '8443'
+  error:
+    include-exception: true
+    include-message: always
+    include-stacktrace: always
 
 app:
   version: 'v0.7'
@@ -96,6 +100,8 @@ app:
           path: 'app/SystemOut.log'
         - id: 'UZDO-NEW_JAVAGATE_HTTP'
           path: 'UZDO-NEW_JAVAGATE_HTTP.log'
+        - id: 'UZDO-ksdd-integration'
+          path: 'UZDO-ksdd-integration.log'
   command:
     commands:
       - id: 'announce'
@@ -114,6 +120,7 @@ app:
           - ssh_ready_pattern
           - ssh_block
           - ssh_err_patterns
+          - wsadmin_block
           - announce_execution
       - id: 'ra'
         name: 'Рестарт приложения'
@@ -155,6 +162,16 @@ app:
           - wsadmin_block
           - wsadmin_err_patterns
           - announce_execution
+      - id: 'uric'
+        name: 'Обновление приложения (integ + cfg)'
+        command: 'uric()'
+        timeout: 240
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
       - id: 'urg'
         name: 'Обновление приложения (gp)'
         command: 'urg(1)'
@@ -169,16 +186,6 @@ app:
         name: 'Обновление приложения (gp + integ + cfg)'
         command: 'ura(1)'
         timeout: 300
-        shell: wsadmin
-        flags:
-          - wsadmin_ready_pattern
-          - wsadmin_block
-          - wsadmin_err_patterns
-          - announce_execution
-      - id: 'uric'
-        name: 'Обновление приложения (integ + cfg)'
-        command: 'uric()'
-        timeout: 240
         shell: wsadmin
         flags:
           - wsadmin_ready_pattern

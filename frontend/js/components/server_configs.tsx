@@ -19,7 +19,7 @@ export function ServerConfigs({serverId}: ServerConfigsProps) {
     const [configText, setConfigText] = useState("");
     const [configId, setConfigId] = useState("");
     const comment = useRef("");
-    const skipAnalysis = useRef(true);
+    const skipAnalysis = useRef(false);
     const [disableAll, setDisableAll] = useState(false);
     const textArea: React.MutableRefObject<any> = useRef();
 
@@ -34,7 +34,7 @@ export function ServerConfigs({serverId}: ServerConfigsProps) {
     const configs = frontendConfigQuery?.data?.configs ?? [];
     const requestConfig = () => {
         setDisableAll(true);
-        getServerConfigFile(serverId, configId)
+        return getServerConfigFile(serverId, configId)
             .then(config => {
                 config.text?.replace?.("\r\r\n", "\n");
                 setConfigText(config.text);
@@ -47,14 +47,14 @@ export function ServerConfigs({serverId}: ServerConfigsProps) {
 
     const saveConfig = () => {
         setDisableAll(true);
-        saveServerConfigFile({
+        return saveServerConfigFile({
             serverId,
             configId,
             configText,
             comment: comment.current,
             skipAnalysis: skipAnalysis.current
         }).finally(() => {
-            setDisableAll(false);
+            requestConfig().finally(() => setDisableAll(false));
         });
     }
 

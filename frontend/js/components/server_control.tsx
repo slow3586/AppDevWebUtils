@@ -152,7 +152,7 @@ export function ServerControl({isActive, serverId}: ServerControlProps) {
     const wsadminUnavailable = getCommand(commandId)?.blocksWsadmin
         && !infoQuery?.data?.wsAdminShell;
 
-    let errorMessages = new Array<string>;
+    const errorMessages = new Array<string>;
     if (isEmpty(commandId)) {
         errorMessages.push("Операция не выбрана");
     }

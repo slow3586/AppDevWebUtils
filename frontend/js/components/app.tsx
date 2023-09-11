@@ -6,7 +6,6 @@ import {isEmpty} from "lodash";
 import {Server} from "./server";
 import {useQuery} from "react-query";
 import {getFrontendConfig} from "../clients/frontend_client";
-import {GlobalContextProvider} from "./globals";
 
 export class ServerContext {
     id: number;

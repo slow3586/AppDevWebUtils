@@ -18,9 +18,6 @@ import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerDao;
 import ru.blogic.muzedodevwebutils.api.muzedo.ssh.SSHService;
 import ru.blogic.muzedodevwebutils.utils.Utils;
 
-import java.util.Arrays;
-import java.util.regex.Pattern;
-
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -116,8 +113,10 @@ public class ConfigFileService {
                     .filter(t -> !StringUtils.equalsIgnoreCase(t._1._1, t._1._2));
                 if (sizeDifference == 0 && differentLines.size() != 1) {
                     throw new RuntimeException("Анализ: в конфиге было ИЗМЕНЕНО более/менее 1 строки: "
-                        + "изменено " + sizeDifference + " строк: "
-                        + differentLines.map(l -> "№" + l._2).mkString(", "));
+                        + "изменено " + differentLines.size() + " строк"
+                        + (differentLines.isEmpty()
+                        ? differentLines.map(l -> "№" + l._2).mkString(", ")
+                        : ""));
                 }
                 final Tuple2<Tuple2<String, String>, Integer> changedLine = differentLines.head();
 

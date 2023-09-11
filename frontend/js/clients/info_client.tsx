@@ -30,4 +30,4 @@ export type MuzedoBuildInfo = {
 export const getServerInfo = (
     serverId: number
 ): Promise<GetServerInfoResponse> =>
-    getWrapper(`api/info/${serverId}`)
+    getWrapper('Запрос статуса стенда',`api/info/${serverId}`)
