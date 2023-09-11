@@ -105,51 +105,6 @@ app:
         shell: none
         flags:
           - announce_execution
-      - id: 'hostname'
-        name: 'Проверка SSH'
-        command: 'hostname'
-        timeout: 10
-        shell: ssh
-        flags:
-          - ssh_ready_pattern
-      - id: 'restart_wsadmin'
-        name: 'Рестарт WsAdmin'
-        command: ''
-        timeout: 90
-        shell: wsadmin
-        flags:
-          - wsadmin_block
-          - announce_execution
-      - id: 'ra'
-        name: 'Рестарт'
-        command: 'ra(1)'
-        timeout: 180
-        shell: wsadmin
-        flags:
-          - wsadmin_ready_pattern
-          - wsadmin_block
-          - wsadmin_err_patterns
-          - announce_execution
-      - id: 'ura'
-        name: 'Обновление (gp + integ + cfg)'
-        command: 'ura(1)'
-        timeout: 300
-        shell: wsadmin
-        flags:
-          - wsadmin_ready_pattern
-          - wsadmin_block
-          - wsadmin_err_patterns
-          - announce_execution
-      - id: 'uric'
-        name: 'Обновление (integ + cfg)'
-        command: 'uric()'
-        timeout: 240
-        shell: wsadmin
-        flags:
-          - wsadmin_ready_pattern
-          - wsadmin_block
-          - wsadmin_err_patterns
-          - announce_execution
       - id: 'clear_cache'
         name: 'Клир кэш'
         command: '/root/deploy/clear_cache_shortcut.sh'
@@ -160,9 +115,9 @@ app:
           - ssh_block
           - ssh_err_patterns
           - announce_execution
-      - id: 'ba'
-        name: 'Остановка приложения'
-        command: 'ba()'
+      - id: 'ra'
+        name: 'Рестарт приложения'
+        command: 'ra(1)'
         timeout: 180
         shell: wsadmin
         flags:
@@ -180,8 +135,18 @@ app:
           - wsadmin_block
           - wsadmin_err_patterns
           - announce_execution
+      - id: 'ba'
+        name: 'Остановка приложения'
+        command: 'ba()'
+        timeout: 180
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
       - id: 'cnf'
-        name: 'Обновление (cfg)'
+        name: 'Обновление приложения (cfg)'
         command: 'cnf()'
         timeout: 90
         shell: wsadmin
@@ -191,7 +156,7 @@ app:
           - wsadmin_err_patterns
           - announce_execution
       - id: 'urg'
-        name: 'Обновление (gp)'
+        name: 'Обновление приложения (gp)'
         command: 'urg(1)'
         timeout: 180
         shell: wsadmin
@@ -199,4 +164,39 @@ app:
           - wsadmin_ready_pattern
           - wsadmin_block
           - wsadmin_err_patterns
+          - announce_execution
+      - id: 'ura'
+        name: 'Обновление приложения (gp + integ + cfg)'
+        command: 'ura(1)'
+        timeout: 300
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
+      - id: 'uric'
+        name: 'Обновление приложения (integ + cfg)'
+        command: 'uric()'
+        timeout: 240
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
+      - id: 'hostname'
+        name: 'Проверка SSH'
+        command: 'hostname'
+        timeout: 10
+        shell: ssh
+        flags:
+          - ssh_ready_pattern
+      - id: 'restart_wsadmin'
+        name: 'Рестарт WsAdmin'
+        command: ''
+        timeout: 90
+        shell: wsadmin
+        flags:
+          - wsadmin_block
           - announce_execution

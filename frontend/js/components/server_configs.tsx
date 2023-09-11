@@ -1,10 +1,9 @@
 import React, {useRef, useState} from "react";
 import {Button, Form, OverlayTrigger, Tooltip} from "react-bootstrap";
 import {getServerConfigFile, saveServerConfigFile} from "../clients/file_configs_client";
-import {isEmpty, isNil} from "lodash";
+import {isEmpty} from "lodash";
 import {useQuery} from "react-query";
 import {getFrontendConfig} from "../clients/frontend_client";
-import {config} from "@fortawesome/fontawesome-svg-core";
 
 export type ServerConfigsProps = {
     serverId: number
@@ -20,7 +19,7 @@ export function ServerConfigs({serverId}: ServerConfigsProps) {
     const [configText, setConfigText] = useState("");
     const [configId, setConfigId] = useState("");
     const comment = useRef("");
-    const analyzeChanges = useRef(true);
+    const skipAnalysis = useRef(true);
     const [disableAll, setDisableAll] = useState(false);
     const textArea: React.MutableRefObject<any> = useRef();
 
@@ -51,7 +50,9 @@ export function ServerConfigs({serverId}: ServerConfigsProps) {
         saveServerConfigFile({
             serverId,
             configId,
-            configText
+            configText,
+            comment: comment.current,
+            skipAnalysis: skipAnalysis.current
         }).finally(() => {
             setDisableAll(false);
         });
@@ -86,15 +87,14 @@ export function ServerConfigs({serverId}: ServerConfigsProps) {
                                         разрешено изменять/добавлять/удалять только одну строчку за одно сохранение.
                                     </Tooltip>
                                 }>
-                    <Form.Check label="Анализ изменений"
-                                checked={true}
-                                onChange={e => analyzeChanges.current = e.target.value == 'true'}/>
+                    <Form.Check label="Пропустить анализ изменений"
+                                onChange={e => skipAnalysis.current = e.target.value == 'true'}/>
                 </OverlayTrigger>
 
                 <div className="comp-button-container">
                     <Button onClick={requestConfig}
                             disabled={isEmpty(configId)
-                            || disableAll}
+                                || disableAll}
                             variant="primary">Запросить</Button>
                     <Button onClick={saveConfig}
                             disabled={isEmpty(configId)

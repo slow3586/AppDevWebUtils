@@ -1,4 +1,4 @@
-import {getWrapper, postWrapper} from "../utils/client";
+import {getWrapper, postWrapper, ResponseType} from "../utils/client";
 
 export type GetServerConfigFileResponse = {
     text: string
@@ -6,8 +6,10 @@ export type GetServerConfigFileResponse = {
 
 export type SaveServerConfigFileRequest = {
     serverId: number,
-    configId: String,
-    configText: String
+    configId: string,
+    configText: string,
+    comment: string,
+    skipAnalysis: boolean
 }
 
 export const getServerConfigFile = (
@@ -18,5 +20,5 @@ export const getServerConfigFile = (
 
 export const saveServerConfigFile = (
     saveServerConfigFileRequest: SaveServerConfigFileRequest
-): Promise<GetServerConfigFileResponse> =>
-    postWrapper(`api/file/config/save`, saveServerConfigFileRequest)
+): Promise<string> =>
+    postWrapper(`api/file/config/save`, saveServerConfigFileRequest, ResponseType.TEXT)

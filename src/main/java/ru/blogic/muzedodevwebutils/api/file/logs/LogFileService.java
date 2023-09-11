@@ -73,7 +73,7 @@ public class LogFileService {
         Command.Shell.SSH,
         false,
         true,
-        "zip -9 -j -",
+        "zip -9 -j -q -", //-9 уровень сжатия, -j без папок, -q без лишней инфы
         Command.SSH_READY_PATTERN,
         10,
         false,
@@ -98,7 +98,7 @@ public class LogFileService {
                     + serverLog.path()));
 
         return response.map(r ->
-            new GetLogFileResponse(r.commandOutput().mkString("\n")));
+            new GetLogFileResponse(r.commandOutput()));
     }
 
     public Mono<ResponseEntity<Resource>> getEntireLogFile(int serverId, String logId) {
@@ -116,8 +116,7 @@ public class LogFileService {
             final HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.set(HttpHeaders.CONTENT_DISPOSITION, serverLog.id() + ".zip");
             final byte[] decoded = Base64.getDecoder().decode(
-                response.commandOutput().drop(4).
-                    mkString(""));
+                StringUtils.replace(response.commandOutput(), "\r\n", ""));
             return new ResponseEntity<>(
                 new ByteArrayResource(decoded),
                 responseHeaders,

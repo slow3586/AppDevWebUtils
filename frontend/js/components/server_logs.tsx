@@ -1,13 +1,10 @@
 import React, {useRef, useState} from "react";
 import {Button, Form} from "react-bootstrap";
-import {getServerConfigFile} from "../clients/file_configs_client";
 import {getEntireLogFile, getLogsArchive, getServerLogFile} from "../clients/file_logs_client";
 import {useQuery} from "react-query";
 import {getFrontendConfig} from "../clients/frontend_client";
 import {isEmpty, toInteger} from "lodash";
 import download from "downloadjs";
-import {toast} from "react-toastify";
-
 
 export type ServerLogsProps = {
     serverId: number
@@ -34,25 +31,29 @@ export function ServerLogs({serverId}: ServerLogsProps) {
 
     const logs = frontendConfigQuery?.data?.logs ?? [];
     const requestLog = () => {
+        setDisableAll(true);
         getServerLogFile({
             serverId,
             logId,
             linesCount: toInteger(linesCount.current)
-        }).then(log => setLogText(log.text));
+        }).then(log => setLogText(log.text))
+            .finally(() => setDisableAll(false));
     }
     const requestEntireLogFile = () => {
+        setDisableAll(true);
         getEntireLogFile(serverId, logId).then(
             blobWrapper => blobWrapper.blob.then((blob) => {
                     download(blob, blobWrapper.filename, "application/zip");
                 }
-            ));
+            )).finally(() => setDisableAll(false));
     }
     const requestLogsArchive = () => {
+        setDisableAll(false);
         getLogsArchive(serverId).then(
             blobWrapper => blobWrapper.blob.then((blob) => {
                     download(blob, blobWrapper.filename, "application/zip");
                 }
-            ));
+            )).finally(() => setDisableAll(false));
     }
 
     return (
@@ -85,10 +86,10 @@ export function ServerLogs({serverId}: ServerLogsProps) {
                     <Button onClick={requestEntireLogFile}
                             disabled={isEmpty(logId)
                                 || disableAll}
-                            variant="primary">Скачать весь файл</Button>
+                            variant="primary">Скачать</Button>
                     <Button onClick={requestLogsArchive}
                             disabled={disableAll}
-                            variant="primary">Скачать все логи</Button>
+                            variant="primary">Архив логов</Button>
                 </div>
             </div>
         </div>

@@ -112,8 +112,15 @@ public class CommandService {
                                     command,
                                     List.empty()).block();
                             Try.of(execute)
-                                .onFailure(e -> log.error("#run ошибка при первом запуске, запускаю вторую попытку...", e))
-                                .getOrElse(() -> {
+                                .onFailure(e -> {
+                                    log.error("#run ошибка при первом запуске, запускаю вторую попытку...", e);
+                                    historyService.addHistoryEntry(
+                                        muzedoServer.getId(),
+                                        MuzedoServer.HistoryEntry.Severity.CRIT,
+                                        "Ошибка при выполнении операции \"" + command.name()
+                                            + "\": " + e.getMessage()
+                                            + ", запускаю вторую попытку...");
+                                }).getOrElse(() -> {
                                     muzedoServerService.reconnectWsadminShell(muzedoServer);
                                     return Try.of(execute)
                                         .getOrElseThrow((e1) -> new RuntimeException(

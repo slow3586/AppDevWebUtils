@@ -35,5 +35,5 @@ public record Command(
         "SyntaxError",
         "root@edo-dev");
     public static final List<String> SSH_ERR_PATTERNS
-        = List.of();
+        = List.of(": cannot open ");
 }

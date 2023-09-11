@@ -153,6 +153,9 @@ export function ServerControl({isActive, serverId}: ServerControlProps) {
         && !infoQuery?.data?.wsAdminShell;
 
     let errorMessages = new Array<string>;
+    if (isEmpty(commandId)) {
+        errorMessages.push("Операция не выбрана");
+    }
     if (wsadminUnavailable) {
         errorMessages.push("WsAdmin недоступен");
     }
@@ -167,9 +170,6 @@ export function ServerControl({isActive, serverId}: ServerControlProps) {
     }
     if (disableAll) {
         errorMessages.push("Жду ответа");
-    }
-    if(errorMessages.length > 0) {
-        errorMessages.unshift("Кнопка запуска недоступна: ")
     }
 
     return (
@@ -231,7 +231,8 @@ export function ServerControl({isActive, serverId}: ServerControlProps) {
                         </div>
                     </div>
                     <Form.Text className="comp-error">
-                        {errorMessages.join("; ")}</Form.Text>
+                        {(!isEmpty(errorMessages) ? "Кнопка запуска недоступна: " : "")
+                            + errorMessages.join("; ")}</Form.Text>
                 </div>
             }
         </div>

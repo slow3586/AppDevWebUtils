@@ -94,8 +94,7 @@ public class SSHService {
     }
 
     public record ExecuteCommandResult(
-        List<String> entireOutput,
-        List<String> commandOutput
+        String commandOutput
     ) {}
 
     public Mono<ExecuteCommandResult> executeCommand(
@@ -104,29 +103,33 @@ public class SSHService {
         @NonNull final List<String> arguments
     ) {
         try (
-            final OutputStream in = new NoCloseOutputStream(channelShell.getInvertedIn());
-            final ByteArrayOutputStream baos = new ByteArrayOutputStream()
+            final OutputStream input = new NoCloseOutputStream(channelShell.getInvertedIn());
+            final ByteArrayOutputStream output = new ByteArrayOutputStream()
         ) {
-            in.write(21);
-            in.flush();
+            input.write(21);
+            input.flush();
 
-            final String commandText = List.of(
-                command.command(),
-                arguments.mkString(" ")
-            ).mkString(" ");
+            final String commandText =
+                List.of(
+                        (command.shell() == Command.Shell.SSH ? "echo '_COMMAND_OUTPUT_START_' &&" : ""),
+                        command.command(),
+                        arguments.mkString(" ")
+                    ).filter(StringUtils::isNotBlank)
+                    .mkString(" ");
             log.debug("commandText: " + commandText);
-            channelShell.setOut(baos);
-            in.write(commandText.getBytes());
-            in.write("\n".getBytes());
-            in.flush();
+            input.write(commandText.getBytes());
+            input.write("\n".getBytes());
+            input.flush();
 
-            var substringBegin = 0;
-            var timer = 0;
+            channelShell.setOut(output);
+
+            int substringBegin = 0;
+            int timer = 0;
             while (true) {
                 Thread.sleep(1000);
                 timer++;
-                final String entireOutput = baos.toString().trim();
-                final String newOutputPart = entireOutput.substring(substringBegin);
+                final String outputString = output.toString().trim();
+                final String newOutputPart = outputString.substring(substringBegin);
                 if (!newOutputPart.isEmpty()) {
                     substringBegin += newOutputPart.length();
                     log.debug("{}: {}: ({}s) {}",
@@ -140,7 +143,7 @@ public class SSHService {
                     .stream()
                     .filter(e ->
                         StringUtils.containsIgnoreCase(
-                            entireOutput, e))
+                            outputString, e))
                     .findFirst();
                 if (err.isPresent()) {
                     log.error("{}: {}: обнаружена ошибка \"{}\"",
@@ -152,21 +155,18 @@ public class SSHService {
                         + ": " + err.get());
                 }
                 if (StringUtils.isBlank(command.readyPattern())
-                    || entireOutput.endsWith(command.readyPattern())
+                    || outputString.endsWith(command.readyPattern())
                 ) {
                     log.debug("{}: {}: complete @ {}s",
                         channelShell.getSession().getRemoteAddress(),
                         command.command(),
                         timer);
 
-                    final List<String> commandOutputResult =
-                        Utils.splitByLines(entireOutput)
-                            .drop(1)
-                            .dropRight(1);
-
                     return Mono.just(new ExecuteCommandResult(
-                        Utils.splitByLines(entireOutput),
-                        commandOutputResult
+                        StringUtils.substringAfterLast(
+                            StringUtils.substringBeforeLast(outputString, "\r\n"),
+                            "_COMMAND_OUTPUT_START_\r\n"
+                        )
                     ));
                 }
                 if (command.timeout() != 0 && timer > command.timeout()) {

@@ -2,6 +2,7 @@ package ru.blogic.muzedodevwebutils.api.file.configs;
 
 import io.vavr.Tuple2;
 import io.vavr.collection.List;
+import io.vavr.control.Option;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -73,7 +74,7 @@ public class ConfigFileService {
 
         return response
             .map(r ->
-                new GetConfigFileResponse(r.commandOutput().mkString("\n")));
+                new GetConfigFileResponse(r.commandOutput()));
     }
 
     public void saveServerConfigFile(
@@ -82,35 +83,55 @@ public class ConfigFileService {
         final MuzedoServer muzedoServer = muzedoServerDao.get(saveConfigFileRequest.serverId());
         try {
             final ConfigFile serverConfig = configFileDao.get(saveConfigFileRequest.configId());
-            final String serverConfigFile = this.getServerConfigFile(
-                    saveConfigFileRequest.serverId(),
-                    saveConfigFileRequest.configId()
-                ).map(GetConfigFileResponse::text)
-                .block();
 
-            if (StringUtils.isBlank(serverConfigFile)) {
-                throw new RuntimeException("При запросе конфиг со стенда пришел пустым или не пришел");
+            final String commentText = Option.of(saveConfigFileRequest.comment())
+                .filter(StringUtils::isNotBlank)
+                .map(s -> ": " + s)
+                .getOrElse("");
+
+            final String historyText;
+            if (!saveConfigFileRequest.skipAnalysis()) {
+                final String serverConfigFile = this.getServerConfigFile(
+                        saveConfigFileRequest.serverId(),
+                        saveConfigFileRequest.configId()
+                    ).map(GetConfigFileResponse::text)
+                    .block();
+
+                if (StringUtils.isBlank(serverConfigFile)) {
+                    throw new RuntimeException("При запросе конфиг со стенда пришел пустым или не пришел");
+                }
+
+                final List<String> previousVersion = Utils.splitByLines(serverConfigFile);
+                final List<String> newVersion = Utils.splitByLines(saveConfigFileRequest.configText());
+
+                final int sizeDifference = newVersion.size() - previousVersion.size();
+                if (sizeDifference > 1 || sizeDifference < -1) {
+                    throw new RuntimeException("Анализ: в конфиге было ДОБАВЛЕНО/УБРАНО более 1 строки: " +
+                        "изменено " + sizeDifference + " строк");
+                }
+
+                final List<Tuple2<Tuple2<String, String>, Integer>> differentLines = previousVersion
+                    .zip(newVersion)
+                    .zipWithIndex()
+                    .filter(t -> !StringUtils.equalsIgnoreCase(t._1._1, t._1._2));
+                if (sizeDifference == 0 && differentLines.size() != 1) {
+                    throw new RuntimeException("Анализ: в конфиге было ИЗМЕНЕНО более/менее 1 строки: "
+                        + "изменено " + sizeDifference + " строк: "
+                        + differentLines.map(l -> "№" + l._2).mkString(", "));
+                }
+                final Tuple2<Tuple2<String, String>, Integer> changedLine = differentLines.head();
+
+                historyText = "Изменена строка конфига " +
+                    "\"" + serverConfig.id() + "\" " +
+                    "#" + changedLine._2() + ": "
+                    + "\"" + changedLine._1()._2 + "\""
+                    + commentText;
+            } else {
+                historyText = "Изменен конфиг " +
+                    "\"" + serverConfig.id() + "\" "
+                    + "без анализа"
+                    + commentText;
             }
-
-            final List<String> previousVersion = Utils.splitByLines(serverConfigFile);
-            final List<String> newVersion = Utils.splitByLines(saveConfigFileRequest.configText());
-
-            final int sizeDifference = newVersion.size() - previousVersion.size();
-            if (sizeDifference > 1 || sizeDifference < -1) {
-                throw new RuntimeException("Анализ: в конфиге было ДОБАВЛЕНО/УБРАНО более 1 строки: " +
-                    "изменено " + sizeDifference + " строк");
-            }
-
-            final List<Tuple2<Tuple2<String, String>, Integer>> differentLines = previousVersion
-                .zip(newVersion)
-                .zipWithIndex()
-                .filter(t -> !StringUtils.equalsIgnoreCase(t._1._1, t._1._2));
-            if (sizeDifference == 0 && differentLines.size() != 1) {
-                throw new RuntimeException("Анализ: в конфиге было ИЗМЕНЕНО более/менее 1 строки: "
-                    + "изменено " + sizeDifference + " строк: "
-                    + differentLines.map(l -> "№" + l._2).mkString(", "));
-            }
-            final Tuple2<Tuple2<String, String>, Integer> changedLine = differentLines.head();
 
             final SSHService.ExecuteCommandResult saveResult = sshService.executeCommand(
                 muzedoServer.getSshClientSession(),
@@ -126,10 +147,8 @@ public class ConfigFileService {
             historyService.addHistoryEntry(
                 muzedoServer.getId(),
                 MuzedoServer.HistoryEntry.Severity.CRIT,
-                "Изменена строка конфига " +
-                    "\"" + serverConfig.id() + "\" " +
-                    "#" + changedLine._2() + ": "
-                    + "\"" + changedLine._1()._2 + "\"");
+                historyText
+            );
         } catch (Exception e) {
             historyService.addHistoryEntry(
                 muzedoServer.getId(),
@@ -151,6 +170,8 @@ public class ConfigFileService {
     public record SaveConfigFileRequest(
         int serverId,
         String configId,
-        String configText
+        String configText,
+        String comment,
+        boolean skipAnalysis
     ) {}
 }

@@ -3,6 +3,7 @@ import {toast} from 'react-toastify';
 import {startsWith} from 'lodash';
 
 export enum ResponseType {
+    NOTHING,
     TEXT,
     JSON,
     BLOB
@@ -24,16 +25,15 @@ const common = (
                 if (!response.ok) {
                     throw response;
                 }
-                return responseType == ResponseType.TEXT
-                    ? response.text()
-                    : responseType == ResponseType.JSON
-                        ? response.json() as Promise<any>
-                        : responseType == ResponseType.BLOB
-                            ? new Promise((res, rej) => res({
-                                filename: response.headers.get("Content-Disposition"),
-                                blob: response.blob()
-                            })) as Promise<BlobWrapper>
-                            : null;
+                switch (responseType) {
+                    case ResponseType.BLOB: return new Promise((res, rej) => res({
+                        filename: response.headers.get("Content-Disposition"),
+                        blob: response.blob()
+                    })) as Promise<BlobWrapper>
+                    case ResponseType.TEXT: return response.text()
+                    case ResponseType.JSON: return response.json()
+                    default: return null
+                }
             })
             .catch((error) => {
                 console.error(error);

@@ -1,4 +1,4 @@
-import {postWrapper} from "../utils/client";
+import {postWrapper, ResponseType} from "../utils/client";
 
 export enum Type {
     WSADMIN = "WSADMIN",
@@ -15,7 +15,7 @@ export type CommandRunRequest = {
 export const commandRun = (
     request: CommandRunRequest
 ): Promise<string> =>
-    postWrapper(`api/command/run`, request, true)
+    postWrapper(`api/command/run`, request, ResponseType.TEXT)
 
 export interface CommandDelayRequest {
     serverId: number,
@@ -26,7 +26,7 @@ export interface CommandDelayRequest {
 export const commandDelay = (
     request: CommandDelayRequest
 ): Promise<string> =>
-    postWrapper(`api/command/delay`, request, true)
+    postWrapper(`api/command/delay`, request, ResponseType.TEXT)
 
 export interface CommandCancelRequest {
     serverId: number,
@@ -36,4 +36,4 @@ export interface CommandCancelRequest {
 export const commandCancel = (
     request: CommandCancelRequest
 ): Promise<string> =>
-    postWrapper(`api/command/cancel`, request, true)
+    postWrapper(`api/command/cancel`, request, ResponseType.TEXT)
