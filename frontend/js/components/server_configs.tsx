@@ -4,6 +4,7 @@ import {getServerConfigFile, saveServerConfigFile} from "../clients/file_configs
 import {isEmpty} from "lodash";
 import {useQuery} from "react-query";
 import {getFrontendConfig} from "../clients/frontend_client";
+import {toast} from "react-toastify";
 
 export type ServerConfigsProps = {
     serverId: number
@@ -32,30 +33,64 @@ export function ServerConfigs({serverId}: ServerConfigsProps) {
         });
 
     const configs = frontendConfigQuery?.data?.configs ?? [];
-    const requestConfig = () => {
+
+    const showToast = (
+        text: string,
+        time: number
+    ) => {
+        toast(text, {
+            position: "top-right",
+            autoClose: time * 1000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+            closeButton: false
+        });
+    }
+    const requestWrapper = (
+        toastText: string,
+        toastTime: number,
+        request: Promise<any>
+    ) => {
         setDisableAll(true);
-        return getServerConfigFile(serverId, configId)
-            .then(config => {
-                config.text?.replace?.("\r\r\n", "\n");
-                setConfigText(config.text);
-                textArea.current.value = config.text;
-            })
-            .finally(() => {
-                setDisableAll(false);
-            });
+        if (!isEmpty(toastText)) {
+            showToast(toastText, toastTime);
+        }
+        return request.then(() => {
+            if (!isEmpty(toastText)) {
+                showToast("Успешно!", 5);
+            }
+        }).finally(() => {
+            setDisableAll(false);
+        })
+    }
+
+    const requestConfig = () => {
+        return requestWrapper(
+            "",
+            0,
+            getServerConfigFile(serverId, configId)
+                .then(config => {
+                    config.text?.replace?.("\r\r\n", "\n");
+                    setConfigText(config.text);
+                    textArea.current.value = config.text;
+                }));
     }
 
     const saveConfig = () => {
-        setDisableAll(true);
-        return saveServerConfigFile({
-            serverId,
-            configId,
-            configText,
-            comment: comment.current,
-            skipAnalysis: skipAnalysis.current
-        }).finally(() => {
-            requestConfig().finally(() => setDisableAll(false));
-        });
+        return requestWrapper(
+            "Сохраняю...",
+            5,
+            saveServerConfigFile({
+                serverId,
+                configId,
+                configText,
+                comment: comment.current,
+                skipAnalysis: skipAnalysis.current
+            }));
     }
 
     return (
@@ -64,7 +99,7 @@ export function ServerConfigs({serverId}: ServerConfigsProps) {
                           onChange={e => setConfigText(e.target.value)}
                           ref={textArea}
                           as="textarea"
-                          rows={30}/>
+                          rows={25}/>
             <div className="comp-controls">
 
                 <Form.Text muted>Конфиг</Form.Text>
@@ -79,7 +114,8 @@ export function ServerConfigs({serverId}: ServerConfigsProps) {
                               type="text"
                               placeholder=""/>
 
-                <OverlayTrigger placement="top"
+                <OverlayTrigger placement="right"
+                                delay={{ show: 250 , hide: 0}}
                                 overlay={(props) =>
                                     <Tooltip {...props}>
                                         При включенном анализе изменений система автоматически проанализирует
@@ -87,8 +123,10 @@ export function ServerConfigs({serverId}: ServerConfigsProps) {
                                         разрешено изменять/добавлять/удалять только одну строчку за одно сохранение.
                                     </Tooltip>
                                 }>
-                    <Form.Check label="Пропустить анализ изменений"
-                                onChange={e => skipAnalysis.current = e.target.value == 'true'}/>
+                    <div>
+                        <Form.Check label="Пропустить анализ изменений"
+                                    onChange={e => skipAnalysis.current = e.target.checked}/>
+                    </div>
                 </OverlayTrigger>
 
                 <div className="comp-button-container">

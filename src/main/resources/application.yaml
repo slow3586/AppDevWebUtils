@@ -67,39 +67,9 @@ app:
       - 'Смирнова Наталья'
   muzedo:
     servers:
-      - id: '58'
-        host: '172.19.203.58'
-        password: '${pw_58}'
-        file-paths:
-          configs: '/fs/it/gp-uzdo'
-          logs: '/workdir/logs'
-      - id: '59'
-        host: '172.19.203.59'
-        password: '${pw_59}'
-        file-paths:
-          configs: '/fs/it/gp-uzdo'
-          logs: '/workdir/logs'
-      - id: '60'
-        host: '172.19.203.60'
-        password: '${pw_60}'
-        file-paths:
-          configs: '/fs/it/gp-uzdo'
-          logs: '/workdir/logs'
-      - id: '61'
-        host: '172.19.203.61'
-        password: '${pw_61}'
-        file-paths:
-          configs: '/fs/it/gp-uzdo'
-          logs: '/workdir/logs'
       - id: '146'
         host: '172.19.203.146'
         password: '${pw_146}'
-        file-paths:
-          configs: '/fs/it/gp-uzdo'
-          logs: '/workdir/logs'
-      - id: '147'
-        host: '172.19.203.147'
-        password: '${pw_147}'
         file-paths:
           configs: '/fs/it/gp-uzdo'
           logs: '/workdir/logs'

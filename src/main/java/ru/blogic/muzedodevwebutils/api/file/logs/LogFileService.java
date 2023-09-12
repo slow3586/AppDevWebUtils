@@ -114,7 +114,10 @@ public class LogFileService {
             )
         ).map(response -> {
             final HttpHeaders responseHeaders = new HttpHeaders();
-            responseHeaders.set(HttpHeaders.CONTENT_DISPOSITION, serverLog.id()
+            responseHeaders.set(
+                HttpHeaders.CONTENT_DISPOSITION,
+                serverId
+                + "_" + serverLog.id()
                 + "_" + DATE_FORMAT_LOG_FILE.format(LocalDateTime.now())
                 + ".zip");
             final byte[] decoded = Base64.getDecoder().decode(

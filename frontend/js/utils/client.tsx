@@ -20,7 +20,7 @@ const common = (
     options: any,
     responseType: ResponseType
 ): Promise<any> => {
-    const showToast = (text: string) => {
+    const showErrToast = (text: string) => {
         toast.warn('Не удалось выполнить "' + requestName + '": ' + text, {
             toastId: "clienterr",
             position: "top-right",
@@ -63,13 +63,13 @@ const common = (
                     } else if (startsWith(errMessage, `Unexpected token '<'`)) {
                         errMessage = "Необходимо перезагрузить страницу"
                     }
-                    showToast(errMessage);
+                    showErrToast(errMessage);
                     throw errMessage;
                 });
             })
     } catch (err) {
         console.error(err);
-        showToast(err);
+        showErrToast(err);
         throw err;
     }
 }

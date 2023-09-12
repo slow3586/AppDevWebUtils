@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.apache.sshd.client.channel.ChannelShell;
 import org.apache.sshd.client.session.ClientSession;
+import org.apache.sshd.scp.client.ScpClient;
 import ru.blogic.muzedodevwebutils.api.command.Command;
 import ru.blogic.muzedodevwebutils.utils.Timer;
 
@@ -26,6 +27,7 @@ public class MuzedoServer {
 
     ClientSession sshClientSession;
     ChannelShell wsadminShell;
+    ScpClient scpClient;
 
     final ConcurrentLinkedQueue<HistoryEntry> history = new ConcurrentLinkedQueue<>();
 

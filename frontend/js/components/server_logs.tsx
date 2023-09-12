@@ -5,6 +5,7 @@ import {useQuery} from "react-query";
 import {getFrontendConfig} from "../clients/frontend_client";
 import {isEmpty, toInteger} from "lodash";
 import download from "downloadjs";
+import {toast} from "react-toastify";
 
 export type ServerLogsProps = {
     serverId: number
@@ -33,32 +34,70 @@ export function ServerLogs({serverId}: ServerLogsProps) {
         });
 
     const logs = frontendConfigQuery?.data?.logs ?? [];
-    const requestLog = () => {
+    const showToast = (
+        text: string,
+        time: number
+    ) => {
+        toast(text, {
+            position: "top-right",
+            autoClose: time * 1000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+            theme: "light",
+            closeButton: false
+        });
+    }
+    const requestWrapper = (
+        toastText: string,
+        toastTime: number,
+        request: Promise<any>
+    ) => {
         setDisableAll(true);
-        getServerLogFile({
-            serverId,
-            logId,
-            linesCount: toInteger(linesCount.current)
-        }).then(log => setLogText(log.text)
-        ).finally(() => setDisableAll(false));
+        if (!isEmpty(toastText)) {
+            showToast(toastText, toastTime);
+        }
+        return request.then(() => {
+            if (!isEmpty(toastText)) {
+                showToast("Успешно!", 5);
+            }
+        }).finally(() => {
+            setDisableAll(false);
+        })
+    }
+    const requestLog = () => {
+        requestWrapper(
+            "",
+            0,
+            getServerLogFile({
+                serverId,
+                logId,
+                linesCount: toInteger(linesCount.current)
+            }).then(log => setLogText(log.text)));
     }
     const requestEntireLogFile = () => {
-        setDisableAll(true);
-        getEntireLogFile(serverId, logId).then(
-            blobWrapper => blobWrapper.blob.then((blob) => {
-                    download(blob, blobWrapper.filename, "application/zip");
-                }
-            )
-        ).finally(() => setDisableAll(false));
+        requestWrapper(
+            "Подготавливаю лог...",
+            3,
+            getEntireLogFile(serverId, logId).then(
+                blobWrapper => blobWrapper.blob.then((blob) => {
+                        download(blob, blobWrapper.filename, "application/zip");
+                    }
+                )
+            ));
     }
     const requestLogsArchive = () => {
-        setDisableAll(true);
-        getLogsArchive(serverId).then(
-            blobWrapper => blobWrapper.blob.then((blob) => {
-                    download(blob, blobWrapper.filename, "application/zip");
-                }
-            )
-        ).finally(() => setDisableAll(false));
+        requestWrapper(
+            "Подготавливаю архив...",
+            15,
+            getLogsArchive(serverId).then(
+                blobWrapper => blobWrapper.blob.then((blob) => {
+                        download(blob, blobWrapper.filename, "application/zip");
+                    }
+                )
+            ));
     }
 
     return (

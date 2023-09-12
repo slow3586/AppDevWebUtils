@@ -18,6 +18,9 @@ import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerDao;
 import ru.blogic.muzedodevwebutils.api.muzedo.ssh.SSHService;
 import ru.blogic.muzedodevwebutils.utils.Utils;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -61,6 +64,16 @@ public class ConfigFileService {
         final MuzedoServer muzedoServer = muzedoServerDao.get(serverId);
         final ConfigFile serverConfig = configFileDao.get(configId);
 
+        final byte[] file = sshService.downloadFile(
+            muzedoServer,
+            muzedoServer.getFilePaths().configsFilePath()
+                + "/"
+                + serverConfig.path()
+        );
+
+        final String text = new String(file, StandardCharsets.UTF_8);
+
+        /*
         final Mono<SSHService.ExecuteCommandResult> response = sshService.executeCommand(
             muzedoServer.getSshClientSession(),
             GET_CONFIG_COMMAND,
@@ -68,10 +81,9 @@ public class ConfigFileService {
                 muzedoServer.getFilePaths().configsFilePath()
                     + "/"
                     + serverConfig.path()));
+         */
 
-        return response
-            .map(r ->
-                new GetConfigFileResponse(r.commandOutput()));
+        return Mono.just(new GetConfigFileResponse(text));
     }
 
     public void saveServerConfigFile(
@@ -83,7 +95,7 @@ public class ConfigFileService {
 
             final String commentText = Option.of(saveConfigFileRequest.comment())
                 .filter(StringUtils::isNotBlank)
-                .map(s -> ": " + s)
+                .map(s -> ": \"" + s + "\"")
                 .getOrElse("");
 
             final String historyText;
@@ -114,9 +126,12 @@ public class ConfigFileService {
                 if (sizeDifference == 0 && differentLines.size() != 1) {
                     throw new RuntimeException("Анализ: в конфиге было ИЗМЕНЕНО более/менее 1 строки: "
                         + "изменено " + differentLines.size() + " строк"
-                        + (differentLines.isEmpty()
-                        ? differentLines.map(l -> "№" + l._2).mkString(", ")
+                        + (!differentLines.isEmpty()
+                        ? ": " + differentLines.map(l -> "№" + l._2).mkString(", ")
                         : ""));
+                }
+                if (sizeDifference != 0 && differentLines.size() != 1) {
+                    throw new RuntimeException("Анализ: в конфиге были одновременно ИЗМЕНЕНЫ и ДОБАВЛЕНЫ/УБРАНЫ строки");
                 }
                 final Tuple2<Tuple2<String, String>, Integer> changedLine = differentLines.head();
 
@@ -132,16 +147,13 @@ public class ConfigFileService {
                     + commentText;
             }
 
-            final SSHService.ExecuteCommandResult saveResult = sshService.executeCommand(
-                muzedoServer.getSshClientSession(),
-                SAVE_CONFIG_COMMAND,
-                List.of(
-                    "'" + saveConfigFileRequest.configText()
-                        + "' >| "
-                        + muzedoServer.getFilePaths().configsFilePath()
-                        + "/"
-                        + serverConfig.path())
-            ).block();
+            sshService.uploadFile(
+                muzedoServer,
+                saveConfigFileRequest.configText().getBytes(),
+                muzedoServer.getFilePaths().configsFilePath()
+                    + "/"
+                    + serverConfig.path()
+            );
 
             historyService.addHistoryEntry(
                 muzedoServer.getId(),
@@ -149,11 +161,7 @@ public class ConfigFileService {
                 historyText
             );
         } catch (Exception e) {
-            historyService.addHistoryEntry(
-                muzedoServer.getId(),
-                MuzedoServer.HistoryEntry.Severity.INFO,
-                "Ошибка изменения конфига: " + e.getMessage());
-            throw new RuntimeException("#saveServerConfigFile", e);
+            throw new RuntimeException("#saveServerConfigFile: " + e.getMessage(), e);
         }
     }
 

@@ -64,6 +64,7 @@ public class MuzedoServerService {
             });
 
             muzedoServer.setSshClientSession(session);
+            muzedoServer.setScpClient(sshService.createScpClient(session));
             log.debug(muzedoServer.getHost() + ": SshSession установлена!");
         } catch (Exception e) {
             log.error("#reconnectSshSession exception: " + e.getMessage(), e);

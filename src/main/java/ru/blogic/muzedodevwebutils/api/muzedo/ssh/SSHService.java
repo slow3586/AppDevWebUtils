@@ -15,6 +15,10 @@ import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.channel.ChannelListener;
 import org.apache.sshd.common.channel.RequestHandler;
 import org.apache.sshd.common.util.io.output.NoCloseOutputStream;
+import org.apache.sshd.scp.client.CloseableScpClient;
+import org.apache.sshd.scp.client.ScpClient;
+import org.apache.sshd.scp.client.ScpClientCreator;
+import org.apache.sshd.scp.common.helpers.ScpTimestampCommandDetails;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 import ru.blogic.muzedodevwebutils.api.command.Command;
@@ -22,6 +26,8 @@ import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.Date;
 import java.util.Optional;
 
 @Service
@@ -30,12 +36,13 @@ import java.util.Optional;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SSHService {
     static long TIMEOUT = 5000;
-    SshClient client = SshClient.setUpDefaultClient();
+    ScpClientCreator SCP_CLIENT_CREATOR = ScpClientCreator.instance();
+    SshClient DEFAULT_SSH_CLIENT = SshClient.setUpDefaultClient();
 
     @PostConstruct
     public void postConstruct() {
         try {
-            client.start();
+            DEFAULT_SSH_CLIENT.start();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -45,7 +52,7 @@ public class SSHService {
         final MuzedoServer muzedoServer
     ) {
         try {
-            final ClientSession session = client.connect("root", muzedoServer.getHost(), 22)
+            final ClientSession session = DEFAULT_SSH_CLIENT.connect("root", muzedoServer.getHost(), 22)
                 .verify(TIMEOUT)
                 .getSession();
 
@@ -77,6 +84,12 @@ public class SSHService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public ScpClient createScpClient(
+        final ClientSession clientSession
+    ) {
+        return SCP_CLIENT_CREATOR.createScpClient(clientSession);
     }
 
     public Mono<ExecuteCommandResult> executeCommand(
@@ -175,6 +188,37 @@ public class SSHService {
             }
         } catch (Exception e) {
             throw new RuntimeException("#executeCommand: " + e.getMessage(), e);
+        }
+    }
+
+    public byte[] downloadFile(
+        @NonNull final MuzedoServer muzedoServer,
+        @NonNull final String path
+    ) {
+        try {
+            return muzedoServer.getScpClient().downloadBytes(path);
+        } catch (Exception e) {
+            throw new RuntimeException("#downloadFile: " + e.getMessage(), e);
+        }
+    }
+
+    public void uploadFile(
+        @NonNull final MuzedoServer muzedoServer,
+        final byte[] data,
+        @NonNull final String path
+    ) {
+        try {
+            final long now = new Date().getTime();
+            muzedoServer.getScpClient().upload(
+                data,
+                path,
+                java.util.List.of(
+                    PosixFilePermission.OWNER_EXECUTE,
+                    PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.OWNER_READ),
+                new ScpTimestampCommandDetails(now, now));
+        } catch (Exception e) {
+            throw new RuntimeException("#downloadFile: " + e.getMessage(), e);
         }
     }
 }
