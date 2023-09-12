@@ -38,7 +38,9 @@ export function ServerLogs({serverId}: ServerLogsProps) {
         text: string,
         time: number
     ) => {
-        toast(text, {
+        toast.dismiss("requestToast");
+        return toast(text, {
+            toastId: "requestToast",
             position: "top-right",
             autoClose: time * 1000,
             hideProgressBar: false,
@@ -68,17 +70,17 @@ export function ServerLogs({serverId}: ServerLogsProps) {
         })
     }
     const requestLog = () => {
-        requestWrapper(
+        return requestWrapper(
             "",
             0,
             getServerLogFile({
                 serverId,
                 logId,
                 linesCount: toInteger(linesCount.current)
-            }).then(log => setLogText(log.text)));
+            }).then(logText => setLogText(logText)));
     }
     const requestEntireLogFile = () => {
-        requestWrapper(
+        return requestWrapper(
             "Подготавливаю лог...",
             3,
             getEntireLogFile(serverId, logId).then(
@@ -89,7 +91,7 @@ export function ServerLogs({serverId}: ServerLogsProps) {
             ));
     }
     const requestLogsArchive = () => {
-        requestWrapper(
+        return requestWrapper(
             "Подготавливаю архив...",
             15,
             getLogsArchive(serverId).then(

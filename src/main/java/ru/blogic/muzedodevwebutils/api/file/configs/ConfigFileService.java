@@ -10,88 +10,51 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import ru.blogic.muzedodevwebutils.api.command.Command;
-import ru.blogic.muzedodevwebutils.api.file.configs.dao.ConfigFileDao;
+import ru.blogic.muzedodevwebutils.api.file.configs.config.ConfigFile;
+import ru.blogic.muzedodevwebutils.api.file.configs.config.ConfigFileConfig;
+import ru.blogic.muzedodevwebutils.api.file.configs.dto.SaveConfigFileRequest;
 import ru.blogic.muzedodevwebutils.api.history.HistoryService;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
-import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerDao;
+import ru.blogic.muzedodevwebutils.api.muzedo.config.MuzedoServerConfig;
 import ru.blogic.muzedodevwebutils.api.muzedo.ssh.SSHService;
 import ru.blogic.muzedodevwebutils.utils.Utils;
 
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ConfigFileService {
-    MuzedoServerDao muzedoServerDao;
+    MuzedoServerConfig muzedoServerConfig;
     SSHService sshService;
-    ConfigFileDao configFileDao;
+    ConfigFileConfig configFileConfig;
     HistoryService historyService;
 
-    static Command GET_CONFIG_COMMAND = new Command(
-        "awk",
-        "Awk",
-        Command.Shell.SSH,
-        false,
-        true,
-        "awk 1",
-        Command.SSH_READY_PATTERN,
-        10,
-        false,
-        Command.SSH_ERR_PATTERNS
-    );
-
-    static Command SAVE_CONFIG_COMMAND = new Command(
-        "echo",
-        "Echo",
-        Command.Shell.SSH,
-        false,
-        true,
-        "echo",
-        Command.SSH_READY_PATTERN,
-        10,
-        false,
-        Command.SSH_ERR_PATTERNS
-    );
-
-    public Mono<GetConfigFileResponse> getServerConfigFile(
+    public String getServerConfigFile(
         final int serverId,
         final String configId
     ) {
-        final MuzedoServer muzedoServer = muzedoServerDao.get(serverId);
-        final ConfigFile serverConfig = configFileDao.get(configId);
+        final MuzedoServer muzedoServer = muzedoServerConfig.get(serverId);
+        final ConfigFile configFile = configFileConfig.get(configId);
 
         final byte[] file = sshService.downloadFile(
             muzedoServer,
             muzedoServer.getFilePaths().configsFilePath()
                 + "/"
-                + serverConfig.path()
-        );
+                + configFile.path());
 
-        final String text = new String(file, StandardCharsets.UTF_8);
-
-        /*
-        final Mono<SSHService.ExecuteCommandResult> response = sshService.executeCommand(
-            muzedoServer.getSshClientSession(),
-            GET_CONFIG_COMMAND,
-            List.of(
-                muzedoServer.getFilePaths().configsFilePath()
-                    + "/"
-                    + serverConfig.path()));
-         */
-
-        return Mono.just(new GetConfigFileResponse(text));
+        return new String(
+            file,
+            StandardCharsets.UTF_8);
     }
 
     public void saveServerConfigFile(
         final SaveConfigFileRequest saveConfigFileRequest
     ) {
-        final MuzedoServer muzedoServer = muzedoServerDao.get(saveConfigFileRequest.serverId());
         try {
-            final ConfigFile serverConfig = configFileDao.get(saveConfigFileRequest.configId());
+            final MuzedoServer muzedoServer = muzedoServerConfig.get(saveConfigFileRequest.serverId());
+            final ConfigFile configFile = configFileConfig.get(saveConfigFileRequest.configId());
 
             final String commentText = Option.of(saveConfigFileRequest.comment())
                 .filter(StringUtils::isNotBlank)
@@ -101,10 +64,9 @@ public class ConfigFileService {
             final String historyText;
             if (!saveConfigFileRequest.skipAnalysis()) {
                 final String serverConfigFile = this.getServerConfigFile(
-                        saveConfigFileRequest.serverId(),
-                        saveConfigFileRequest.configId()
-                    ).map(GetConfigFileResponse::text)
-                    .block();
+                    saveConfigFileRequest.serverId(),
+                    saveConfigFileRequest.configId()
+                );
 
                 if (StringUtils.isBlank(serverConfigFile)) {
                     throw new RuntimeException("При запросе конфиг со стенда пришел пустым или не пришел");
@@ -133,16 +95,16 @@ public class ConfigFileService {
                 if (sizeDifference != 0 && differentLines.size() != 1) {
                     throw new RuntimeException("Анализ: в конфиге были одновременно ИЗМЕНЕНЫ и ДОБАВЛЕНЫ/УБРАНЫ строки");
                 }
-                final Tuple2<Tuple2<String, String>, Integer> changedLine = differentLines.head();
 
+                final Tuple2<Tuple2<String, String>, Integer> changedLine = differentLines.head();
                 historyText = "Изменена строка конфига " +
-                    "\"" + serverConfig.id() + "\" " +
+                    "\"" + configFile.id() + "\" " +
                     "#" + changedLine._2() + ": "
                     + "\"" + changedLine._1()._2 + "\""
                     + commentText;
             } else {
                 historyText = "Изменен конфиг " +
-                    "\"" + serverConfig.id() + "\" "
+                    "\"" + configFile.id() + "\" "
                     + "без анализа"
                     + commentText;
             }
@@ -152,33 +114,15 @@ public class ConfigFileService {
                 saveConfigFileRequest.configText().getBytes(),
                 muzedoServer.getFilePaths().configsFilePath()
                     + "/"
-                    + serverConfig.path()
-            );
+                    + configFile.path());
 
             historyService.addHistoryEntry(
                 muzedoServer.getId(),
                 MuzedoServer.HistoryEntry.Severity.CRIT,
-                historyText
-            );
+                historyText);
         } catch (Exception e) {
             throw new RuntimeException("#saveServerConfigFile: " + e.getMessage(), e);
         }
     }
 
-    public record GetConfigFileRequest(
-        int serverId,
-        String configId
-    ) {}
-
-    public record GetConfigFileResponse(
-        String text
-    ) {}
-
-    public record SaveConfigFileRequest(
-        int serverId,
-        String configId,
-        String configText,
-        String comment,
-        boolean skipAnalysis
-    ) {}
 }

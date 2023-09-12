@@ -1,6 +1,7 @@
 package ru.blogic.muzedodevwebutils.api.muzedo.ssh;
 
 import io.vavr.collection.List;
+import io.vavr.control.Option;
 import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
 import lombok.NonNull;
@@ -15,7 +16,6 @@ import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.channel.ChannelListener;
 import org.apache.sshd.common.channel.RequestHandler;
 import org.apache.sshd.common.util.io.output.NoCloseOutputStream;
-import org.apache.sshd.scp.client.CloseableScpClient;
 import org.apache.sshd.scp.client.ScpClient;
 import org.apache.sshd.scp.client.ScpClientCreator;
 import org.apache.sshd.scp.common.helpers.ScpTimestampCommandDetails;
@@ -28,16 +28,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Date;
-import java.util.Optional;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SSHService {
-    static long TIMEOUT = 5000;
-    ScpClientCreator SCP_CLIENT_CREATOR = ScpClientCreator.instance();
-    SshClient DEFAULT_SSH_CLIENT = SshClient.setUpDefaultClient();
+    static long DEFAULT_TIMEOUT = 5000;
+    static ScpClientCreator SCP_CLIENT_CREATOR = ScpClientCreator.instance();
+    static SshClient DEFAULT_SSH_CLIENT = SshClient.setUpDefaultClient();
 
     @PostConstruct
     public void postConstruct() {
@@ -53,11 +52,11 @@ public class SSHService {
     ) {
         try {
             final ClientSession session = DEFAULT_SSH_CLIENT.connect("root", muzedoServer.getHost(), 22)
-                .verify(TIMEOUT)
+                .verify(DEFAULT_TIMEOUT)
                 .getSession();
 
             session.addPasswordIdentity(muzedoServer.getPassword());
-            session.auth().verify(TIMEOUT);
+            session.auth().verify(DEFAULT_TIMEOUT);
             session.addChannelListener(new ChannelListener() {});
 
             return session;
@@ -73,7 +72,7 @@ public class SSHService {
         try {
             final ChannelShell channelShell = clientSession.createShellChannel();
             channelShell.setRedirectErrorStream(true);
-            channelShell.open().verify(TIMEOUT);
+            channelShell.open().verify(DEFAULT_TIMEOUT);
             channelShell.addRequestHandler((channel, request, wantReply, buffer) -> {
                 if (StringUtils.contains(request, "keepalive@openssh.com"))
                     return RequestHandler.Result.ReplySuccess;
@@ -92,7 +91,7 @@ public class SSHService {
         return SCP_CLIENT_CREATOR.createScpClient(clientSession);
     }
 
-    public Mono<ExecuteCommandResult> executeCommand(
+    public String executeCommand(
         final ClientSession clientSession,
         final Command command,
         final List<String> arguments
@@ -104,11 +103,7 @@ public class SSHService {
         }
     }
 
-    public record ExecuteCommandResult(
-        String commandOutput
-    ) {}
-
-    public Mono<ExecuteCommandResult> executeCommand(
+    public String executeCommand(
         @NonNull final PtyCapableChannelSession channelShell,
         @NonNull final Command command,
         @NonNull final List<String> arguments
@@ -150,13 +145,11 @@ public class SSHService {
                         newOutputPart
                     );
                 }
-                final Optional<String> err = command.errPatterns()
-                    .stream()
-                    .filter(e ->
+                final Option<String> err = command.errPatterns()
+                    .find(e ->
                         StringUtils.containsIgnoreCase(
-                            outputString, e))
-                    .findFirst();
-                if (err.isPresent()) {
+                            outputString, e));
+                if (!err.isEmpty()) {
                     log.error("{}: {}: обнаружена ошибка \"{}\"",
                         channelShell.getSession().getRemoteAddress(),
                         command.command(),
@@ -173,12 +166,10 @@ public class SSHService {
                         command.command(),
                         timer);
 
-                    return Mono.just(new ExecuteCommandResult(
-                        StringUtils.substringAfterLast(
-                            StringUtils.substringBeforeLast(outputString, "\r\n"),
-                            "_COMMAND_OUTPUT_START_\r\n"
-                        )
-                    ));
+                    return StringUtils.substringAfterLast(
+                        StringUtils.substringBeforeLast(outputString, "\r\n"),
+                        "_COMMAND_OUTPUT_START_\r\n"
+                    );
                 }
                 if (command.timeout() != 0 && timer > command.timeout()) {
                     throw new RuntimeException("Таймаут: "

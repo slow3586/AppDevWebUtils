@@ -15,10 +15,15 @@ export type SaveServerConfigFileRequest = {
 export const getServerConfigFile = (
     serverId: number,
     configId: string
-): Promise<GetServerConfigFileResponse> =>
-    getWrapper('Запрос конфига', `api/file/config/${serverId}/${configId}`)
+): Promise<string> =>
+    getWrapper('Запрос конфига',
+        `api/file/config/${serverId}/${configId}`,
+        ResponseType.TEXT)
 
 export const saveServerConfigFile = (
     saveServerConfigFileRequest: SaveServerConfigFileRequest
 ): Promise<string> =>
-    postWrapper('Сохранение конфига', `api/file/config/save`, saveServerConfigFileRequest, ResponseType.TEXT)
+    postWrapper('Сохранение конфига',
+        `api/file/config/save`,
+        saveServerConfigFileRequest,
+        ResponseType.TEXT)

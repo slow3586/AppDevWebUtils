@@ -38,7 +38,9 @@ export function ServerConfigs({serverId}: ServerConfigsProps) {
         text: string,
         time: number
     ) => {
-        toast(text, {
+        toast.dismiss("requestToast");
+        return toast(text, {
+            toastId: "requestToast",
             position: "top-right",
             autoClose: time * 1000,
             hideProgressBar: false,
@@ -73,10 +75,10 @@ export function ServerConfigs({serverId}: ServerConfigsProps) {
             "",
             0,
             getServerConfigFile(serverId, configId)
-                .then(config => {
-                    config.text?.replace?.("\r\r\n", "\n");
-                    setConfigText(config.text);
-                    textArea.current.value = config.text;
+                .then(configText => {
+                    configText.replace?.("\r\r\n", "\n");
+                    setConfigText(configText);
+                    textArea.current.value = configText;
                 }));
     }
 
@@ -115,7 +117,7 @@ export function ServerConfigs({serverId}: ServerConfigsProps) {
                               placeholder=""/>
 
                 <OverlayTrigger placement="right"
-                                delay={{ show: 250 , hide: 0}}
+                                delay={{show: 250, hide: 0}}
                                 overlay={(props) =>
                                     <Tooltip {...props}>
                                         При включенном анализе изменений система автоматически проанализирует

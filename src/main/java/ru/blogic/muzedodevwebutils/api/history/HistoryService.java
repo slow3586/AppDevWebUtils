@@ -12,8 +12,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
+import ru.blogic.muzedodevwebutils.api.history.dto.GetServerHistoryResponse;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
-import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerDao;
+import ru.blogic.muzedodevwebutils.api.muzedo.config.MuzedoServerConfig;
 import ru.blogic.muzedodevwebutils.config.logging.DisableLoggingAspect;
 import ru.blogic.muzedodevwebutils.utils.Utils;
 
@@ -25,10 +26,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class HistoryService {
-    MuzedoServerDao muzedoServerDao;
+    MuzedoServerConfig muzedoServerConfig;
 
     @CacheEvict(allEntries = true, value = "getServerLog")
-    @Scheduled(fixedDelay = 3000)
     @DisableLoggingAspect
     public void clearGetServerLogCache() {}
 
@@ -46,10 +46,9 @@ public class HistoryService {
             new Date(),
             text,
             severity,
-            user
-        );
+            user);
 
-        muzedoServerDao
+        muzedoServerConfig
             .get(serverId)
             .getHistory()
             .add(infoEntry);
@@ -63,7 +62,7 @@ public class HistoryService {
         final int serverId,
         final int last
     ) {
-        final ConcurrentLinkedQueue<MuzedoServer.HistoryEntry> log = muzedoServerDao
+        final ConcurrentLinkedQueue<MuzedoServer.HistoryEntry> log = muzedoServerConfig
             .get(serverId)
             .getHistory();
         final List<MuzedoServer.HistoryEntry> infoEntries =
@@ -78,9 +77,4 @@ public class HistoryService {
             log.size()
         );
     }
-
-    public record GetServerHistoryResponse(
-        io.vavr.collection.List<MuzedoServer.HistoryEntry> logs,
-        int logLast
-    ) {}
 }

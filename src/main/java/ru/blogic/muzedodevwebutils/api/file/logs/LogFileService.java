@@ -16,9 +16,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import ru.blogic.muzedodevwebutils.api.command.Command;
-import ru.blogic.muzedodevwebutils.api.file.logs.dao.LogFileDao;
+import ru.blogic.muzedodevwebutils.api.file.logs.config.LogFile;
+import ru.blogic.muzedodevwebutils.api.file.logs.config.LogFileConfig;
+import ru.blogic.muzedodevwebutils.api.file.logs.dto.GetLogFileRequest;
+import ru.blogic.muzedodevwebutils.api.file.logs.dto.GetLogFileResponse;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
-import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerDao;
+import ru.blogic.muzedodevwebutils.api.muzedo.config.MuzedoServerConfig;
 import ru.blogic.muzedodevwebutils.api.muzedo.ssh.SSHService;
 import ru.blogic.muzedodevwebutils.utils.Utils;
 
@@ -32,28 +35,26 @@ import java.util.Locale;
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class LogFileService {
-    MuzedoServerDao muzedoServerDao;
+    MuzedoServerConfig muzedoServerConfig;
     SSHService sshService;
-    LogFileDao logFileDao;
+    LogFileConfig logFileConfig;
     WebClient client;
 
     static DateTimeFormatter DATE_FORMAT_LOG_FILE = DateTimeFormatter.ofPattern(
         "yyyy_MM_dd_HH_mm_ss", Locale.ENGLISH);
 
     public LogFileService(
-        MuzedoServerDao muzedoServerDao,
+        MuzedoServerConfig muzedoServerConfig,
         SSHService sshService,
-        LogFileDao logFileDao,
+        LogFileConfig logFileConfig,
         WebClient.Builder webClientBuilder
     ) {
-        this.muzedoServerDao = muzedoServerDao;
+        this.muzedoServerConfig = muzedoServerConfig;
         this.sshService = sshService;
-        this.logFileDao = logFileDao;
+        this.logFileConfig = logFileConfig;
         this.client = webClientBuilder.build();
     }
 
-    // ПУТЬ К ФАЙЛУ НЕ ДОЛЖЕН БЫТЬ ДЛИННЫМ, ИНАЧЕ SSH БУДЕТ ВСТАВЛЯТЬ ЛЕВЫЕ СИМВОЛЫ
-    // В ТАКОМ СЛУЧАЕ НУЖНО ИСПОЛЬЗОВАТЬ SYMLINKИ
     static Command COMMAND_TAIL = new Command(
         "tail",
         "Tail",
@@ -80,15 +81,15 @@ public class LogFileService {
         Command.SSH_ERR_PATTERNS
     );
 
-    public Mono<GetLogFileResponse> getServerLogFile(
+    public String getServerLogFile(
         final GetLogFileRequest request
     ) {
-        final MuzedoServer muzedoServer = muzedoServerDao.get(request.serverId());
-        final LogFile serverLog = logFileDao.get(request.logId());
+        final MuzedoServer muzedoServer = muzedoServerConfig.get(request.serverId());
+        final LogFile serverLog = logFileConfig.get(request.logId());
 
         final int lineCount = Utils.clamp(request.linesCount(), 1, 1000);
 
-        final Mono<SSHService.ExecuteCommandResult> response = sshService.executeCommand(
+        return sshService.executeCommand(
             muzedoServer.getSshClientSession(),
             COMMAND_TAIL,
             List.of(
@@ -96,23 +97,19 @@ public class LogFileService {
                 muzedoServer.getFilePaths().logsFilePath()
                     + "/"
                     + serverLog.path()));
-
-        return response.map(r ->
-            new GetLogFileResponse(r.commandOutput()));
     }
 
-    public Mono<ResponseEntity<Resource>> getEntireLogFile(int serverId, String logId) {
-        final MuzedoServer muzedoServer = muzedoServerDao.get(serverId);
-        final LogFile serverLog = logFileDao.get(logId);
+    public ResponseEntity<Resource> getEntireLogFile(int serverId, String logId) {
+        final MuzedoServer muzedoServer = muzedoServerConfig.get(serverId);
+        final LogFile serverLog = logFileConfig.get(logId);
 
-        return sshService.executeCommand(
+        final String result = sshService.executeCommand(
             muzedoServer.getSshClientSession(),
             COMMAND_ZIP,
             List.of(
                 muzedoServer.getFilePaths().logsFilePath() + "/" + serverLog.path(),
                 "| base64"
-            )
-        ).map(response -> {
+            ));
             final HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.set(
                 HttpHeaders.CONTENT_DISPOSITION,
@@ -121,16 +118,15 @@ public class LogFileService {
                 + "_" + DATE_FORMAT_LOG_FILE.format(LocalDateTime.now())
                 + ".zip");
             final byte[] decoded = Base64.getDecoder().decode(
-                StringUtils.replace(response.commandOutput(), "\r\n", ""));
+                StringUtils.replace(result, "\r\n", ""));
             return new ResponseEntity<>(
                 new ByteArrayResource(decoded),
                 responseHeaders,
                 HttpStatus.OK);
-        });
     }
 
     public Mono<ResponseEntity<Resource>> getLogsArchive(int serverId) {
-        final MuzedoServer muzedoServer = muzedoServerDao.get(serverId);
+        final MuzedoServer muzedoServer = muzedoServerConfig.get(serverId);
 
         return client.get()
             .uri("http://" + muzedoServer.getHost() + "/log/archive")
@@ -159,14 +155,4 @@ public class LogFileService {
                         HttpStatus.OK);
                 }));
     }
-
-    public record GetLogFileRequest(
-        int serverId,
-        String logId,
-        int linesCount
-    ) {}
-
-    public record GetLogFileResponse(
-        String text
-    ) {}
 }

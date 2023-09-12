@@ -9,9 +9,12 @@ import org.apache.sshd.client.channel.ChannelShell;
 import org.apache.sshd.client.session.ClientSession;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import ru.blogic.muzedodevwebutils.api.command.dao.CommandDao;
+import ru.blogic.muzedodevwebutils.api.command.Command;
+import ru.blogic.muzedodevwebutils.api.command.config.CommandConfig;
+import ru.blogic.muzedodevwebutils.api.muzedo.config.MuzedoServerConfig;
 import ru.blogic.muzedodevwebutils.api.muzedo.ssh.SSHService;
 
+import java.util.Collections;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -20,17 +23,38 @@ import java.util.concurrent.ScheduledExecutorService;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class MuzedoServerService {
-    CommandDao commandDao;
     SSHService sshService;
-    MuzedoServerDao muzedoServerDao;
-    ScheduledExecutorService executorService =
+    MuzedoServerConfig muzedoServerConfig;
+    static ScheduledExecutorService executorService =
         Executors.newScheduledThreadPool(8);
+
+    static Command COMMAND_CD_ROOT_DEPLOY = new Command("cd_root_deploy",
+        "cd_root_deploy",
+        Command.Shell.SSH,
+        true,
+        true,
+        "cd /root/deploy/",
+        Command.SSH_READY_PATTERN,
+        10,
+        true,
+        List.empty());
+
+    static Command COMMAND_WSADMIN_START = new Command("wsadmin_start",
+        "wsadmin_start",
+        Command.Shell.SSH,
+        true,
+        true,
+        "./wsadmin_extra.sh",
+        Command.WSADMIN_READY_PATTERN,
+        60,
+        true,
+        Command.WSADMIN_ERR_PATTERNS);
 
     @Scheduled(fixedDelay = 1000 * 60 * 30, initialDelay = 0)
     public void scheduleReconnect() {
         try {
             log.debug("#scheduleReconnect");
-            muzedoServerDao.getAll()
+            muzedoServerConfig.getAll()
                 .filter(server ->
                     server.getExecutingCommand() == null
                         && server.getScheduledCommand() == null
@@ -115,11 +139,11 @@ public class MuzedoServerService {
             log.debug("{}: запускаю WsAdmin", muzedoServer.getHost());
             sshService.executeCommand(
                 shell,
-                commandDao.get("cd_root_deploy"),
+                COMMAND_CD_ROOT_DEPLOY,
                 List.empty());
             sshService.executeCommand(
                 shell,
-                commandDao.get("wsadmin_start"),
+                COMMAND_WSADMIN_START,
                 List.empty());
 
             muzedoServer.setWsadminShell(shell);

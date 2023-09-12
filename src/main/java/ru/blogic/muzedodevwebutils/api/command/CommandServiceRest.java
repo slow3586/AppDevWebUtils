@@ -1,6 +1,8 @@
 package ru.blogic.muzedodevwebutils.api.command;
 
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,8 +16,9 @@ import ru.blogic.muzedodevwebutils.api.command.dto.CommandRunRequest;
 @RestController
 @RequestMapping("api/command")
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class CommandServiceRest {
-    private final CommandService commandService;
+    CommandService commandService;
 
     @GetMapping(path = "run/{host}/{command}", produces = "application/json")
     public void runGet(

@@ -9,14 +9,14 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import ru.blogic.muzedodevwebutils.api.command.dao.CommandDao;
+import ru.blogic.muzedodevwebutils.api.command.config.CommandConfig;
 import ru.blogic.muzedodevwebutils.api.command.dto.CommandCancelRequest;
 import ru.blogic.muzedodevwebutils.api.command.dto.CommandDelayRequest;
 import ru.blogic.muzedodevwebutils.api.command.dto.CommandRunRequest;
 import ru.blogic.muzedodevwebutils.api.history.HistoryService;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
-import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerDao;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerService;
+import ru.blogic.muzedodevwebutils.api.muzedo.config.MuzedoServerConfig;
 import ru.blogic.muzedodevwebutils.api.muzedo.ssh.SSHService;
 import ru.blogic.muzedodevwebutils.utils.TimerScheduler;
 import ru.blogic.muzedodevwebutils.utils.Utils;
@@ -31,19 +31,19 @@ import java.util.concurrent.TimeUnit;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class CommandService {
     SSHService sshService;
-    MuzedoServerDao muzedoServerDao;
+    MuzedoServerConfig muzedoServerConfig;
     MuzedoServerService muzedoServerService;
     HistoryService historyService;
-    CommandDao commandDao;
+    CommandConfig commandConfig;
     TimerScheduler timerScheduler;
-    ScheduledExecutorService executorService =
+    static ScheduledExecutorService executorService =
         Executors.newScheduledThreadPool(4);
 
     public void run(
         final CommandRunRequest commandRunRequest
     ) {
-        final MuzedoServer muzedoServer = muzedoServerDao.get(commandRunRequest.serverId());
-        final Command command = commandDao.get(commandRunRequest.commandId());
+        final MuzedoServer muzedoServer = muzedoServerConfig.get(commandRunRequest.serverId());
+        final Command command = commandConfig.get(commandRunRequest.commandId());
 
         try {
             if (muzedoServer.getWsadminShell() == null
@@ -106,11 +106,11 @@ public class CommandService {
 
                         //region ЗАПУСК ОПЕРАЦИИ
                         if (command.shell().equals(Command.Shell.WSADMIN)) {
-                            CheckedFunction0<SSHService.ExecuteCommandResult> execute = () ->
+                            CheckedFunction0<String> execute = () ->
                                 sshService.executeCommand(
                                     muzedoServer.getWsadminShell(),
                                     command,
-                                    List.empty()).block();
+                                    List.empty());
                             Try.of(execute)
                                 .onFailure(e -> {
                                     log.error("#run ошибка при первом запуске, запускаю вторую попытку...", e);
@@ -208,7 +208,7 @@ public class CommandService {
     public void delay(
         final CommandDelayRequest commandDelayRequest
     ) {
-        final MuzedoServer muzedoServer = muzedoServerDao.get(commandDelayRequest.serverId());
+        final MuzedoServer muzedoServer = muzedoServerConfig.get(commandDelayRequest.serverId());
 
         try {
             final MuzedoServer.ScheduledCommand scheduledCommand = muzedoServer.getScheduledCommand();
@@ -216,9 +216,9 @@ public class CommandService {
                 throw new RuntimeException("Нет запланированной операции");
             }
 
-            final long currentDelay = scheduledCommand.future().getDelay(TimeUnit.SECONDS);
+            final long currentDelay = scheduledCommand.scheduledFuture().getDelay(TimeUnit.SECONDS);
             final Command command = muzedoServer.getScheduledCommand().command();
-            final Runnable callable = muzedoServer.getScheduledCommand().callable();
+            final Runnable runnable = muzedoServer.getScheduledCommand().runnable();
 
             this.cancel(
                 new CommandCancelRequest(
@@ -232,10 +232,10 @@ public class CommandService {
             muzedoServer.setScheduledCommand(new MuzedoServer.ScheduledCommand(
                 command,
                 executorService.schedule(
-                    callable,
+                    runnable,
                     newDelay,
                     TimeUnit.SECONDS),
-                callable
+                runnable
             ));
 
             historyService.addHistoryEntry(
@@ -261,7 +261,7 @@ public class CommandService {
     public void cancel(
         final CommandCancelRequest commandCancelRequest
     ) {
-        final MuzedoServer muzedoServer = muzedoServerDao.get(commandCancelRequest.serverId());
+        final MuzedoServer muzedoServer = muzedoServerConfig.get(commandCancelRequest.serverId());
 
         try {
             final MuzedoServer.ScheduledCommand scheduledCommand = muzedoServer.getScheduledCommand();
@@ -269,11 +269,11 @@ public class CommandService {
                 throw new RuntimeException("В данный момент нет операции на сервере");
             }
 
-            if (scheduledCommand.future().getDelay(TimeUnit.MILLISECONDS) <= 1000) {
+            if (scheduledCommand.scheduledFuture().getDelay(TimeUnit.MILLISECONDS) <= 1000) {
                 throw new RuntimeException("Отменять операцию уже поздно");
             }
 
-            final boolean cancelled = scheduledCommand.future().cancel(false);
+            final boolean cancelled = scheduledCommand.scheduledFuture().cancel(false);
             if (!cancelled) {
                 throw new RuntimeException("Не удалось отменить операцию");
             }

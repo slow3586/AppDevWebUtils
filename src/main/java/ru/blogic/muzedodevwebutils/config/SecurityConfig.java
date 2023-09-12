@@ -17,7 +17,6 @@ import org.springframework.security.web.authentication.rememberme.JdbcTokenRepos
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 
 import javax.sql.DataSource;
-import java.util.List;
 
 @EnableWebSecurity
 @Configuration
@@ -79,6 +78,6 @@ public class SecurityConfig {
     @ConfigurationProperties(prefix = "app.security")
     @RequiredArgsConstructor
     protected static class SecurityConfigConfig{
-        final List<String> users;
+        final java.util.List<String> users;
     }
 }

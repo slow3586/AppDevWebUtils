@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import ru.blogic.muzedodevwebutils.api.history.dto.GetServerHistoryResponse;
 
 @RestController
 @RequestMapping("api/history")
@@ -17,7 +18,7 @@ public class HistoryServiceRest {
     HistoryService historyService;
 
     @GetMapping(path = "{serverId}", produces = "application/json")
-    public HistoryService.GetServerHistoryResponse getServerLog(
+    public GetServerHistoryResponse getServerLog(
         @PathVariable final int serverId,
         @RequestParam final int last
     ) {

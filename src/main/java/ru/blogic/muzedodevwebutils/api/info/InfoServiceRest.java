@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.blogic.muzedodevwebutils.api.info.dto.GetServerInfoResponse;
 
 @RestController
 @RequestMapping("api/info")
@@ -16,7 +17,7 @@ public class InfoServiceRest {
     InfoService infoService;
 
     @GetMapping(path = "{serverId}", produces = "application/json")
-    public InfoService.GetServerInfoResponse getServerInfo(
+    public GetServerInfoResponse getServerInfo(
         @PathVariable final int serverId
     ) {
         return infoService.getServerInfo(serverId);

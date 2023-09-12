@@ -1,4 +1,4 @@
-package ru.blogic.muzedodevwebutils.api.command.dao;
+package ru.blogic.muzedodevwebutils.api.command.config;
 
 import lombok.Data;
 import lombok.Getter;
@@ -11,11 +11,11 @@ import java.util.List;
 @ConfigurationProperties(prefix = "app.command")
 @RequiredArgsConstructor
 @Getter
-class CommandConfig {
-    final List<CommandConfigDto> commands;
+class CommandConfigExternalBinding {
+    final List<CommandConfigExternalBindingDto> commands;
 
     @Data
-    static class CommandConfigDto {
+    static class CommandConfigExternalBindingDto {
         String id;
         String name;
         String command;

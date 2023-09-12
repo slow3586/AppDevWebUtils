@@ -1,6 +1,6 @@
 package ru.blogic.muzedodevwebutils.api.command;
 
-import java.util.List;
+import io.vavr.collection.List;
 
 public record Command(
     String id,
@@ -18,12 +18,6 @@ public record Command(
         NONE,
         WSADMIN,
         SSH
-    }
-
-    public enum Block {
-        SERVER,
-        WSADMIN,
-        NONE
     }
 
     public static final String SSH_READY_PATTERN = "]#";

@@ -26,14 +26,23 @@ export interface CommandCancelRequest {
 export const commandRun = (
     request: CommandRunRequest
 ): Promise<string> =>
-    postWrapper('Запуск операции', `api/command/run`, request, ResponseType.TEXT)
+    postWrapper('Запуск операции',
+        `api/command/run`,
+        request,
+        ResponseType.TEXT)
 
 export const commandDelay = (
     request: CommandDelayRequest
 ): Promise<string> =>
-    postWrapper('Отсрочка операции', `api/command/delay`, request, ResponseType.TEXT)
+    postWrapper('Отсрочка операции',
+        `api/command/delay`,
+        request,
+        ResponseType.TEXT)
 
 export const commandCancel = (
     request: CommandCancelRequest
 ): Promise<string> =>
-    postWrapper('Отмена операции', `api/command/cancel`, request, ResponseType.TEXT)
+    postWrapper('Отмена операции',
+        `api/command/cancel`,
+        request,
+        ResponseType.TEXT)

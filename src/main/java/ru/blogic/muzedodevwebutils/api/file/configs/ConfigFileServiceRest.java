@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
+import ru.blogic.muzedodevwebutils.api.file.configs.dto.SaveConfigFileRequest;
 
 @RestController
 @RequestMapping("api/file/config")
@@ -19,7 +20,7 @@ public class ConfigFileServiceRest {
     ConfigFileService configFileService;
 
     @GetMapping(path = "{serverId}/{configId}", produces = "application/json")
-    public Mono<ConfigFileService.GetConfigFileResponse> getServerConfigFile(
+    public String getServerConfigFile(
         @PathVariable final int serverId,
         @PathVariable final String configId
     ) {
@@ -28,7 +29,7 @@ public class ConfigFileServiceRest {
 
     @PostMapping(path = "save")
     public void saveServerConfigFile(
-        @RequestBody final ConfigFileService.SaveConfigFileRequest saveConfigFileRequest
+        @RequestBody final SaveConfigFileRequest saveConfigFileRequest
     ) {
         configFileService.saveServerConfigFile(saveConfigFileRequest);
     }

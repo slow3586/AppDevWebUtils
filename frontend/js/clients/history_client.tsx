@@ -22,4 +22,5 @@ export const getServerHistory = (
     serverId: number,
     last: number
 ): Promise<GetServerHistoryResponse> =>
-    getWrapper('Запрос истории операций стенда',`api/history/${serverId}?last=${last}`)
+    getWrapper('Запрос истории операций стенда',
+        `api/history/${serverId}?last=${last}`)

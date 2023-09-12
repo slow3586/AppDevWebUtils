@@ -20,20 +20,6 @@ const common = (
     options: any,
     responseType: ResponseType
 ): Promise<any> => {
-    const showErrToast = (text: string) => {
-        toast.warn('Не удалось выполнить "' + requestName + '": ' + text, {
-            toastId: "clienterr",
-            position: "top-right",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "light",
-            closeButton: false
-        });
-    }
     try {
         return fetch(path, options)
             .then((response) => {
@@ -54,24 +40,51 @@ const common = (
                         return null
                 }
             })
-            .catch((err) => {
-                err.text().then((errText: any) => {
-                    console.error(errText);
-                    let errMessage = errText ?? 'Неизвестная ошибка';
-                    if (startsWith(errMessage, `Failed to fetch`)) {
-                        errMessage = "Потеряна связь, переподключаюсь..."
-                    } else if (startsWith(errMessage, `Unexpected token '<'`)) {
-                        errMessage = "Необходимо перезагрузить страницу"
-                    }
-                    showErrToast(errMessage);
-                    throw errMessage;
-                });
-            })
+            .catch((err) => handleErr(requestName, err))
     } catch (err) {
-        console.error(err);
-        showErrToast(err);
-        throw err;
+        handleErr(requestName, err);
     }
+}
+
+const showErrToast = (
+    requestName: string,
+    text: string
+) => {
+    toast.warn('Не удалось выполнить "' + requestName + '": ' + text, {
+        toastId: "clienterr",
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+        closeButton: false
+    });
+}
+
+const handleErr = (
+    requestName: string,
+    err: any
+) => {
+    console.error(err);
+
+    const errTextPromise = err?.text instanceof Function
+        ? err.text()
+        : new Promise((res, rej) => res(err.message));
+
+    errTextPromise.then((errText: string) => {
+        errText = errText ?? 'Неизвестная ошибка';
+        if (startsWith(errText, `Failed to fetch`)) {
+            errText = "Потеряна связь, переподключаюсь..."
+        } else if (startsWith(errText, `Unexpected token '<'`)) {
+            errText = "Необходимо перезагрузить страницу"
+        }
+        showErrToast(requestName, errText);
+    });
+
+    throw err;
 }
 
 export const getWrapper = (

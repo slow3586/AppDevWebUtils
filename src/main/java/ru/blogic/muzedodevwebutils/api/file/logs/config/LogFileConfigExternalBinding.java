@@ -1,20 +1,18 @@
-package ru.blogic.muzedodevwebutils.api.file.logs.dao;
+package ru.blogic.muzedodevwebutils.api.file.logs.config;
 
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-import java.util.List;
-
 @ConfigurationProperties(prefix = "app.files.logs")
 @RequiredArgsConstructor
 @Getter
-class LogFileConfig {
-    private final List<LogFileConfigDto> list;
+class LogFileConfigExternalBinding {
+    private final java.util.List<LogFileConfigExternalBindingDto> list;
 
     @Data
-    static class LogFileConfigDto {
+    static class LogFileConfigExternalBindingDto {
         String id;
         String path;
     }

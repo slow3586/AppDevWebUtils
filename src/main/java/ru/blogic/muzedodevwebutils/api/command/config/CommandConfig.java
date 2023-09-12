@@ -1,30 +1,29 @@
-package ru.blogic.muzedodevwebutils.api.command.dao;
+package ru.blogic.muzedodevwebutils.api.command.config;
 
+import io.vavr.collection.List;
 import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.stereotype.Repository;
+import lombok.experimental.NonFinal;
+import org.springframework.stereotype.Component;
 import ru.blogic.muzedodevwebutils.api.command.Command;
-import ru.blogic.muzedodevwebutils.api.command.dao.CommandConfig.CommandConfigDto.CommandConfigDtoFlags;
+import ru.blogic.muzedodevwebutils.api.command.config.CommandConfigExternalBinding.CommandConfigExternalBindingDto.CommandConfigDtoFlags;
 import ru.blogic.muzedodevwebutils.config.logging.DisableLoggingAspect;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-@Repository
+@Component
 @DisableLoggingAspect
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class CommandDao {
-    CommandConfig commandConfig;
-    List<Command> commands = new ArrayList<>();
+public class CommandConfig {
+    CommandConfigExternalBinding commandConfigExternalBinding;
+
+    @NonFinal
+    List<Command> commands;
 
     @PostConstruct
     public void postConstruct() {
-        commands.addAll(commandConfig.getCommands()
-            .stream()
+        this.commands = List.ofAll(commandConfigExternalBinding.getCommands())
             .map(c -> new Command(
                 c.getId(),
                 c.getName(),
@@ -43,42 +42,18 @@ public class CommandDao {
                     ? Command.SSH_ERR_PATTERNS
                     : c.getFlags().contains(CommandConfigDtoFlags.WSADMIN_ERR_PATTERNS)
                         ? Command.WSADMIN_ERR_PATTERNS
-                        : Collections.emptyList()
-            )).toList()
-        );
-
-        commands.add(new Command("cd_root_deploy",
-            "cd_root_deploy",
-            Command.Shell.SSH,
-            true,
-            true,
-            "cd /root/deploy/",
-            Command.SSH_READY_PATTERN,
-            10,
-            true,
-            Collections.emptyList()));
-        commands.add(new Command("wsadmin_start",
-            "wsadmin_start",
-            Command.Shell.SSH,
-            true,
-            true,
-            "./wsadmin_extra.sh",
-            Command.WSADMIN_READY_PATTERN,
-            60,
-            true,
-            Command.WSADMIN_ERR_PATTERNS));
+                        : List.empty()
+            ));
     }
 
     public Command get(String id) {
         return commands
-            .stream()
-            .filter(c -> c.id().equals(id))
-            .findFirst()
-            .orElseThrow(() -> new RuntimeException(
+            .find(c -> c.id().equals(id))
+            .getOrElseThrow(() -> new RuntimeException(
                 "Не найдена команда " + id));
     }
 
-    public io.vavr.collection.List<Command> getAll(){
-        return io.vavr.collection.List.ofAll(commands);
+    public List<Command> getAll() {
+        return commands;
     }
 }

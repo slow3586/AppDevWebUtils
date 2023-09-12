@@ -1,4 +1,4 @@
-package ru.blogic.muzedodevwebutils.api.file.logs;
+package ru.blogic.muzedodevwebutils.api.file.logs.config;
 
 public record LogFile(
     String id,

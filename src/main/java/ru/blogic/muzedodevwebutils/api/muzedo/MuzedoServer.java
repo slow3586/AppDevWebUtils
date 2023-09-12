@@ -41,8 +41,6 @@ public class MuzedoServer {
     Timer executingCommandTimer = new Timer();
     Timer delayBetweenCommands = new Timer();
 
-    public static String UNKNOWN_BUILD = "Неизвестная сборка";
-
     public record HistoryEntry(
         Date date,
         String text,
@@ -65,8 +63,8 @@ public class MuzedoServer {
 
     public record ScheduledCommand(
         Command command,
-        ScheduledFuture<?> future,
-        Runnable callable
+        ScheduledFuture<?> scheduledFuture,
+        Runnable runnable
     ) {}
 
     public record FilePaths(

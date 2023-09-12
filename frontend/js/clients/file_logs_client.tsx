@@ -6,22 +6,25 @@ export type GetServerLogFileRequest = {
     linesCount: number
 }
 
-export type GetServerLogFileResponse = {
-    text: string
-}
-
 export const getServerLogFile = (
     request: GetServerLogFileRequest
-): Promise<GetServerLogFileResponse> =>
-    postWrapper('Запрос лога', `api/file/log`, request)
+): Promise<string> =>
+    postWrapper('Запрос лога',
+        `api/file/log`,
+        request,
+        ResponseType.TEXT)
 
 export const getEntireLogFile = (
     serverId: number,
     logId: string
 ): Promise<BlobWrapper> =>
-    getWrapper('Скачивание лога', `api/file/log/getEntireLogFile/${serverId}/${logId}`, ResponseType.BLOB)
+    getWrapper('Скачивание лога',
+        `api/file/log/getEntireLogFile/${serverId}/${logId}`,
+        ResponseType.BLOB)
 
 export const getLogsArchive = (
     serverId: number
 ): Promise<BlobWrapper> =>
-    getWrapper('Скачивание архива логов', `api/file/log/getLogsArchive/${serverId}`, ResponseType.BLOB)
+    getWrapper('Скачивание архива логов',
+        `api/file/log/getLogsArchive/${serverId}`,
+        ResponseType.BLOB)
