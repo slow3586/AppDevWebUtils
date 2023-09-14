@@ -8,13 +8,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.sshd.client.channel.ChannelShell;
 import org.apache.sshd.client.session.ClientSession;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.concurrent.DelegatingSecurityContextScheduledExecutorService;
 import org.springframework.stereotype.Service;
 import ru.blogic.muzedodevwebutils.api.command.Command;
-import ru.blogic.muzedodevwebutils.api.command.config.CommandConfig;
 import ru.blogic.muzedodevwebutils.api.muzedo.config.MuzedoServerConfig;
 import ru.blogic.muzedodevwebutils.api.muzedo.ssh.SSHService;
 
-import java.util.Collections;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -26,7 +25,8 @@ public class MuzedoServerService {
     SSHService sshService;
     MuzedoServerConfig muzedoServerConfig;
     static ScheduledExecutorService executorService =
-        Executors.newScheduledThreadPool(8);
+        new DelegatingSecurityContextScheduledExecutorService(
+        Executors.newScheduledThreadPool(8));
 
     static Command COMMAND_CD_ROOT_DEPLOY = new Command("cd_root_deploy",
         "cd_root_deploy",

@@ -1,10 +1,7 @@
 package ru.blogic.muzedodevwebutils.config.logging;
 
 import io.vavr.control.Option;
-import lombok.val;
-import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;

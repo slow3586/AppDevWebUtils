@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.security.concurrent.DelegatingSecurityContextScheduledExecutorService;
 import org.springframework.stereotype.Service;
 import ru.blogic.muzedodevwebutils.api.command.config.CommandConfig;
 import ru.blogic.muzedodevwebutils.api.command.dto.CommandCancelRequest;
@@ -37,7 +38,8 @@ public class CommandService {
     CommandConfig commandConfig;
     TimerScheduler timerScheduler;
     static ScheduledExecutorService executorService =
-        Executors.newScheduledThreadPool(4);
+        new DelegatingSecurityContextScheduledExecutorService(
+            Executors.newScheduledThreadPool(4));
 
     public void run(
         final CommandRunRequest commandRunRequest
