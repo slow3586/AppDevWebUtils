@@ -27,7 +27,11 @@ public record Command(
         "Error creating \"SOAP\" connection",
         "syntax error",
         "SyntaxError",
-        "root@edo-dev");
+        "root@edo-dev",
+        ": No such file or directory",
+        ": cannot stat ");
     public static final List<String> SSH_ERR_PATTERNS
-        = List.of(": cannot open ");
+        = List.of(": cannot open ",
+        ": No such file or directory",
+        ": cannot stat ");
 }

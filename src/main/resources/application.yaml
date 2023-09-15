@@ -65,6 +65,7 @@ app:
       - 'Габдуллина Гузель'
       - 'Чурсин Владимир'
       - 'Смирнова Наталья'
+      - 'Насыров Руслан'
   muzedo:
     servers:
       - id: '146'
@@ -86,6 +87,8 @@ app:
           path: 'poa-test/SEDRequest.xml'
         - id: 'successfulAnswer.xml'
           path: 'uzdo/successfulAnswer.xml'
+        - id: 'build_gp_integ_upload'
+          path: 'deploy_maven/build_gp_integ_upload/run_script.sh'
     logs:
       list:
         - id: 'UZDO-integration'
@@ -184,6 +187,26 @@ app:
         name: 'Обновление приложения (gp + integ + cfg)'
         command: 'ura(1)'
         timeout: 300
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
+      - id: 'truncate_db2_temp_tables'
+        name: 'Чистка таблицы LOCK и др.'
+        command: 'truncate_db2_temp_tables()'
+        timeout: 60
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
+      - id: 'build_gp_integ_upload'
+        name: 'Сборка GP + Integ и обновление стенда'
+        command: 'build_gp_integ_upload()'
+        timeout: 900
         shell: wsadmin
         flags:
           - wsadmin_ready_pattern
