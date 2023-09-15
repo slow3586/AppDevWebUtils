@@ -16,6 +16,7 @@ public class RestExceptionHandler {
     protected String handleException(
         final Exception ex
     ) {
+        log.error("#handleException", ex);
         return "Ошибка: " + ex.getMessage();
     }
 }

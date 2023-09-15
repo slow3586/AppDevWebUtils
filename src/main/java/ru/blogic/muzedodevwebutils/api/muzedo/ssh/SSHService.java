@@ -3,6 +3,7 @@ package ru.blogic.muzedodevwebutils.api.muzedo.ssh;
 import io.vavr.collection.List;
 import io.vavr.control.Option;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +47,15 @@ public class SSHService {
         }
     }
 
+    @PreDestroy
+    public void preDestroy() {
+        try {
+            // TODO: CLOSE SESSIONS!
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public ClientSession createSession(
         final MuzedoServer muzedoServer
     ) {
@@ -56,7 +66,6 @@ public class SSHService {
 
             session.addPasswordIdentity(muzedoServer.getPassword());
             session.auth().verify(DEFAULT_TIMEOUT);
-            session.addChannelListener(new ChannelListener() {});
 
             return session;
         } catch (Exception e) {

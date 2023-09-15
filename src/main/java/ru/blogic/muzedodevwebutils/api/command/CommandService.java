@@ -48,21 +48,23 @@ public class CommandService {
         final Command command = commandConfig.get(commandRunRequest.commandId());
 
         try {
-            if (muzedoServer.getWsadminShell() == null
-                || muzedoServer.getWsadminShell().isClosing()
-                || !muzedoServer.getWsadminShell().isOpen()) {
-                throw new RuntimeException("Wsadmin не запущен! Необходимо дождаться его запуска (~1 мин)");
-            }
+            final boolean isBlockingCommand = command.blocksWsadmin();
+            if (isBlockingCommand) {
+                if (muzedoServer.getWsadminShell() == null
+                    || muzedoServer.getWsadminShell().isClosing()
+                    || !muzedoServer.getWsadminShell().isOpen()) {
+                    throw new RuntimeException("Wsadmin не запущен! Необходимо дождаться его запуска (~1 мин)");
+                }
 
-            if (!muzedoServer.getCommandSchedulingLock().tryLock(5, TimeUnit.SECONDS)) {
-                throw new RuntimeException("На сервере планируется другая операция");
+                if (!muzedoServer.getCommandSchedulingLock().tryLock(5, TimeUnit.SECONDS)) {
+                    throw new RuntimeException("На сервере планируется другая операция");
+                }
             }
 
             try {
                 final int commandDelay = !command.blocksWsadmin()
                     ? 0
                     : Utils.clamp(commandRunRequest.delaySeconds(), 0, 600);
-                final boolean isBlockingCommand = command.blocksWsadmin();
                 final boolean isScheduledCommand = commandDelay > 0;
 
                 //region ПРОВЕРКА БЛОКИРОВАНИЯ ОПЕРАЦИИ
@@ -195,7 +197,9 @@ public class CommandService {
                     commandRunnable.run();
                 }
             } finally {
-                muzedoServer.getCommandSchedulingLock().unlock();
+                if (isBlockingCommand) {
+                    muzedoServer.getCommandSchedulingLock().unlock();
+                }
             }
         } catch (Exception e) {
             historyService.addHistoryEntry(

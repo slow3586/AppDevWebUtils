@@ -66,7 +66,7 @@ public class InfoService {
     }
 
     @DisableLoggingAspect
-    @Cacheable(value = "getServerInfo")
+    //@Cacheable(value = "getServerInfo")
     public GetServerInfoResponse getServerInfo(int serverId) {
         final MuzedoServer muzedoServer = muzedoServerConfig.get(serverId);
 
@@ -163,7 +163,7 @@ public class InfoService {
             });
     }
 
-    @CacheEvict(allEntries = true, value = "getServerInfo")
+    //@CacheEvict(allEntries = true, value = "getServerInfo")
     @Scheduled(fixedDelay = 3000)
     @DisableLoggingAspect
     public void clearGetServerInfoCache() {}

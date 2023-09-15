@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class HistoryService {
     MuzedoServerConfig muzedoServerConfig;
 
-    @CacheEvict(allEntries = true, value = "getServerLog")
+    //@CacheEvict(allEntries = true, value = "getServerLog")
     @DisableLoggingAspect
     public void clearGetServerLogCache() {}
 
@@ -57,7 +57,7 @@ public class HistoryService {
     }
 
     @DisableLoggingAspect
-    @Cacheable(value = "getServerLog")
+    //@Cacheable(value = "getServerLog")
     public GetServerHistoryResponse getServerHistory(
         final int serverId,
         final int last
