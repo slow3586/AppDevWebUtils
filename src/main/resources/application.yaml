@@ -146,7 +146,7 @@ app:
       - id: 'ba'
         name: 'Остановка приложения'
         command: 'ba()'
-        timeout: 180
+        timeout: 60
         shell: wsadmin
         flags:
           - wsadmin_ready_pattern
@@ -176,7 +176,7 @@ app:
       - id: 'urg'
         name: 'Обновление приложения (gp)'
         command: 'urg(1)'
-        timeout: 180
+        timeout: 240
         shell: wsadmin
         flags:
           - wsadmin_ready_pattern

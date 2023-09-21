@@ -180,9 +180,8 @@ public class SSHService {
                     );
                 }
                 if (command.timeout() != 0 && timer > command.timeout()) {
-                    throw new RuntimeException("Таймаут: "
-                        + channelShell.getSession().getRemoteAddress()
-                        + ": " + command.name());
+                    throw new RuntimeException("Достигнут таймаут "
+                        + "( " + command.timeout() + " сек.)");
                 }
             }
         } catch (Exception e) {

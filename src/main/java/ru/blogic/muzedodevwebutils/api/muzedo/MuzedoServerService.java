@@ -25,8 +25,7 @@ public class MuzedoServerService {
     SSHService sshService;
     MuzedoServerConfig muzedoServerConfig;
     static ScheduledExecutorService executorService =
-        new DelegatingSecurityContextScheduledExecutorService(
-        Executors.newScheduledThreadPool(8));
+        Executors.newScheduledThreadPool(8);
 
     static Command COMMAND_CD_ROOT_DEPLOY = new Command("cd_root_deploy",
         "cd_root_deploy",

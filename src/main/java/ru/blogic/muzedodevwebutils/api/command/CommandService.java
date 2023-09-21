@@ -8,7 +8,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.security.concurrent.DelegatingSecurityContextRunnable;
 import org.springframework.security.concurrent.DelegatingSecurityContextScheduledExecutorService;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import ru.blogic.muzedodevwebutils.api.command.config.CommandConfig;
 import ru.blogic.muzedodevwebutils.api.command.dto.CommandCancelRequest;
@@ -84,7 +86,7 @@ public class CommandService {
                 }
                 //endregion
 
-                final Runnable commandRunnable = () -> {
+                final Runnable commandRunnable = new DelegatingSecurityContextRunnable(() -> {
                     try {
                         if (isBlockingCommand) {
                             muzedoServer.setExecutingCommand(command);
@@ -170,7 +172,7 @@ public class CommandService {
                         if (command.blocksWsadmin())
                             muzedoServerService.reconnectWsadminShell(muzedoServer);
                     }
-                };
+                }, SecurityContextHolder.getContext());
 
                 if (isScheduledCommand) {
                     //region ПЛАНИРОВАНИЕ ОПЕРАЦИИ
