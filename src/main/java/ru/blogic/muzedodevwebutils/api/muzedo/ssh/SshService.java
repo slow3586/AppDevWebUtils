@@ -2,24 +2,26 @@ package ru.blogic.muzedodevwebutils.api.muzedo.ssh;
 
 import io.vavr.collection.List;
 import io.vavr.control.Option;
+import io.vavr.control.Try;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.channel.ChannelShell;
 import org.apache.sshd.client.channel.PtyCapableChannelSession;
 import org.apache.sshd.client.session.ClientSession;
-import org.apache.sshd.common.channel.ChannelListener;
 import org.apache.sshd.common.channel.RequestHandler;
 import org.apache.sshd.common.util.io.output.NoCloseOutputStream;
 import org.apache.sshd.scp.client.ScpClient;
 import org.apache.sshd.scp.client.ScpClientCreator;
 import org.apache.sshd.scp.common.helpers.ScpTimestampCommandDetails;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.blogic.muzedodevwebutils.api.command.Command;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
@@ -28,15 +30,24 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Date;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class SSHService {
+public class SshService {
+    private static final int MAX_CONNECTION_POOL_SIZE = 5;
     static long DEFAULT_TIMEOUT = 5000;
+    static String COMMAND_OUTPUT_START = "_OUTPUT_";
     static ScpClientCreator SCP_CLIENT_CREATOR = ScpClientCreator.instance();
     static SshClient DEFAULT_SSH_CLIENT = SshClient.setUpDefaultClient();
+    @NonFinal
+    @Value("${ssh-service.username:root}")
+    String username;
+    @NonFinal
+    @Value("${ssh-service.port:22}")
+    String port;
 
     @PostConstruct
     public void postConstruct() {
@@ -50,18 +61,21 @@ public class SSHService {
     @PreDestroy
     public void preDestroy() {
         try {
-            // TODO: CLOSE SESSIONS!
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public ClientSession createSession(
-        final MuzedoServer muzedoServer
-    ) {
+    public ClientSession createSession(final MuzedoServer muzedoServer) {
         try {
-            final ClientSession session = DEFAULT_SSH_CLIENT.connect("root", muzedoServer.getHost(), 22)
-                .verify(DEFAULT_TIMEOUT)
+            final ClientSession session = DEFAULT_SSH_CLIENT.connect(
+                    username,
+                    muzedoServer.getHost(),
+                    Try.of(() -> Integer.parseInt(port))
+                        .onFailure((e) -> log.error("#createSession Некорректный порт SSH", e))
+                        .getOrElse(22)
+                ).verify(DEFAULT_TIMEOUT)
                 .getSession();
 
             session.addPasswordIdentity(muzedoServer.getPassword());
@@ -74,9 +88,7 @@ public class SSHService {
         }
     }
 
-    public ChannelShell createShellChannel(
-        final ClientSession clientSession
-    ) {
+    public ChannelShell createChannelShell(final ClientSession clientSession) {
         try {
             final ChannelShell channelShell = clientSession.createShellChannel();
             channelShell.setRedirectErrorStream(true);
@@ -86,28 +98,65 @@ public class SSHService {
                     return RequestHandler.Result.ReplySuccess;
                 return RequestHandler.Result.Unsupported;
             });
-
             return channelShell;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public ScpClient createScpClient(
-        final ClientSession clientSession
-    ) {
+    public SshConnection getSshConnection(final MuzedoServer muzedoServer) {
+        log.debug("#createShellChannel " + muzedoServer.getId());
+        final java.util.List<SshConnection> connectionPool = muzedoServer.getSshConnectionPool();
+
+        final ReentrantLock poolLock = muzedoServer.getSSHConnectionPoolLock();
+        int attempt = 0;
+        while (poolLock.isLocked() || !poolLock.tryLock()) {
+            if (attempt++ > 10) {
+                throw new RuntimeException("#createShellChannel attempt > 10");
+            }
+            log.warn("#createShellChannel poolLock locked");
+            Try.run(() -> Thread.sleep(1000));
+        }
+
+        try {
+            return List.ofAll(connectionPool)
+                .find(connection -> connection.getChannelShell().isOpen()
+                    && !connection.getBeingUsedLock().isLocked()
+                    && connection.getBeingUsedLock().tryLock())
+                .getOrElse(() -> Try.of(() -> {
+                        log.debug("#createShellChannel нет свободных SSHConnection, создаю новое");
+                        if (connectionPool.size() >= MAX_CONNECTION_POOL_SIZE) {
+                            log.warn("#createShellChannel превышен лимит SSHConnection");
+                            Thread.sleep(5000);
+                            return getSshConnection(muzedoServer);
+                        }
+                        final ChannelShell channelShell = createChannelShell(muzedoServer.getSshClientSession());
+
+                        final SshConnection newConnection = new SshConnection(channelShell);
+                        newConnection.getBeingUsedLock().lock();
+                        connectionPool.add(newConnection);
+                        channelShell.addCloseFutureListener((closeFuture ->
+                            connectionPool.remove(newConnection)));
+                        return newConnection;
+                    }).peek(connection -> log.trace(
+                        "#createShellChannel взял connection #" + connection.getId()))
+                    .get());
+        } finally {
+            poolLock.unlock();
+        }
+    }
+
+    public ScpClient createScpClient(final ClientSession clientSession) {
         return SCP_CLIENT_CREATOR.createScpClient(clientSession);
     }
 
     public String executeCommand(
-        final ClientSession clientSession,
+        final MuzedoServer muzedoServer,
         final Command command,
         final List<String> arguments
     ) {
-        try (ChannelShell channelShell = createShellChannel(clientSession)) {
-            return executeCommand(channelShell, command, arguments);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        try (final SshConnection sshConnection = getSshConnection(muzedoServer)) {
+            return executeCommand(sshConnection.getChannelShell(), command, arguments);
         }
     }
 
@@ -125,7 +174,7 @@ public class SSHService {
 
             final String commandText =
                 List.of(
-                        (command.shell() == Command.Shell.SSH ? "echo '_COMMAND_OUTPUT_START_' &&" : ""),
+                        (command.shell() == Command.Shell.SSH ? "echo '" + COMMAND_OUTPUT_START + "' &&" : ""),
                         command.command(),
                         arguments.mkString(" ")
                     ).filter(StringUtils::isNotBlank)
@@ -176,12 +225,12 @@ public class SSHService {
 
                     return StringUtils.substringAfterLast(
                         StringUtils.substringBeforeLast(outputString, "\r\n"),
-                        "_COMMAND_OUTPUT_START_\r\n"
+                        COMMAND_OUTPUT_START + "\r\n"
                     );
                 }
                 if (command.timeout() != 0 && timer > command.timeout()) {
                     throw new RuntimeException("Достигнут таймаут "
-                        + "( " + command.timeout() + " сек.)");
+                        + "(" + command.timeout() + " сек.)");
                 }
             }
         } catch (Exception e) {

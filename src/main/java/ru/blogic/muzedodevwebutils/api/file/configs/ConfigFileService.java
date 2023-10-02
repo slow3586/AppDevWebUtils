@@ -9,14 +9,13 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 import ru.blogic.muzedodevwebutils.api.file.configs.config.ConfigFile;
 import ru.blogic.muzedodevwebutils.api.file.configs.config.ConfigFileConfig;
 import ru.blogic.muzedodevwebutils.api.file.configs.dto.SaveConfigFileRequest;
 import ru.blogic.muzedodevwebutils.api.history.HistoryService;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
 import ru.blogic.muzedodevwebutils.api.muzedo.config.MuzedoServerConfig;
-import ru.blogic.muzedodevwebutils.api.muzedo.ssh.SSHService;
+import ru.blogic.muzedodevwebutils.api.muzedo.ssh.SshService;
 import ru.blogic.muzedodevwebutils.utils.Utils;
 
 import java.nio.charset.StandardCharsets;
@@ -27,7 +26,7 @@ import java.nio.charset.StandardCharsets;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ConfigFileService {
     MuzedoServerConfig muzedoServerConfig;
-    SSHService sshService;
+    SshService sshService;
     ConfigFileConfig configFileConfig;
     HistoryService historyService;
 
@@ -56,10 +55,9 @@ public class ConfigFileService {
             final MuzedoServer muzedoServer = muzedoServerConfig.get(saveConfigFileRequest.serverId());
             final ConfigFile configFile = configFileConfig.get(saveConfigFileRequest.configId());
 
-            final String commentText = Option.of(saveConfigFileRequest.comment())
+            final Option<String> commentText = Option.of(saveConfigFileRequest.comment())
                 .filter(StringUtils::isNotBlank)
-                .map(s -> ": \"" + s + "\"")
-                .getOrElse("");
+                .map(s -> ": \"" + s + "\"");
 
             final String historyText;
             if (!saveConfigFileRequest.skipAnalysis()) {
@@ -101,12 +99,11 @@ public class ConfigFileService {
                     "\"" + configFile.id() + "\" " +
                     "#" + changedLine._2() + ": "
                     + "\"" + changedLine._1()._2 + "\""
-                    + commentText;
+                    + commentText.getOrElse("");
             } else {
                 historyText = "Изменен конфиг " +
                     "\"" + configFile.id() + "\" "
-                    + "без анализа"
-                    + commentText;
+                    + commentText.getOrElse("без комментария");
             }
 
             sshService.uploadFile(

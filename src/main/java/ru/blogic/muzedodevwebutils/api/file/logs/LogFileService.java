@@ -19,10 +19,9 @@ import ru.blogic.muzedodevwebutils.api.command.Command;
 import ru.blogic.muzedodevwebutils.api.file.logs.config.LogFile;
 import ru.blogic.muzedodevwebutils.api.file.logs.config.LogFileConfig;
 import ru.blogic.muzedodevwebutils.api.file.logs.dto.GetLogFileRequest;
-import ru.blogic.muzedodevwebutils.api.file.logs.dto.GetLogFileResponse;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
 import ru.blogic.muzedodevwebutils.api.muzedo.config.MuzedoServerConfig;
-import ru.blogic.muzedodevwebutils.api.muzedo.ssh.SSHService;
+import ru.blogic.muzedodevwebutils.api.muzedo.ssh.SshService;
 import ru.blogic.muzedodevwebutils.utils.Utils;
 
 import java.net.URI;
@@ -36,7 +35,7 @@ import java.util.Locale;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class LogFileService {
     MuzedoServerConfig muzedoServerConfig;
-    SSHService sshService;
+    SshService sshService;
     LogFileConfig logFileConfig;
     WebClient client;
 
@@ -45,7 +44,7 @@ public class LogFileService {
 
     public LogFileService(
         MuzedoServerConfig muzedoServerConfig,
-        SSHService sshService,
+        SshService sshService,
         LogFileConfig logFileConfig,
         WebClient.Builder webClientBuilder
     ) {
@@ -90,7 +89,7 @@ public class LogFileService {
         final int lineCount = Utils.clamp(request.linesCount(), 1, 1000);
 
         return sshService.executeCommand(
-            muzedoServer.getSshClientSession(),
+            muzedoServer,
             COMMAND_TAIL,
             List.of(
                 "-n " + lineCount,
@@ -104,7 +103,7 @@ public class LogFileService {
         final LogFile serverLog = logFileConfig.get(logId);
 
         final String result = sshService.executeCommand(
-            muzedoServer.getSshClientSession(),
+            muzedoServer,
             COMMAND_ZIP,
             List.of(
                 muzedoServer.getFilePaths().logsFilePath() + "/" + serverLog.path(),

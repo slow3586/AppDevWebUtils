@@ -116,7 +116,7 @@ app:
         name: 'Клир кэш'
         command: '/root/deploy/clear_cache_shortcut.sh'
         timeout: 900
-        shell: wsadmin
+        shell: ssh
         flags:
           - ssh_ready_pattern
           - ssh_block

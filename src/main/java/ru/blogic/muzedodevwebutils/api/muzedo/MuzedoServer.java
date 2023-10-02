@@ -6,8 +6,10 @@ import org.apache.sshd.client.channel.ChannelShell;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.scp.client.ScpClient;
 import ru.blogic.muzedodevwebutils.api.command.Command;
+import ru.blogic.muzedodevwebutils.api.muzedo.ssh.SshConnection;
 import ru.blogic.muzedodevwebutils.utils.Timer;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledFuture;
@@ -40,6 +42,9 @@ public class MuzedoServer {
     Command executingCommand = null;
     Timer executingCommandTimer = new Timer();
     Timer delayBetweenCommands = new Timer();
+
+    final ReentrantLock SSHConnectionPoolLock = new ReentrantLock();
+    final java.util.List<SshConnection> SshConnectionPool = new ArrayList<>();
 
     public record HistoryEntry(
         Date date,

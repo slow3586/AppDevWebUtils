@@ -20,7 +20,7 @@ import ru.blogic.muzedodevwebutils.api.history.HistoryService;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServer;
 import ru.blogic.muzedodevwebutils.api.muzedo.MuzedoServerService;
 import ru.blogic.muzedodevwebutils.api.muzedo.config.MuzedoServerConfig;
-import ru.blogic.muzedodevwebutils.api.muzedo.ssh.SSHService;
+import ru.blogic.muzedodevwebutils.api.muzedo.ssh.SshService;
 import ru.blogic.muzedodevwebutils.utils.TimerScheduler;
 import ru.blogic.muzedodevwebutils.utils.Utils;
 
@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class CommandService {
-    SSHService sshService;
+    SshService sshService;
     MuzedoServerConfig muzedoServerConfig;
     MuzedoServerService muzedoServerService;
     HistoryService historyService;
@@ -105,7 +105,7 @@ public class CommandService {
                             (isBlockingCommand ? "Запуск операции " : "")
                                 + "\"" + command.name() + "\""
                                 + (commandDelay == 0 && StringUtils.isNotBlank(commandRunRequest.comment())
-                                ? " \"" + commandRunRequest.comment() + "\""
+                                ? ": \"" + commandRunRequest.comment() + "\""
                                 : "")
                         );
                         //endregion
@@ -135,7 +135,7 @@ public class CommandService {
                                 });
                         } else if (command.shell().equals(Command.Shell.SSH)) {
                             sshService.executeCommand(
-                                muzedoServer.getSshClientSession(),
+                                muzedoServer,
                                 command,
                                 List.empty());
                         } else {

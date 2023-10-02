@@ -29,7 +29,8 @@ public record Command(
         "SyntaxError",
         "root@edo-dev",
         ": No such file or directory",
-        ": cannot stat ");
+        ": cannot stat ",
+        "Permission denied");
     public static final List<String> SSH_ERR_PATTERNS
         = List.of(": cannot open ",
         ": No such file or directory",
