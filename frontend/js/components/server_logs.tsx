@@ -1,4 +1,4 @@
-import React, {useRef, useState} from "react";
+import React, {useContext, useRef, useState} from "react";
 import {Button, Form} from "react-bootstrap";
 import {getEntireLogFile, getLogsArchive, getServerLogFile} from "../clients/file_logs_client";
 import {useQuery} from "react-query";
@@ -6,6 +6,9 @@ import {getFrontendConfig} from "../clients/frontend_client";
 import {isEmpty, toInteger} from "lodash";
 import download from "downloadjs";
 import {toast} from "react-toastify";
+import {ServerContext} from "./app";
+import {useCookies} from "react-cookie";
+import {ConnectionContext} from "../contexts/connection_context";
 
 export type ServerLogsProps = {
     serverId: number
@@ -25,12 +28,18 @@ export function ServerLogs({serverId}: ServerLogsProps) {
     const [logId, setLogId] = useState("");
     const linesCount = useRef(DEFAULT_LINES_COUNT);
     const [disableAll, setDisableAll] = useState(false);
+    const [cookies] = useCookies(['servers']);
+    const servers: ServerContext[] = cookies.servers ?? [];
+    const serverEnabled = servers.find(s => s.id == serverId).enabled;
+    const connectionContext = useContext(ConnectionContext);
 
     const frontendConfigQuery = useQuery(
         ['getFrontendConfig'],
         () => getFrontendConfig(),
         {
             staleTime: Infinity,
+            enabled: connectionContext.connectionEstablished && serverEnabled,
+            retry: false
         });
 
     const logs = frontendConfigQuery?.data?.logs ?? [];

@@ -1,10 +1,11 @@
-import React from "react";
+import React, {useContext} from "react";
 import {Form} from "react-bootstrap";
 import {useQuery, useQueryClient} from "react-query";
 import {getServerInfo} from "../clients/info_client";
 import {isEmpty, isNil} from "lodash";
 import {ServerContext} from "./app";
 import {useCookies} from "react-cookie";
+import {ConnectionContext} from "../contexts/connection_context";
 
 export type OverviewServerProps = {
     serverId: number
@@ -16,6 +17,7 @@ export function OverviewServer({serverId}: OverviewServerProps) {
     const servers: ServerContext[] = cookies.servers;
     const server = servers.find(s => s.id == serverId);
     const queryClient = useQueryClient();
+    const connectionContext = useContext(ConnectionContext);
 
     const query = useQuery(
         ['getServerInfo', serverId],
@@ -23,7 +25,8 @@ export function OverviewServer({serverId}: OverviewServerProps) {
         {
             refetchInterval: 3000,
             refetchIntervalInBackground: true,
-            enabled: servers.find(s => s.id == serverId).enabled
+            enabled: connectionContext.connectionEstablished && server.enabled,
+            retry: false
         });
 
     let commandText = "-";

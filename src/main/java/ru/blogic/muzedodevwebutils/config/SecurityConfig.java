@@ -2,7 +2,10 @@ package ru.blogic.muzedodevwebutils.config;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.NonFinal;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,16 +17,20 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenBasedRememberMeServices;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 
 import javax.sql.DataSource;
+import java.util.List;
 
 @EnableWebSecurity
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
+    private static final String REMEMBER_ME = "remember-me";
     final DataSource dataSource;
     final SecurityConfigConfig securityConfigConfig;
+    private static final String REMEMBER_ME_KEY = "KEY";
 
     @PostConstruct
     public void postConstruct() {
@@ -41,13 +48,27 @@ public class SecurityConfig {
             ).formLogin(cust ->
                 cust.defaultSuccessUrl("/", true)
             ).rememberMe(cust ->
-                cust.key("idE61wAMkY")
-                    .tokenRepository(persistentTokenRepository())
+                cust.rememberMeServices(persistentTokenBasedRememberMeServices())
             ).csrf(AbstractHttpConfigurer::disable)
             .cors(AbstractHttpConfigurer::disable);
         return http.build();
     }
 
+    @Bean
+    public PersistentTokenBasedRememberMeServices persistentTokenBasedRememberMeServices() {
+        PersistentTokenBasedRememberMeServices rememberMeServices =
+            new PersistentTokenBasedRememberMeServices(
+                REMEMBER_ME_KEY,
+                userDetailsService(),
+                persistentTokenRepository());
+        rememberMeServices.setParameter(REMEMBER_ME);
+        rememberMeServices.setCookieName(REMEMBER_ME);
+        rememberMeServices.setTokenValiditySeconds(60 * 60 * securityConfigConfig.tokenValidityHours);
+        rememberMeServices.setUseSecureCookie(true);
+        return rememberMeServices;
+    }
+
+    @Bean
     public PersistentTokenRepository persistentTokenRepository() {
         final JdbcTokenRepositoryImpl tokenRepository = new JdbcTokenRepositoryImpl();
         tokenRepository.setDataSource(dataSource);
@@ -77,7 +98,8 @@ public class SecurityConfig {
 
     @ConfigurationProperties(prefix = "app.security")
     @RequiredArgsConstructor
-    protected static class SecurityConfigConfig{
+    protected static class SecurityConfigConfig {
         final java.util.List<String> users;
+        final int tokenValidityHours = 200;
     }
 }

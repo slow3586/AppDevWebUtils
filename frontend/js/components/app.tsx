@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useContext, useState} from "react";
 import {Tab, Tabs} from "react-bootstrap";
 import {Overview} from "./overview";
 import {useCookies} from "react-cookie";
@@ -6,6 +6,7 @@ import {isEmpty} from "lodash";
 import {Server} from "./server";
 import {useQuery} from "react-query";
 import {getFrontendConfig} from "../clients/frontend_client";
+import {ConnectionContext, ConnectionContextType} from "../contexts/connection_context";
 
 export class ServerContext {
     id: number;
@@ -18,15 +19,28 @@ export class ServerContext {
 }
 
 export function App() {
-    const [activeTab, setActiveTab] = useState("overview");
+    const [activeTab, setActiveTab] = useState('overview');
     const [cookies, setCookies] = useCookies(['servers']);
+    const connectionContext: ConnectionContextType = useContext(ConnectionContext);
 
     const frontendConfigQuery = useQuery(
         ['getFrontendConfig'],
         () => getFrontendConfig(),
         {
-            staleTime: Infinity,
+            refetchInterval: 3000,
+            refetchIntervalInBackground: true,
+            enabled: !connectionContext.connectionEstablished
         });
+
+    if (!isEmpty(frontendConfigQuery?.data?.version)) {
+        console.log("Version: " + frontendConfigQuery?.data?.version);
+    }
+
+    const connectionEstablished = frontendConfigQuery.failureCount == 0
+        && frontendConfigQuery.errorUpdateCount == 0;
+    if (connectionEstablished != connectionContext.connectionEstablished) {
+        connectionContext.setConnectionEstablished(connectionEstablished);
+    }
 
     const cookiesServers: ServerContext[] = cookies.servers ?? [];
     const configServers: number[] = frontendConfigQuery?.data?.servers ?? [];

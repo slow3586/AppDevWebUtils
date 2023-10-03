@@ -1,4 +1,4 @@
-import React, {useRef, useState} from "react";
+import React, {useContext, useRef, useState} from "react";
 import {Button, Form} from "react-bootstrap";
 import {getServerInfo} from "../clients/info_client";
 import dateFormat from "dateformat";
@@ -10,6 +10,7 @@ import {ServerContext} from "./app";
 import {useCookies} from "react-cookie";
 import {getServerHistory} from "../clients/history_client";
 import {getFrontendConfig} from "../clients/frontend_client";
+import {ConnectionContext} from "../contexts/connection_context";
 
 export type ServerControlProps = {
     isActive: boolean,
@@ -33,6 +34,7 @@ export function ServerControl({isActive, serverId}: ServerControlProps) {
     const [cookies] = useCookies(['servers']);
     const servers: ServerContext[] = cookies.servers ?? [];
     const serverEnabled = servers.find(s => s.id == serverId).enabled;
+    const connectionContext = useContext(ConnectionContext);
 
     const queryClient = useQueryClient();
 
@@ -40,7 +42,9 @@ export function ServerControl({isActive, serverId}: ServerControlProps) {
         ['getFrontendConfig'],
         () => getFrontendConfig(),
         {
-            staleTime: Infinity
+            staleTime: Infinity,
+            enabled: connectionContext.connectionEstablished && serverEnabled,
+            retry: false
         });
     const commands = frontendConfigQuery?.data?.commands ?? [];
     const getCommand = (id: string) => commands.find(c => c.id == id);
@@ -51,8 +55,9 @@ export function ServerControl({isActive, serverId}: ServerControlProps) {
         {
             refetchInterval: 3000,
             refetchIntervalInBackground: true,
-            enabled: isActive && allowEnableAll.current && serverEnabled,
+            enabled: connectionContext.connectionEstablished && isActive && allowEnableAll.current && serverEnabled,
             staleTime: Infinity,
+            retry: false
         });
 
     const infoQuery = useQuery(
@@ -61,8 +66,9 @@ export function ServerControl({isActive, serverId}: ServerControlProps) {
         {
             refetchInterval: 3000,
             refetchIntervalInBackground: true,
-            enabled: isActive && allowEnableAll.current && serverEnabled,
-            staleTime: Infinity
+            enabled: connectionContext.connectionEstablished && isActive && allowEnableAll.current && serverEnabled,
+            staleTime: Infinity,
+            retry: false
         });
 
     const addInfo = (add: string) => {

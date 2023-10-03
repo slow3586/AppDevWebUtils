@@ -1,13 +1,14 @@
-import React, {useRef} from "react";
+import React, {useContext, useRef} from "react";
 import {Form} from "react-bootstrap";
 import {OverviewServer} from "./overview_server";
 import dateFormat from "dateformat";
-import {useQueries} from "react-query";
+import {useQueries, useQueryClient} from "react-query";
 import {isEmpty, isNil, trim} from "lodash";
 import {runNotification} from "../utils/notification";
 import {ServerContext} from "./app";
 import {useCookies} from "react-cookie";
 import {getServerHistory, Severity} from "../clients/history_client";
+import {ConnectionContext} from "../contexts/connection_context";
 
 export function Overview() {
     const last = useRef(new Map<number, number>());
@@ -15,6 +16,8 @@ export function Overview() {
     const firstRun = useRef(true);
     const [cookies] = useCookies(['servers']);
     const servers: ServerContext[] = cookies.servers ?? [];
+    const connectionContext = useContext(ConnectionContext);
+    const queryClient = useQueryClient();
 
     servers.filter(s => !last.current.has(s.id))
         .forEach(s => last.current.set(s.id, 0));
@@ -26,22 +29,27 @@ export function Overview() {
     }
 
     const queries = useQueries(
-        servers.map(server => ({
-                queryKey: ['getServerLog', server.id, last.current.get(server.id) ?? 0],
-                queryFn: async () => await getServerHistory(server.id, last.current.get(server.id) ?? 0),
-                refetchInterval: 3000,
-                refetchIntervalInBackground: true,
-                enabled: server.enabled
-            })
-        ))
+        servers
+            .filter(server => connectionContext.connectionEstablished && server.enabled)
+            .map(server => ({
+                    queryKey: ['getServerLog', server.id, last.current.get(server.id) ?? 0],
+                    queryFn: async () => await getServerHistory(server.id, last.current.get(server.id) ?? 0),
+                    refetchInterval: 3000,
+                    refetchIntervalInBackground: true,
+                    retry: false
+                })
+            ))
         .map((q, index) => ({serverId: servers[index].id, query: q}));
 
     const errored = queries.filter(q => q.query.isError);
     const loading = queries.filter(q => q.query.isLoading);
-    if (!isEmpty(errored)) {
-        // @ts-ignore
-        addInfo(errored.map(q => q.query.error.message)
-            .join("\n") + "\n");
+    const failed = queries.filter(q => q.query.failureCount != 0 || q.query.errorUpdateCount != 0);
+
+    if (connectionContext.connectionEstablished && !isEmpty(failed)) {
+        connectionContext.setConnectionEstablished(false);
+        queries.forEach(q => q.query.remove());
+        queryClient.cancelQueries();
+        queryClient.removeQueries();
     }
 
     if (isEmpty(loading) && isEmpty(errored)) {

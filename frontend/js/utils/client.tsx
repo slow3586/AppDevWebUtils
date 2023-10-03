@@ -77,9 +77,9 @@ const handleErr = (
     errTextPromise.then((errText: string) => {
         errText = errText ?? 'Неизвестная ошибка';
         if (startsWith(errText, `Failed to fetch`)) {
-            errText = "Потеряна связь, переподключаюсь..."
+            errText = "Потеряна связь, переподключаюсь...";
         } else if (startsWith(errText, `Unexpected token '<'`)) {
-            errText = "Необходимо перезагрузить страницу"
+            errText = "Необходимо перезагрузить страницу";
         }
         showErrToast(requestName, errText);
     });

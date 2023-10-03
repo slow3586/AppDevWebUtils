@@ -1,10 +1,11 @@
-import React, {useRef, useState} from "react";
+import React, {useContext, useRef, useState} from "react";
 import {Button, Form, OverlayTrigger, Tooltip} from "react-bootstrap";
 import {getServerConfigFile, saveServerConfigFile} from "../clients/file_configs_client";
 import {isEmpty} from "lodash";
 import {useQuery} from "react-query";
 import {getFrontendConfig} from "../clients/frontend_client";
 import {toast} from "react-toastify";
+import {ConnectionContext} from "../contexts/connection_context";
 
 export type ServerConfigsProps = {
     serverId: number
@@ -23,13 +24,15 @@ export function ServerConfigs({serverId}: ServerConfigsProps) {
     const skipAnalysis = useRef(false);
     const [disableAll, setDisableAll] = useState(false);
     const textArea: React.MutableRefObject<any> = useRef();
+    const connectionContext = useContext(ConnectionContext);
 
     const frontendConfigQuery = useQuery(
         ['getFrontendConfig'],
         () => getFrontendConfig(),
         {
             staleTime: Infinity,
-            enabled: !disableAll
+            enabled: connectionContext.connectionEstablished && !disableAll,
+            retry: false
         });
 
     const configs = frontendConfigQuery?.data?.configs ?? [];
