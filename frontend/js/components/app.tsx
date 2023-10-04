@@ -29,17 +29,18 @@ export function App() {
         {
             refetchInterval: 3000,
             refetchIntervalInBackground: true,
-            enabled: !connectionContext.connectionEstablished
+            enabled: !connectionContext.connectionEstablished,
+            retry: false
         });
 
-    if (!isEmpty(frontendConfigQuery?.data?.version)) {
-        console.log("Version: " + frontendConfigQuery?.data?.version);
-    }
-
-    const connectionEstablished = frontendConfigQuery.failureCount == 0
-        && frontendConfigQuery.errorUpdateCount == 0;
+    const version = frontendConfigQuery?.data?.version;
+    const connectionEstablished = !isEmpty(version)
+        && !frontendConfigQuery.isError;
     if (connectionEstablished != connectionContext.connectionEstablished) {
         connectionContext.setConnectionEstablished(connectionEstablished);
+        if (connectionEstablished && !isEmpty(version)) {
+            console.log("Version: " + version);
+        }
     }
 
     const cookiesServers: ServerContext[] = cookies.servers ?? [];

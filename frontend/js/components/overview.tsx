@@ -43,9 +43,8 @@ export function Overview() {
 
     const errored = queries.filter(q => q.query.isError);
     const loading = queries.filter(q => q.query.isLoading);
-    const failed = queries.filter(q => q.query.failureCount != 0 || q.query.errorUpdateCount != 0);
 
-    if (connectionContext.connectionEstablished && !isEmpty(failed)) {
+    if (connectionContext.connectionEstablished && !isEmpty(errored)) {
         connectionContext.setConnectionEstablished(false);
         queries.forEach(q => q.query.remove());
         queryClient.cancelQueries();
