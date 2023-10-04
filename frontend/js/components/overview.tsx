@@ -5,17 +5,16 @@ import dateFormat from "dateformat";
 import {useQueries, useQueryClient} from "react-query";
 import {isEmpty, isNil, trim} from "lodash";
 import {runNotification} from "../utils/notification";
-import {ServerContext} from "./app";
-import {useCookies} from "react-cookie";
 import {getServerHistory, Severity} from "../clients/history_client";
 import {ConnectionContext} from "../contexts/connection_context";
+import {ServerContext, ServersContext} from "../contexts/servers_context";
 
 export function Overview() {
     const last = useRef(new Map<number, number>());
     const info = useRef("");
     const firstRun = useRef(true);
-    const [cookies] = useCookies(['servers']);
-    const servers: ServerContext[] = cookies.servers ?? [];
+    const serversContext = useContext(ServersContext);
+    const servers: ServerContext[] = serversContext.servers ?? [];
     const connectionContext = useContext(ConnectionContext);
     const queryClient = useQueryClient();
 

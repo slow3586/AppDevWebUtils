@@ -3,21 +3,19 @@ import {Form} from "react-bootstrap";
 import {useQuery, useQueryClient} from "react-query";
 import {getServerInfo} from "../clients/info_client";
 import {isEmpty, isNil} from "lodash";
-import {ServerContext} from "./app";
-import {useCookies} from "react-cookie";
 import {ConnectionContext} from "../contexts/connection_context";
+import {ServerContext, ServersContext} from "../contexts/servers_context";
 
 export type OverviewServerProps = {
     serverId: number
 }
 
 export function OverviewServer({serverId}: OverviewServerProps) {
-    //const servers = useContext(ServersContext);
-    const [cookies, setCookies] = useCookies(['servers']);
-    const servers: ServerContext[] = cookies.servers;
-    const server = servers.find(s => s.id == serverId);
     const queryClient = useQueryClient();
     const connectionContext = useContext(ConnectionContext);
+    const serversContext = useContext(ServersContext);
+    const servers: ServerContext[] = serversContext.servers ?? [];
+    const server = servers.find(s => s.id == serverId);
 
     const query = useQuery(
         ['getServerInfo', serverId],
@@ -41,7 +39,7 @@ export function OverviewServer({serverId}: OverviewServerProps) {
     const changeServerEnabled = (enabled: boolean) => {
         queryClient.removeQueries(['getServerInfo', serverId]);
         queryClient.removeQueries(['getServerLog', serverId]);
-        setCookies('servers', servers.map(s => {
+        serversContext.setServers(servers.map(s => {
             if (s.id == serverId)
                 s.enabled = enabled
             return s;

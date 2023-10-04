@@ -6,22 +6,14 @@ import {isEmpty} from "lodash";
 import {Server} from "./server";
 import {useQuery} from "react-query";
 import {getFrontendConfig} from "../clients/frontend_client";
-import {ConnectionContext, ConnectionContextType} from "../contexts/connection_context";
-
-export class ServerContext {
-    id: number;
-    enabled: boolean;
-
-    constructor(id: number, enabled: boolean) {
-        this.id = id;
-        this.enabled = enabled;
-    }
-}
+import {ConnectionContext} from "../contexts/connection_context";
+import {ServerContext, ServersContext} from "../contexts/servers_context";
+import {toast} from "react-toastify";
 
 export function App() {
     const [activeTab, setActiveTab] = useState('overview');
-    const [cookies, setCookies] = useCookies(['servers']);
-    const connectionContext: ConnectionContextType = useContext(ConnectionContext);
+    const connectionContext = useContext(ConnectionContext);
+    const serversContext = useContext(ServersContext);
 
     const frontendConfigQuery = useQuery(
         ['getFrontendConfig'],
@@ -37,23 +29,29 @@ export function App() {
     const connectionEstablished = !isEmpty(version)
         && !frontendConfigQuery.isError;
     if (connectionEstablished != connectionContext.connectionEstablished) {
+        if(connectionEstablished && !connectionContext.connectionEstablished) {
+            toast.success("Соединение установлено");
+        }
         connectionContext.setConnectionEstablished(connectionEstablished);
         if (connectionEstablished && !isEmpty(version)) {
             console.log("Version: " + version);
         }
     }
 
-    const cookiesServers: ServerContext[] = cookies.servers ?? [];
+    const storageServers: ServerContext[] = serversContext.servers ?? [];
     const configServers: number[] = frontendConfigQuery?.data?.servers ?? [];
     const servers = !isEmpty(configServers)
-        ? cookiesServers.filter(s => configServers.includes(s.id))
+        ? storageServers.filter(s => configServers.includes(s.id))
             .concat(
-                configServers.filter(s => !cookiesServers.some(cs => cs.id == s))
+                configServers.filter(s => !storageServers.some(cs => cs.id == s))
                     .map(s => new ServerContext(s, true))
             )
-        : [];
-    if (!isEmpty(servers) && !servers.every(s => cookiesServers.some(cs => cs.id == s.id))) {
-        setCookies('servers', servers);
+        : storageServers;
+    if (!isEmpty(servers)
+        && !isEmpty(configServers)
+        && (!servers.every(s => storageServers.some(cs => cs.id == s.id))
+            || servers.length != storageServers.length)) {
+        serversContext.setServers(servers);
     }
 
     return (

@@ -4,6 +4,7 @@ import {App} from "./components/app";
 import {QueryClient, QueryClientProvider,} from 'react-query'
 import {ToastContainer} from "react-toastify";
 import {ConnectionContextProvider} from "./contexts/connection_context";
+import {ServersContextProvider} from "./contexts/servers_context";
 
 require('../less/index.less')
 
@@ -13,10 +14,12 @@ Notification.requestPermission();
 createRoot(document.getElementById("root")).render(
     <div>
         <ConnectionContextProvider>
-            <QueryClientProvider client={queryClient}>
-                <App/>
-            </QueryClientProvider>
-            <ToastContainer/>
+            <ServersContextProvider>
+                <QueryClientProvider client={queryClient}>
+                    <App/>
+                </QueryClientProvider>
+                <ToastContainer/>
+            </ServersContextProvider>
         </ConnectionContextProvider>
     </div>
 );

@@ -6,11 +6,10 @@ import {commandCancel, commandDelay, commandRun} from "../clients/command_client
 import {useQuery, useQueryClient} from "react-query";
 import {isEmpty, isNil, trim} from "lodash";
 import {OverviewServer} from "./overview_server";
-import {ServerContext} from "./app";
-import {useCookies} from "react-cookie";
 import {getServerHistory} from "../clients/history_client";
 import {getFrontendConfig} from "../clients/frontend_client";
 import {ConnectionContext} from "../contexts/connection_context";
+import {ServerContext, ServersContext} from "../contexts/servers_context";
 
 export type ServerControlProps = {
     isActive: boolean,
@@ -31,8 +30,8 @@ export function ServerControl({isActive, serverId}: ServerControlProps) {
     const allowEnableAll = useRef(true);
     const [disableAll, setDisableAll] = useState(false);
     const [commandId, setCommandId] = useState("");
-    const [cookies] = useCookies(['servers']);
-    const servers: ServerContext[] = cookies.servers ?? [];
+    const serversContext = useContext(ServersContext);
+    const servers: ServerContext[] = serversContext.servers ?? [];
     const serverEnabled = servers.find(s => s.id == serverId).enabled;
     const connectionContext = useContext(ConnectionContext);
 
