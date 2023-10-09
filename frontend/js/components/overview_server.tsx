@@ -10,6 +10,8 @@ export type OverviewServerProps = {
     serverId: number
 }
 
+const OFFLINE_TEXT = "OFF";
+
 export function OverviewServer({serverId}: OverviewServerProps) {
     const queryClient = useQueryClient();
     const connectionContext = useContext(ConnectionContext);
@@ -46,26 +48,6 @@ export function OverviewServer({serverId}: OverviewServerProps) {
         }));
     }
 
-    const gpBuild = query?.data?.gpBuild;
-    const gpShort = isNil(gpBuild)
-        ? "OFF"
-        : !isNil(gpBuild?.date)
-            ? `${gpBuild.author} @ ${gpBuild.date.substring(0, 22)}`
-            : "Неизвестная сборка";
-    const gpFull = gpBuild?.date
-        ? `(${gpBuild.branch}, ${gpBuild.hash})`
-        : '';
-
-    const integBuild = query?.data?.integBuild;
-    const integShort = isNil(integBuild)
-        ? "OFF"
-        : !isNil(integBuild?.date)
-            ? `${integBuild.author} @ ${integBuild.date.substring(0, 22)}`
-            : "Неизвестная сборка";
-    const integFull = integBuild?.date
-        ? `(${integBuild.branch}, ${integBuild.hash})`
-        : '';
-
     return (
         <div className="comp-overview-server">
             <Form.Check className="comp-enabled"
@@ -79,14 +61,20 @@ export function OverviewServer({serverId}: OverviewServerProps) {
                 {server.enabled && (
                     <div className="comp-content">
                         <div className="comp-row">
-                            <Form.Text className="comp-status">Сборка: <span className="comp-status-bold">{query?.data?.build ?? "OFF"}</span></Form.Text>
+                            <Form.Text className="comp-status">
+                                Сборка: <span className="comp-status-bold">{query?.data?.appBuildText ?? OFFLINE_TEXT}</span>
+                            </Form.Text>
                         </div>
-                        <div title={gpFull} className="comp-row">
-                            <Form.Text className="comp-status">GP: {gpShort}</Form.Text>
-                        </div>
-                        <div title={integFull} className="comp-row">
-                            <Form.Text className="comp-status">Integ: {integShort}</Form.Text>
-                        </div>
+                        {query?.data?.moduleBuildInfoList.map(moduleBuildInfo =>
+                            <div key={`k${moduleBuildInfo.name}`} title={moduleBuildInfo.name} className="comp-row">
+                                <Form.Text className="comp-status">{moduleBuildInfo.name
+                                    + ": "
+                                    + (isEmpty(moduleBuildInfo.buildText)
+                                        ? OFFLINE_TEXT
+                                        : moduleBuildInfo.buildText)}
+                                </Form.Text>
+                            </div>
+                        )}
                         <div className="comp-row">
                             <Form.Text className="comp-status">Операция: {commandText}</Form.Text>
                         </div>

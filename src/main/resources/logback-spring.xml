@@ -23,7 +23,7 @@
         </encoder>
     </appender>
 
-    <logger name="ru.blogic.muzedodevwebutils" level="TRACE"/>
+    <logger name="ru.blogic.appdevwebutils" level="TRACE"/>
     <!--<logger name="org.apache.sshd.client" level="DEBUG"/>-->
     <root level="INFO">
         <appender-ref ref="MDWUConsole" />

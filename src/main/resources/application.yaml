@@ -66,7 +66,7 @@ app:
       - 'Чурсин Владимир'
       - 'Смирнова Наталья'
       - 'Насыров Руслан'
-  muzedo:
+  app:
     servers:
       - id: '146'
         host: '172.19.203.146'
@@ -74,6 +74,25 @@ app:
         file-paths:
           configs: '/fs/it/gp-uzdo'
           logs: '/workdir/logs'
+  info:
+    modules:
+      - name: "GP"
+        uri: "UZDO/api/app/buildInfo"
+      - name: "Integ"
+        uri: "UZDO-ui/rest/app/buildInfo"
+    date-format: "HH:mm:ss dd.MM.yyyy z Z"
+    author-regex: "Собрано пользователем: (.*?)"
+    date-regex: "Дата сборки: "
+    branch-regex: "Ветка: "
+    hash-regex: "Хэш: "
+    app-build-text:
+      date-time-format: "dd.MM.yy_HH.mm"
+      hash-length: 0
+      text-format: "1.3-FP11_$date"
+    module-build-text:
+      date-time-format: "HH:mm:ss dd.MM.yyyy z"
+      hash-length: 6
+      text-format: "$author @ $date ($branch@$hash)"
   files:
     configs:
       list:

@@ -15,16 +15,13 @@ export type GetServerInfoResponse = {
     executingCommandTimer: number,
     scheduledCommand: Command,
     scheduledCommandTimer: number,
-    build: string,
-    gpBuild: MuzedoBuildInfo,
-    integBuild: MuzedoBuildInfo
+    appBuildText: string,
+    moduleBuildInfoList: ModuleBuildInfo[]
 }
 
-export type MuzedoBuildInfo = {
-    author: string,
-    date: string,
-    branch: string,
-    hash: string
+export type ModuleBuildInfo = {
+    name: string,
+    buildText: string
 }
 
 export const getServerInfo = (
