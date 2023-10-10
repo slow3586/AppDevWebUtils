@@ -1,4 +1,4 @@
-import React, {Dispatch, SetStateAction, useContext, useState} from "react";
+import React, {Dispatch, SetStateAction, useState} from "react";
 
 export const ConnectionContext: React.Context<ConnectionContextType>
     = React.createContext(null);

@@ -20,7 +20,6 @@ import ru.blogic.appdevwebutils.api.history.dto.HistoryEntryDto;
 import ru.blogic.appdevwebutils.api.history.repo.HistoryEntry;
 import ru.blogic.appdevwebutils.api.history.repo.HistoryEntryRepository;
 import ru.blogic.appdevwebutils.config.logging.DisableLoggingAspect;
-import ru.blogic.appdevwebutils.utils.OffsetLimitPageable;
 
 @Service
 @Slf4j
@@ -53,23 +52,16 @@ public class HistoryService {
         final int serverId,
         final int last
     ) {
-        final int entryCount = historyEntryRepository.countByServerId(serverId);
-        final int limit = entryCount - last;
-
-        final List<HistoryEntryDto> byServerIdOrderByDate =
-            historyEntryRepository.findByServerIdOrderByDate(
-                serverId,
-                new OffsetLimitPageable(last, limit)
-            ).map(entry -> new HistoryEntryDto(
-                entry.getServerId(),
-                entry.getText(),
-                entry.getSeverity(),
-                entry.getUsername(),
-                entry.getDate()));
-
         return new GetServerHistoryResponse(
-            byServerIdOrderByDate,
-            entryCount);
+            historyEntryRepository.findByServerIdOrderByDate(serverId)
+                .drop(last)
+                .map(entry -> new HistoryEntryDto(
+                    entry.getServerId(),
+                    entry.getText(),
+                    entry.getSeverity(),
+                    entry.getUsername(),
+                    entry.getDate())),
+            historyEntryRepository.countByServerId(serverId));
     }
 
     //@CacheEvict(allEntries = true, value = "getServerLog")

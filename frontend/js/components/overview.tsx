@@ -41,15 +41,17 @@ export function Overview() {
         .map((q, index) => ({serverId: servers[index].id, query: q}));
 
     const errored = queries.filter(q => q.query.isError);
+    errored.forEach(q => {
+        // @ts-ignore
+        const failedToFetch = q?.query?.error?.message === 'Failed to fetch';
+        if (failedToFetch) {
+            connectionContext.connectionEstablished = false;
+            queryClient.cancelQueries();
+            queryClient.removeQueries();
+        }
+    });
+
     const loading = queries.filter(q => q.query.isLoading);
-
-    if (connectionContext.connectionEstablished && !isEmpty(errored)) {
-        connectionContext.setConnectionEstablished(false);
-        queries.forEach(q => q.query.remove());
-        queryClient.cancelQueries();
-        queryClient.removeQueries();
-    }
-
     if (isEmpty(loading) && isEmpty(errored)) {
         const goodQueries = queries.filter(q => !isNil(q.query.data));
         goodQueries.filter(q => last.current.get(q.serverId) > q.query.data.logLast)

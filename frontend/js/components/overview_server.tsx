@@ -2,7 +2,7 @@ import React, {useContext} from "react";
 import {Form} from "react-bootstrap";
 import {useQuery, useQueryClient} from "react-query";
 import {getServerInfo} from "../clients/info_client";
-import {isEmpty, isNil} from "lodash";
+import {isEmpty} from "lodash";
 import {ConnectionContext} from "../contexts/connection_context";
 import {ServerContext, ServersContext} from "../contexts/servers_context";
 

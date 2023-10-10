@@ -1,7 +1,6 @@
 import React, {useContext, useState} from "react";
 import {Tab, Tabs} from "react-bootstrap";
 import {Overview} from "./overview";
-import {useCookies} from "react-cookie";
 import {isEmpty} from "lodash";
 import {Server} from "./server";
 import {useQuery} from "react-query";
@@ -26,15 +25,18 @@ export function App() {
         });
 
     const version = frontendConfigQuery?.data?.version;
-    const connectionEstablished = !isEmpty(version)
-        && !frontendConfigQuery.isError;
+    const connectionEstablished = !isEmpty(version) && !frontendConfigQuery.isError;
     if (connectionEstablished != connectionContext.connectionEstablished) {
-        if(connectionEstablished && !connectionContext.connectionEstablished) {
+        if (connectionEstablished) {
+            connectionContext.setConnectionEstablished(true);
             toast.success("Соединение установлено");
-        }
-        connectionContext.setConnectionEstablished(connectionEstablished);
-        if (connectionEstablished && !isEmpty(version)) {
             console.log("Version: " + version);
+        } else {
+            // @ts-ignore
+            const failedToFetch = frontendConfigQuery?.error?.message === 'Failed to fetch';
+            if (failedToFetch) {
+                connectionContext.setConnectionEstablished(false);
+            }
         }
     }
 

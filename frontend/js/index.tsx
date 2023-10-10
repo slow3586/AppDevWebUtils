@@ -13,13 +13,13 @@ Notification.requestPermission();
 
 createRoot(document.getElementById("root")).render(
     <div>
-        <ConnectionContextProvider>
-            <ServersContextProvider>
-                <QueryClientProvider client={queryClient}>
+        <QueryClientProvider client={queryClient}>
+            <ConnectionContextProvider>
+                <ServersContextProvider>
                     <App/>
-                </QueryClientProvider>
-                <ToastContainer/>
-            </ServersContextProvider>
-        </ConnectionContextProvider>
+                    <ToastContainer/>
+                </ServersContextProvider>
+            </ConnectionContextProvider>
+        </QueryClientProvider>
     </div>
 );

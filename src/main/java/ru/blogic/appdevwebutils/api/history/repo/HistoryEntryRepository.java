@@ -11,6 +11,6 @@ import java.util.UUID;
 
 @Repository
 public interface HistoryEntryRepository extends CrudRepository<HistoryEntry, UUID> {
-    List<HistoryEntry> findByServerIdOrderByDate(int serverId, Pageable pageable);
+    List<HistoryEntry> findByServerIdOrderByDate(int serverId);
     int countByServerId(int serverId);
 }
