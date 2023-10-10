@@ -8,14 +8,11 @@ import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.scp.client.ScpClient;
 import ru.blogic.appdevwebutils.api.command.Command;
 import ru.blogic.appdevwebutils.api.app.ssh.SshConnection;
+import ru.blogic.appdevwebutils.api.history.repo.HistoryEntry;
 import ru.blogic.appdevwebutils.utils.Timer;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantLock;
@@ -35,8 +32,6 @@ public class AppServer {
     ChannelShell wsadminShell;
     ScpClient scpClient;
 
-    final ConcurrentLinkedQueue<HistoryEntry> history = new ConcurrentLinkedQueue<>();
-
     final ReentrantLock commandSchedulingLock = new ReentrantLock();
     final ReentrantLock wsadminConnectLock = new ReentrantLock();
     final ReentrantLock sessionConnectLock = new ReentrantLock();
@@ -49,19 +44,6 @@ public class AppServer {
 
     final ReentrantLock SSHConnectionPoolLock = new ReentrantLock();
     final java.util.List<SshConnection> SshConnectionPool = new ArrayList<>();
-
-    public record HistoryEntry(
-        Date date,
-        String text,
-        Severity severity,
-        String user
-    ) {
-        public enum Severity {
-            CRIT,
-            INFO,
-            TRACE
-        }
-    }
 
     public record ModuleBuildInfo(
         String name,

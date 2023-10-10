@@ -21,6 +21,7 @@ import ru.blogic.appdevwebutils.api.app.AppServer;
 import ru.blogic.appdevwebutils.api.app.AppServerService;
 import ru.blogic.appdevwebutils.api.app.config.AppServerConfig;
 import ru.blogic.appdevwebutils.api.app.ssh.SshService;
+import ru.blogic.appdevwebutils.api.history.repo.HistoryEntry;
 import ru.blogic.appdevwebutils.utils.TimerScheduler;
 import ru.blogic.appdevwebutils.utils.Utils;
 
@@ -100,8 +101,8 @@ public class CommandService {
                         historyService.addHistoryEntry(
                             appServer.getId(),
                             command.announce()
-                                ? AppServer.HistoryEntry.Severity.CRIT
-                                : AppServer.HistoryEntry.Severity.INFO,
+                                ? HistoryEntry.Severity.CRIT
+                                : HistoryEntry.Severity.INFO,
                             (isBlockingCommand ? "Запуск операции " : "")
                                 + "\"" + command.name() + "\""
                                 + (commandDelay == 0 && StringUtils.isNotBlank(commandRunRequest.comment())
@@ -122,7 +123,7 @@ public class CommandService {
                                     log.error("#run ошибка при первом запуске, запускаю вторую попытку...", e);
                                     historyService.addHistoryEntry(
                                         appServer.getId(),
-                                        AppServer.HistoryEntry.Severity.CRIT,
+                                        HistoryEntry.Severity.CRIT,
                                         "Ошибка при выполнении операции \"" + command.name()
                                             + "\": " + e.getMessage()
                                             + ", запускаю вторую попытку...");
@@ -148,8 +149,8 @@ public class CommandService {
                             historyService.addHistoryEntry(
                                 appServer.getId(),
                                 command.announce()
-                                    ? AppServer.HistoryEntry.Severity.CRIT
-                                    : AppServer.HistoryEntry.Severity.INFO,
+                                    ? HistoryEntry.Severity.CRIT
+                                    : HistoryEntry.Severity.INFO,
                                 "Завершено \""
                                     + command.name()
                                     + "\" за "
@@ -160,7 +161,7 @@ public class CommandService {
                     } catch (Exception e) {
                         historyService.addHistoryEntry(
                             appServer.getId(),
-                            AppServer.HistoryEntry.Severity.CRIT,
+                            HistoryEntry.Severity.CRIT,
                             "Ошибка при выполнении операции \"" + command.name()
                                 + "\": " + e.getMessage());
                         throw new RuntimeException(e);
@@ -178,7 +179,7 @@ public class CommandService {
                     //region ПЛАНИРОВАНИЕ ОПЕРАЦИИ
                     historyService.addHistoryEntry(
                         appServer.getId(),
-                        AppServer.HistoryEntry.Severity.CRIT,
+                        HistoryEntry.Severity.CRIT,
                         "Запланирована операция "
                             + "\"" + command.name() + "\""
                             + (StringUtils.isNotBlank(commandRunRequest.comment())
@@ -206,7 +207,7 @@ public class CommandService {
         } catch (Exception e) {
             historyService.addHistoryEntry(
                 appServer.getId(),
-                AppServer.HistoryEntry.Severity.CRIT,
+                HistoryEntry.Severity.CRIT,
                 "Ошибка при планировании операции \"" + command.name()
                     + "\": " + e.getMessage());
             throw new RuntimeException("#run Не удалось запланировать операцию: " + e.getMessage(), e);
@@ -248,7 +249,7 @@ public class CommandService {
 
             historyService.addHistoryEntry(
                 appServer.getId(),
-                AppServer.HistoryEntry.Severity.CRIT,
+                HistoryEntry.Severity.CRIT,
                 "Отложена операция \"" + command.name() + "\""
                     + (StringUtils.isNotBlank(commandDelayRequest.comment())
                     ? ": \"" + commandDelayRequest.comment() + "\""
@@ -260,7 +261,7 @@ public class CommandService {
         } catch (Exception e) {
             historyService.addHistoryEntry(
                 appServer.getId(),
-                AppServer.HistoryEntry.Severity.CRIT,
+                HistoryEntry.Severity.CRIT,
                 "Ошибка при откладывании операции: " + e.getMessage());
             throw new RuntimeException("#delay Не удалось отложить запланированную операцию: " + e.getMessage(), e);
         }
@@ -292,7 +293,7 @@ public class CommandService {
             if (!commandCancelRequest.silent()) {
                 historyService.addHistoryEntry(
                     appServer.getId(),
-                    AppServer.HistoryEntry.Severity.CRIT,
+                    HistoryEntry.Severity.CRIT,
                     "Отменена операция \"" + commandName + "\""
                         + (StringUtils.isNotBlank(commandCancelRequest.comment())
                         ? ": \"" + commandCancelRequest.comment() + "\""
@@ -302,7 +303,7 @@ public class CommandService {
         } catch (Exception e) {
             historyService.addHistoryEntry(
                 appServer.getId(),
-                AppServer.HistoryEntry.Severity.CRIT,
+                HistoryEntry.Severity.CRIT,
                 "Ошибка при отмене операции: " + e.getMessage());
             throw new RuntimeException("#cancel Не удалось отменить запланированную операцию:" + e.getMessage(), e);
         }

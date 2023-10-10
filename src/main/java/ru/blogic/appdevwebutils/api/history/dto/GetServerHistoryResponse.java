@@ -1,8 +1,8 @@
 package ru.blogic.appdevwebutils.api.history.dto;
 
-import ru.blogic.appdevwebutils.api.app.AppServer;
+import io.vavr.collection.List;
 
 public record GetServerHistoryResponse(
-    io.vavr.collection.List<AppServer.HistoryEntry> logs,
+    List<HistoryEntryDto> logs,
     int logLast
 ) {}

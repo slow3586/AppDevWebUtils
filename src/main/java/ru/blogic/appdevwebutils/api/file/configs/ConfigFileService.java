@@ -16,6 +16,7 @@ import ru.blogic.appdevwebutils.api.history.HistoryService;
 import ru.blogic.appdevwebutils.api.app.AppServer;
 import ru.blogic.appdevwebutils.api.app.config.AppServerConfig;
 import ru.blogic.appdevwebutils.api.app.ssh.SshService;
+import ru.blogic.appdevwebutils.api.history.repo.HistoryEntry;
 import ru.blogic.appdevwebutils.utils.Utils;
 
 import java.nio.charset.StandardCharsets;
@@ -115,7 +116,7 @@ public class ConfigFileService {
 
             historyService.addHistoryEntry(
                 appServer.getId(),
-                AppServer.HistoryEntry.Severity.CRIT,
+                HistoryEntry.Severity.CRIT,
                 historyText);
         } catch (Exception e) {
             throw new RuntimeException("#saveServerConfigFile: " + e.getMessage(), e);

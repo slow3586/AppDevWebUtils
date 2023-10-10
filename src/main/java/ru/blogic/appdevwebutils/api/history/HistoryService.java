@@ -1,79 +1,78 @@
 package ru.blogic.appdevwebutils.api.history;
 
 import io.vavr.collection.List;
+import io.vavr.control.Option;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.security.core.Authentication;
+import org.springframework.data.domain.AbstractPageRequest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 import ru.blogic.appdevwebutils.api.history.dto.GetServerHistoryResponse;
-import ru.blogic.appdevwebutils.api.app.AppServer;
-import ru.blogic.appdevwebutils.api.app.config.AppServerConfig;
+import ru.blogic.appdevwebutils.api.history.dto.HistoryEntryDto;
+import ru.blogic.appdevwebutils.api.history.repo.HistoryEntry;
+import ru.blogic.appdevwebutils.api.history.repo.HistoryEntryRepository;
 import ru.blogic.appdevwebutils.config.logging.DisableLoggingAspect;
-import ru.blogic.appdevwebutils.utils.Utils;
-
-import java.util.Date;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import ru.blogic.appdevwebutils.utils.OffsetLimitPageable;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class HistoryService {
-    AppServerConfig appServerConfig;
+    HistoryEntryRepository historyEntryRepository;
 
     public void addHistoryEntry(
         final int serverId,
-        final AppServer.HistoryEntry.Severity severity,
+        final HistoryEntry.Severity severity,
         final String text
     ) {
-        final Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        final String user = auth == null
-            ? "Система"
-            : ((User) auth.getPrincipal()).getUsername();
-
-        final AppServer.HistoryEntry infoEntry = new AppServer.HistoryEntry(
-            new Date(),
-            text,
-            severity,
-            user);
-
-        appServerConfig
-            .get(serverId)
-            .getHistory()
-            .add(infoEntry);
+        final HistoryEntry historyEntry = new HistoryEntry();
+        historyEntry.setServerId(serverId);
+        historyEntry.setSeverity(severity);
+        historyEntry.setText(text);
+        historyEntry.setUsername(
+            Option.of(SecurityContextHolder.getContext().getAuthentication())
+                .map(auth -> ((User) auth.getPrincipal()).getUsername())
+                .getOrElse("Система"));
+        historyEntryRepository.save(historyEntry);
 
         this.clearGetServerLogCache();
     }
 
     @DisableLoggingAspect
-    @Cacheable(value = "getServerLog")
+    //@Cacheable(value = "getServerLog", key = "serverId")
     public GetServerHistoryResponse getServerHistory(
         final int serverId,
         final int last
     ) {
-        final ConcurrentLinkedQueue<AppServer.HistoryEntry> log = appServerConfig
-            .get(serverId)
-            .getHistory();
-        final List<AppServer.HistoryEntry> infoEntries =
-            List.ofAll(log)
-                .drop(Utils.clamp(
-                    log.size() - last < 100 ? last : log.size() - 100,
-                    0,
-                    log.size()));
+        final int entryCount = historyEntryRepository.countByServerId(serverId);
+        final int limit = entryCount - last;
+
+        final List<HistoryEntryDto> byServerIdOrderByDate =
+            historyEntryRepository.findByServerIdOrderByDate(
+                serverId,
+                new OffsetLimitPageable(last, limit)
+            ).map(entry -> new HistoryEntryDto(
+                entry.getServerId(),
+                entry.getText(),
+                entry.getSeverity(),
+                entry.getUsername(),
+                entry.getDate()));
 
         return new GetServerHistoryResponse(
-            infoEntries,
-            log.size()
-        );
+            byServerIdOrderByDate,
+            entryCount);
     }
 
-    @CacheEvict(allEntries = true, value = "getServerLog")
+    //@CacheEvict(allEntries = true, value = "getServerLog")
     @DisableLoggingAspect
     public void clearGetServerLogCache() {}
 }
