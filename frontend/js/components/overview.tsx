@@ -45,7 +45,7 @@ export function Overview() {
         // @ts-ignore
         const failedToFetch = q?.query?.error?.message === 'Failed to fetch';
         if (failedToFetch) {
-            connectionContext.connectionEstablished = false;
+            connectionContext.setConnectionEstablished(false);
             queryClient.cancelQueries();
             queryClient.removeQueries();
         }
