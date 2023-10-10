@@ -81,18 +81,18 @@ app:
       - name: "Integ"
         uri: "UZDO-ui/rest/app/buildInfo"
     date-format: "HH:mm:ss dd.MM.yyyy z Z"
-    author-regex: "Собрано пользователем: (.*?)"
-    date-regex: "Дата сборки: "
-    branch-regex: "Ветка: "
-    hash-regex: "Хэш: "
+    author-regex: "Собрано пользователем: (.*)"
+    date-regex: "Дата сборки: (.*)"
+    branch-regex: "Ветка: (.*)"
+    hash-regex: "Хэш: (.*)"
     app-build-text:
       date-time-format: "dd.MM.yy_HH.mm"
       hash-length: 0
       text-format: "1.3-FP11_$date"
     module-build-text:
-      date-time-format: "HH:mm:ss dd.MM.yyyy z"
+      date-time-format: "HH:mm dd.MM.yy z"
       hash-length: 6
-      text-format: "$author @ $date ($branch@$hash)"
+      text-format: "$author @ $date $branch@$hash"
   files:
     configs:
       list:

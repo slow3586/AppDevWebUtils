@@ -66,7 +66,9 @@ export function OverviewServer({serverId}: OverviewServerProps) {
                             </Form.Text>
                         </div>
                         {query?.data?.moduleBuildInfoList.map(moduleBuildInfo =>
-                            <div key={`k${moduleBuildInfo.name}`} title={moduleBuildInfo.name} className="comp-row">
+                            <div key={`k${moduleBuildInfo.name}`}
+                                 title={moduleBuildInfo.name}
+                                 className="comp-row">
                                 <Form.Text className="comp-status">{moduleBuildInfo.name
                                     + ": "
                                     + (isEmpty(moduleBuildInfo.buildText)

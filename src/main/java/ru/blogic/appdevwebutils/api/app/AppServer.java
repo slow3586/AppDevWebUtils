@@ -11,6 +11,9 @@ import ru.blogic.appdevwebutils.api.app.ssh.SshConnection;
 import ru.blogic.appdevwebutils.utils.Timer;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -64,7 +67,7 @@ public class AppServer {
         String name,
         boolean online,
         String author,
-        Instant date,
+        ZonedDateTime date,
         String branch,
         String hash
     ) {}

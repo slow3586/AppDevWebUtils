@@ -2,6 +2,7 @@ package ru.blogic.appdevwebutils.api.info;
 
 import io.vavr.collection.List;
 import io.vavr.control.Option;
+import io.vavr.control.Try;
 import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -23,9 +24,12 @@ import ru.blogic.appdevwebutils.api.app.AppServer;
 import ru.blogic.appdevwebutils.api.app.config.AppServerConfig;
 import ru.blogic.appdevwebutils.config.logging.DisableLoggingAspect;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @Slf4j
@@ -34,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 public class InfoService {
     AppServerConfig appServerConfig;
     InfoServiceConfig infoServiceConfig;
+    static String UNKNOWN = "<?>";
     static WebClient WEB_CLIENT = WebClient.create();
 
     @PostConstruct
@@ -80,7 +85,8 @@ public class InfoService {
                     moduleBuildInfo.online()
                         ? this.formatBuildText(
                         infoServiceConfig.getModuleBuildTextConfig().textFormat(),
-                        moduleBuildInfo)
+                        moduleBuildInfo,
+                        infoServiceConfig.getModuleBuildTextConfig().dateTimeFormat())
                         : null)));
     }
 
@@ -109,20 +115,20 @@ public class InfoService {
                                 new AppServer.ModuleBuildInfo(
                                     moduleConfig.name(),
                                     true,
-                                    infoServiceConfig.getAuthorPattern()
-                                        .matcher(answer)
-                                        .group(),
-                                    (Instant) (infoServiceConfig.getDatePattern()
-                                        .matcher(answer)
-                                        .group()
-                                        .transform(infoServiceConfig.getDateTimeFormat()::parse)),
-                                    infoServiceConfig.getBranchPattern()
-                                        .matcher(answer)
-                                        .group(),
-                                    infoServiceConfig.getHashPattern()
-                                        .matcher(answer)
-                                        .group()))
-                            .doOnError((err) -> {
+                                    this.find(answer, infoServiceConfig.getAuthorPattern()),
+                                    Option.of(this.find(
+                                            answer,
+                                            infoServiceConfig.getDatePattern()))
+                                        .filter(StringUtils::isNotBlank)
+                                        .flatMap(dateStr -> Try.of(() ->
+                                                infoServiceConfig.getDateTimeFormat().parse(dateStr)
+                                            ).onFailure((err) -> log.error("#updateInfo date: " + err.getMessage()))
+                                            .toOption())
+                                        .map(ZonedDateTime::from)
+                                        .getOrNull(),
+                                    this.find(answer, infoServiceConfig.getBranchPattern()),
+                                    this.find(answer, infoServiceConfig.getHashPattern()))
+                            ).doOnError((err) -> {
                                 if (!StringUtils.containsAnyIgnoreCase(err.getMessage(),
                                     "503 Service Unavailable",
                                     "Connection refused: no further information")) {
@@ -147,28 +153,46 @@ public class InfoService {
                             .minBy(Comparator.comparing(AppServer.ModuleBuildInfo::date))
                             .map(appBuildInfo -> this.formatBuildText(
                                 infoServiceConfig.getAppBuildTextConfig().textFormat(),
-                                appBuildInfo))
+                                appBuildInfo,
+                                infoServiceConfig.getAppBuildTextConfig().dateTimeFormat()))
                             .getOrNull());
                     }).doOnError(e -> server.setAppBuildText(null))
                     .subscribe());
     }
 
-    private String formatBuildText(String textFormat, AppServer.ModuleBuildInfo moduleBuildInfo) {
+    private String formatBuildText(
+        final String textFormat,
+        final AppServer.ModuleBuildInfo moduleBuildInfo,
+        final DateTimeFormatter dateTimeFormatter
+        ) {
         return textFormat
             .replaceAll("\\$author",
-                StringUtils.defaultString(moduleBuildInfo.author(), "<?>"))
+                Option.of(moduleBuildInfo.author())
+                    .filter(StringUtils::isNotBlank)
+                    .getOrElse(UNKNOWN))
             .replaceAll("\\$date",
                 Option.of(moduleBuildInfo.date())
-                    .map(date -> infoServiceConfig.getModuleBuildTextConfig()
-                        .dateTimeFormat()
-                        .format(date)
-                    ).getOrElse("<?>"))
+                    .map(dateTimeFormatter::format)
+                    .getOrElse(UNKNOWN))
             .replaceAll("\\$branch",
-                StringUtils.defaultString(moduleBuildInfo.branch(), "<?>"))
+                Option.of(moduleBuildInfo.branch())
+                    .filter(StringUtils::isNotBlank)
+                    .getOrElse(UNKNOWN))
             .replaceAll("\\$hash",
-                StringUtils.substring(StringUtils.defaultString(moduleBuildInfo.hash(), "<?>"),
-                    0,
-                    infoServiceConfig.getModuleBuildTextConfig().hashLength()));
+                Option.of(moduleBuildInfo.hash())
+                    .filter(StringUtils::isNotBlank)
+                    .map(s -> s.substring(0, infoServiceConfig.getModuleBuildTextConfig().hashLength()))
+                    .getOrElse(UNKNOWN));
+    }
+
+    private String find(String text, Pattern pattern) {
+        return Option.of(text)
+            .filter(StringUtils::isNotBlank)
+            .map(pattern::matcher)
+            .filter(Matcher::find)
+            .map(m -> m.group(1))
+            .filter(s -> !StringUtils.containsAnyIgnoreCase(s, "fatal:"))
+            .getOrNull();
     }
 
     @CacheEvict(allEntries = true, value = "getServerInfo")
