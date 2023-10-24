@@ -13,21 +13,24 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Аспект логгирования начала и конца работы методов.
+ */
 @Aspect
 @Component
 public class LoggingAspect {
- /*   @Around("execution(* *(..))" +
-        "&& !execution(* *.main(..))" +
-        "&& !execution(*.new(..))" +
-        "&& !execution(* *.*lambda*(..))" +
-        "&& !@annotation(ru.blogic.appdevwebutils.logging.DisableLoggingAspect)" +
-        "&& !@within(ru.blogic.appdevwebutils.logging.DisableLoggingAspect)" +
-        "&& !within(ru.blogic.appdevwebutils.logging..*)" +
-        "&& (" +
-        "@within(org.springframework.stereotype.Service) " +
-        "|| @within(org.springframework.stereotype.Component) " +
-        //"|| @within(org.springframework.web.bind.annotation.RestController) " +
-        ")")*/
+    /*   @Around("execution(* *(..))" +
+           "&& !execution(* *.main(..))" +
+           "&& !execution(*.new(..))" +
+           "&& !execution(* *.*lambda*(..))" +
+           "&& !@annotation(ru.blogic.appdevwebutils.logging.DisableLoggingAspect)" +
+           "&& !@within(ru.blogic.appdevwebutils.logging.DisableLoggingAspect)" +
+           "&& !within(ru.blogic.appdevwebutils.logging..*)" +
+           "&& (" +
+           "@within(org.springframework.stereotype.Service) " +
+           "|| @within(org.springframework.stereotype.Component) " +
+           //"|| @within(org.springframework.web.bind.annotation.RestController) " +
+           ")")*/
     public Object around(ProceedingJoinPoint point) throws Throwable {
         final Logger logger = LoggerFactory.getLogger(point.getSignature().getDeclaringType());
         final String methodName = ((MethodSignature) point.getSignature()).getMethod().getName();

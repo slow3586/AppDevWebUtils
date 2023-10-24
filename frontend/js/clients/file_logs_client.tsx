@@ -1,3 +1,7 @@
+/**
+ * Клиент для файлов логов. Связан с LogFileService.
+ */
+
 import {BlobWrapper, getWrapper, postWrapper, ResponseType} from "../utils/client";
 
 export type GetServerLogFileRequest = {

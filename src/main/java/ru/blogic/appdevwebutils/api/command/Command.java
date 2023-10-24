@@ -2,6 +2,19 @@ package ru.blogic.appdevwebutils.api.command;
 
 import io.vavr.collection.List;
 
+/**
+ * Сущность, хранящая информацию об операции, которую можно выполнить на сервере.
+ * @param id ID операции
+ * @param name Название операции для интерфейса пользователя
+ * @param shell Оболочка, в которой выполняется операция
+ * @param blocksWsadmin Блокирует ли операция WsAdmin
+ * @param hidden Спрятана ли операция от пользователя
+ * @param command Команда, выполняемая в оболочке
+ * @param readyPattern Шаблоны текста, сигнализирующие об окончании выполнения операции в оболочке
+ * @param timeout Время, через которое операция считается неуспешной
+ * @param announce Требуется ли оповещение о старте операции
+ * @param errPatterns Шаблоны текста, сигнализирующие об ошибке выполнения операции в оболочке
+ */
 public record Command(
     String id,
     String name,

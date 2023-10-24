@@ -1,3 +1,7 @@
+/**
+ * Клиент для операций. Связан с CommandService.
+ */
+
 import {postWrapper, ResponseType} from "../utils/client";
 
 export enum Type {

@@ -22,6 +22,7 @@ export type Command = {
 const DEFAULT_LINES_COUNT = "25";
 const MAX_LINES_COUNT = 1000;
 
+/** Компонент страницы файлов логов сервера приложения. */
 export function ServerLogs({serverId}: ServerLogsProps) {
     const [logText, setLogText] = useState("");
     const [logId, setLogId] = useState("");

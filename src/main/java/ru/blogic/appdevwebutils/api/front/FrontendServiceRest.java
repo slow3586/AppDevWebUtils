@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.blogic.appdevwebutils.api.front.dto.GetFrontendConfigResponse;
 
+/**
+ * REST сервис, предоставляющий конфигурацию frontend-а клиенту пользователя.
+ */
 @RestController
 @RequestMapping("api/front")
 @RequiredArgsConstructor

@@ -17,6 +17,7 @@ export type Command = {
     effect: string
 }
 
+/** Компонент страницы файлов конфигурации сервера приложения. */
 export function ServerConfigs({serverId}: ServerConfigsProps) {
     const [configText, setConfigText] = useState("");
     const [configId, setConfigId] = useState("");

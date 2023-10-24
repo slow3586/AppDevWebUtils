@@ -58,15 +58,7 @@ public class SshService {
         }
     }
 
-    @PreDestroy
-    public void preDestroy() {
-        try {
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
+    /** Создает SSH сессию для указанного сервера. */
     public ClientSession createSession(final AppServer appServer) {
         try {
             final ClientSession session = DEFAULT_SSH_CLIENT.connect(
@@ -88,6 +80,7 @@ public class SshService {
         }
     }
 
+    /** Создает SSH канал для указанной SSH сессии.  */
     public ChannelShell createChannelShell(final ClientSession clientSession) {
         try {
             final ChannelShell channelShell = clientSession.createShellChannel();
@@ -104,11 +97,12 @@ public class SshService {
         }
     }
 
+    /** Предоставляет SSH соединение для сервера приложения, при необходимости создавая новое в пуле соединений. */
     public SshConnection getSshConnection(final AppServer appServer) {
         log.debug("#createShellChannel " + appServer.getId());
         final java.util.List<SshConnection> connectionPool = appServer.getSshConnectionPool();
 
-        final ReentrantLock poolLock = appServer.getSSHConnectionPoolLock();
+        final ReentrantLock poolLock = appServer.getSshConnectionPoolLock();
         int attempt = 0;
         while (poolLock.isLocked() || !poolLock.tryLock()) {
             if (attempt++ > 10) {
@@ -146,10 +140,12 @@ public class SshService {
         }
     }
 
+    /** Создает SCP клиент для указанной SSH сессии. */
     public ScpClient createScpClient(final ClientSession clientSession) {
         return SCP_CLIENT_CREATOR.createScpClient(clientSession);
     }
 
+    /** Выполняет операцию через SSH сервера, при необходимости создавая новый SSH канал. */
     public String executeCommand(
         final AppServer appServer,
         final Command command,
@@ -160,6 +156,7 @@ public class SshService {
         }
     }
 
+    /** Выполняет операцию в указанном SSH канале. */
     public String executeCommand(
         @NonNull final PtyCapableChannelSession channelShell,
         @NonNull final Command command,
@@ -238,6 +235,7 @@ public class SshService {
         }
     }
 
+    /** Скачивает файл через SCP сервера приложения по указанному пути. */
     public byte[] downloadFile(
         @NonNull final AppServer appServer,
         @NonNull final String path
@@ -249,6 +247,7 @@ public class SshService {
         }
     }
 
+    /** Загружает файл через SCP сервера приложения по указанному пути. */
     public void uploadFile(
         @NonNull final AppServer appServer,
         final byte[] data,

@@ -29,6 +29,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Сервис, отвечающий за выполнение и планирование операций пользователями на серверах приложений.
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -40,10 +43,13 @@ public class CommandService {
     HistoryService historyService;
     CommandConfig commandConfig;
     TimerScheduler timerScheduler;
-    static ScheduledExecutorService executorService =
+    ScheduledExecutorService executorService =
         new DelegatingSecurityContextScheduledExecutorService(
             Executors.newScheduledThreadPool(4));
 
+    /**
+     * Запускает/планирует указанную операцию на указанном сервере приложения.
+     */
     public void run(
         final CommandRunRequest commandRunRequest
     ) {
@@ -214,6 +220,9 @@ public class CommandService {
         }
     }
 
+    /**
+     * Откладывает текущую запланированную операцию на указанное время.
+     */
     public void delay(
         final CommandDelayRequest commandDelayRequest
     ) {
@@ -267,6 +276,9 @@ public class CommandService {
         }
     }
 
+    /**
+     * Отменяет текущую запланированную операцию на указанном сервере приложения.
+     */
     public void cancel(
         final CommandCancelRequest commandCancelRequest
     ) {

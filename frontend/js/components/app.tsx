@@ -1,4 +1,4 @@
-import React, {useContext, useState} from "react";
+import React, {useContext} from "react";
 import {Tab, Tabs} from "react-bootstrap";
 import {Overview} from "./overview";
 import {isEmpty} from "lodash";
@@ -9,8 +9,8 @@ import {ConnectionContext} from "../contexts/connection_context";
 import {ServerContext, ServersContext} from "../contexts/servers_context";
 import {toast} from "react-toastify";
 
+/** Основной компонент приложения, содержащий остальные компоненты. */
 export function App() {
-    const [activeTab, setActiveTab] = useState('overview');
     const connectionContext = useContext(ConnectionContext);
     const serversContext = useContext(ServersContext);
 
@@ -63,7 +63,6 @@ export function App() {
                 transition={false}
             >
                 <Tab key="overview"
-                     onSelect={() => setActiveTab(`overview`)}
                      eventKey="overview"
                      title="Общее">
                     <Overview></Overview>
@@ -72,10 +71,9 @@ export function App() {
                     .filter(s => s.enabled)
                     .map(s => (
                         <Tab key={`key${s.id}`}
-                             onSelect={() => setActiveTab(`tab${s.id}`)}
                              eventKey={`tab${s.id}`}
                              title={s.id}>
-                            <Server isActive={true} serverId={s.id}></Server>
+                            <Server serverId={s.id}></Server>
                         </Tab>
                     ))}
             </Tabs>

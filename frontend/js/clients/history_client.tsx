@@ -1,3 +1,7 @@
+/**
+ * Клиент для истории операций. Связан с HistoryService.
+ */
+
 import {getWrapper} from "../utils/client";
 
 export enum Severity {

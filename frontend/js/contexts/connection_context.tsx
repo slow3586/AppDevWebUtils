@@ -8,6 +8,9 @@ export type ConnectionContextType = {
     setConnectionEstablished: Dispatch<SetStateAction<boolean>>
 }
 
+/**
+ * Контекст, хранящий состояние соединения с backend-ом приложения.
+ */
 export const ConnectionContextProvider = ({children}: any) => {
     const [connectionEstablished, setConnectionEstablished] = useState(false);
 

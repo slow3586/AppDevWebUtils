@@ -32,8 +32,8 @@ spring:
     properties:
       hibernate:
         globally_quoted_identifiers: true
-  logging:
-    config: 'classpath:logback-spring.xml'
+logging:
+  config: 'classpath:logback-spring.xml'
 server:
   ssl:
     enabled: true
@@ -49,7 +49,6 @@ server:
 
 app:
   version: 'v1.1'
-  buildVersion: '1.3-FP11'
   security:
     users:
       - 'Багрянцев Дмитрий'
@@ -68,11 +67,12 @@ app:
       - 'Чурсин Владимир'
       - 'Смирнова Наталья'
       - 'Насыров Руслан'
+      - 'Николаев Артем'
   app:
     servers:
-      - id: '146'
-        host: '172.19.203.146'
-        password: '${pw_146}'
+      - id: '61'
+        host: '172.19.203.61'
+        password: '${pw_61}'
         file-paths:
           configs: '/fs/it/gp-uzdo'
           logs: '/workdir/logs'
@@ -95,6 +95,10 @@ app:
       date-time-format: "HH:mm dd.MM.yy z"
       hash-length: 6
       text-format: "$author @ $date $branch@$hash"
+    unknown-build-text: "Неизвестная сборка"
+    offline-text: "OFF"
+    use-https: false
+    unknown-value-text: "<?>"
   files:
     configs:
       list:
@@ -140,7 +144,6 @@ app:
         shell: ssh
         flags:
           - ssh_ready_pattern
-          - ssh_block
           - ssh_err_patterns
           - wsadmin_block
           - announce_execution

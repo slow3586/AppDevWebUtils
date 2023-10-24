@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 import ru.blogic.appdevwebutils.api.file.logs.dto.GetLogFileRequest;
 
+/**
+ * REST сервис, отвечающий за предоставление логов сервера приложения.
+ */
 @RestController
 @RequestMapping("api/file/log")
 @RequiredArgsConstructor

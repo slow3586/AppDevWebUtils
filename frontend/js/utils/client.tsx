@@ -1,3 +1,7 @@
+/**
+ * Оболочка для всех клиентов с необходимой обработкой ошибок.
+ */
+
 // @ts-ignore
 import {toast} from 'react-toastify';
 import {startsWith} from 'lodash';

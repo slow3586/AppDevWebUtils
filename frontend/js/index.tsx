@@ -8,14 +8,15 @@ import {ServersContextProvider} from "./contexts/servers_context";
 
 require('../less/index.less')
 
-const queryClient = new QueryClient()
+// Просим разрешение на показ оповещений в операционной системе пользователя
 Notification.requestPermission();
 
+// Создание корневого элемента веб-приложения
 createRoot(document.getElementById("root")).render(
     <div>
         <ConnectionContextProvider>
             <ServersContextProvider>
-                <QueryClientProvider client={queryClient}>
+                <QueryClientProvider client={new QueryClient()}>
                     <App/>
                 </QueryClientProvider>
                 <ToastContainer/>

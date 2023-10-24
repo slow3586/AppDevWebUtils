@@ -20,6 +20,9 @@ export type ServersContextType = {
 
 const initialServers = localStorage.getItem('servers');
 
+/**
+ * Контекст, хранящий конфигурации сервером приложений.
+ */
 export const ServersContextProvider = ({children}: any) => {
     const [servers, setServers] = useState(JSON.parse(initialServers));
 

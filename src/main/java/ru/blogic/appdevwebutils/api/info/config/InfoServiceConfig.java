@@ -12,11 +12,15 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
+/**
+ * Конфигурация сервиса предоставления информации о сервере приложения.
+ */
 @Component
 @DisableLoggingAspect
 @RequiredArgsConstructor
 @Getter
 public class InfoServiceConfig {
+    /** Внешняя конфигурация. */
     final InfoServiceConfigExternalBinding infoServiceConfigExternalBinding;
 
     List<ModuleConfig> moduleConfigs;
@@ -27,7 +31,12 @@ public class InfoServiceConfig {
     Pattern branchPattern;
     Pattern hashPattern;
     DateTimeFormatter dateTimeFormat;
+    String unknownValueText;
+    String unknownBuildText;
+    boolean useHttps;
+    String offlineText;
 
+    /** Конвертация внешней конфигурации. */
     @PostConstruct
     public void postConstruct() {
         moduleConfigs = List.ofAll(
@@ -54,5 +63,31 @@ public class InfoServiceConfig {
             DateTimeFormatter.ofPattern(infoServiceConfigExternalBinding.getModuleBuildText().dateTimeFormat));
         dateTimeFormat = DateTimeFormatter.ofPattern(
             infoServiceConfigExternalBinding.getDateFormat(), Locale.ENGLISH);
+        unknownValueText = infoServiceConfigExternalBinding.getUnknownValueText();
+        useHttps = infoServiceConfigExternalBinding.isUseHttps();
+        unknownBuildText = infoServiceConfigExternalBinding.getUnknownBuildText();
+        offlineText = infoServiceConfigExternalBinding.getOfflineText();
     }
+
+    /**
+     * Конфигурация информации о сборке.
+     * @param textFormat Формат текста сборки.
+     * @param hashLength Длина хэша.
+     * @param dateTimeFormat Формат даты.
+     */
+    public record BuildTextConfig(
+        String textFormat,
+        int hashLength,
+        DateTimeFormatter dateTimeFormat
+    ) {}
+
+    /**
+     * Конфигурация информации о модуле.
+     * @param name Название модуля.
+     * @param uri URI для получения внешней информации о сборке модуля.
+     */
+    public record ModuleConfig(
+        String name,
+        String uri
+    ) {}
 }

@@ -1,3 +1,7 @@
+/**
+ * Клиент для конфиг-файлов. Связан с ConfigFileService.
+ */
+
 import {getWrapper, postWrapper, ResponseType} from "../utils/client";
 
 export type GetServerConfigFileResponse = {

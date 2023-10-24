@@ -3,6 +3,7 @@ package ru.blogic.appdevwebutils.api.command.config;
 import io.vavr.collection.List;
 import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Component;
@@ -10,15 +11,19 @@ import ru.blogic.appdevwebutils.api.command.Command;
 import ru.blogic.appdevwebutils.api.command.config.CommandConfigExternalBinding.CommandConfigExternalBindingDto.CommandConfigDtoFlags;
 import ru.blogic.appdevwebutils.config.logging.DisableLoggingAspect;
 
+/** Конфигурация сервиса операций. */
 @Component
 @DisableLoggingAspect
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Getter
 public class CommandConfig {
+    /** Внешняя конфигурация. */
     final CommandConfigExternalBinding commandConfigExternalBinding;
 
     List<Command> commands;
 
+    /** Конвертация внешней конфигурации. */
     @PostConstruct
     public void postConstruct() {
         this.commands = List.ofAll(commandConfigExternalBinding.getCommands())
@@ -44,14 +49,11 @@ public class CommandConfig {
             ));
     }
 
+    /** Предоставляет информацию об операции с указанным ID. */
     public Command get(String id) {
         return commands
             .find(c -> c.id().equals(id))
             .getOrElseThrow(() -> new RuntimeException(
                 "Не найдена команда " + id));
-    }
-
-    public List<Command> getAll() {
-        return commands;
     }
 }

@@ -8,6 +8,9 @@ import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Конфигурация Spring Cache.
+ */
 @Configuration
 @EnableCaching
 public class CacheConfig implements CachingConfigurer {

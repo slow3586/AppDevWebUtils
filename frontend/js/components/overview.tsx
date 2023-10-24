@@ -9,6 +9,7 @@ import {getServerHistory, Severity} from "../clients/history_client";
 import {ConnectionContext} from "../contexts/connection_context";
 import {ServerContext, ServersContext} from "../contexts/servers_context";
 
+/** Компонент страницы "Общее", хранящий основную информацию о всех серверах приложений. */
 export function Overview() {
     const last = useRef(new Map<number, number>());
     const info = useRef("");
@@ -70,7 +71,7 @@ export function Overview() {
                 .join("\n"));
             const crits = logs.filter(l => l.severity == Severity.CRIT).map(l => l.text).join("\n");
             if (!firstRun.current && !isEmpty(trim(crits))) {
-                runNotification("МЮЗ ЭДО DEV", crits);
+                runNotification("APP DEV", crits);
             }
         }
         goodQueries.forEach(q => {

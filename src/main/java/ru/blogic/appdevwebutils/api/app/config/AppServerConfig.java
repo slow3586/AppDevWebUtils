@@ -11,15 +11,18 @@ import org.springframework.stereotype.Repository;
 import ru.blogic.appdevwebutils.api.app.AppServer;
 import ru.blogic.appdevwebutils.config.logging.DisableLoggingAspect;
 
+/** Конфигурация, хранящая информацию о серверах приложений */
 @Component
 @DisableLoggingAspect
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AppServerConfig {
+    /** Внешняя конфигурация */
     final AppServerConfigExternalBinding appServerConfigExternalBinding;
 
     List<AppServer> servers;
 
+    /** Конвертация внешней конфигурации. */
     @PostConstruct
     public void postConstruct() {
         this.servers = List.ofAll(

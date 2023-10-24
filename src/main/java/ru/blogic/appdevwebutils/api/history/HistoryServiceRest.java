@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.blogic.appdevwebutils.api.history.dto.GetServerHistoryResponse;
 
+/**
+ * REST сервис, предоставляющий историю операций, запущенных в веб приложении пользователями.
+ */
 @RestController
 @RequestMapping("api/history")
 @RequiredArgsConstructor
@@ -17,6 +20,9 @@ import ru.blogic.appdevwebutils.api.history.dto.GetServerHistoryResponse;
 public class HistoryServiceRest {
     HistoryService historyService;
 
+    /**
+     * Предоставляет историю операций, проведенных на указано сервере приложения.
+     */
     @GetMapping(path = "{serverId}", produces = "application/json")
     public GetServerHistoryResponse getServerLog(
         @PathVariable final int serverId,

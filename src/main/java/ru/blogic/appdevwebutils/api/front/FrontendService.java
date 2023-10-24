@@ -8,6 +8,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import ru.blogic.appdevwebutils.api.command.Command;
 import ru.blogic.appdevwebutils.api.command.config.CommandConfig;
@@ -18,7 +19,10 @@ import ru.blogic.appdevwebutils.api.app.AppServer;
 import ru.blogic.appdevwebutils.api.app.config.AppServerConfig;
 import ru.blogic.appdevwebutils.config.logging.DisableLoggingAspect;
 
-@Service
+/**
+ * Сервис, предоставляющий конфигурацию frontend клиента пользователю.
+ */
+@Component
 @Slf4j
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -35,11 +39,14 @@ public class FrontendService {
     @Value("${app.version}")
     String actualVersion;
 
+    /**
+     * Формирование информации при запуске приложения.
+     */
     @PostConstruct
     public void postConstruct() {
         this.frontendConfigResponse = new GetFrontendConfigResponse(
             this.actualVersion,
-            commandConfig.getAll()
+            commandConfig.getCommands()
                 .filter(Predicates.not(Command::hidden))
                 .map(c -> new GetFrontendConfigResponse.GetFrontendConfigResponseCommand(
                     c.id(),
@@ -47,17 +54,20 @@ public class FrontendService {
                     c.blocksWsadmin()
                 )),
             appServerConfig.getAll().map(AppServer::getId),
-            configFileConfig.getAll().map(c ->
+            configFileConfig.getConfigFiles().map(c ->
                 new GetFrontendConfigResponse.GetFrontendConfigResponseConfig(
                     c.id()
                 )),
-            logFileConfig.getAll().map(c ->
+            logFileConfig.getLogFiles().map(c ->
                 new GetFrontendConfigResponse.GetFrontendConfigResponseLog(
                     c.id()
                 ))
         );
     }
 
+    /**
+     * Предоставляет конфигурацию frontend клиента.
+     */
     @DisableLoggingAspect
     public GetFrontendConfigResponse getFrontendConfig() {
         return this.frontendConfigResponse;

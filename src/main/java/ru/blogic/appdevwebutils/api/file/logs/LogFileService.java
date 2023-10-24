@@ -2,6 +2,7 @@ package ru.blogic.appdevwebutils.api.file.logs;
 
 import io.vavr.collection.List;
 import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -15,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-import ru.blogic.appdevwebutils.api.command.Command;
 import ru.blogic.appdevwebutils.api.file.logs.config.LogFile;
 import ru.blogic.appdevwebutils.api.file.logs.config.LogFileConfig;
 import ru.blogic.appdevwebutils.api.file.logs.dto.GetLogFileRequest;
@@ -30,6 +30,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Locale;
 
+/**
+ * Сервис, отвечающий за предоставление файлов логов, хранящихся на серверах приложений.
+ */
 @Service
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -39,10 +42,10 @@ public class LogFileService {
     LogFileConfig logFileConfig;
     WebClient client;
 
-    static DateTimeFormatter DATE_FORMAT_LOG_FILE = DateTimeFormatter.ofPattern(
-        "yyyy_MM_dd_HH_mm_ss", Locale.ENGLISH);
-
-    public LogFileService(
+    /**
+     * Конструктор необходим для webClientBuilder.
+     */
+    protected LogFileService(
         AppServerConfig appServerConfig,
         SshService sshService,
         LogFileConfig logFileConfig,
@@ -54,32 +57,9 @@ public class LogFileService {
         this.client = webClientBuilder.build();
     }
 
-    static Command COMMAND_TAIL = new Command(
-        "tail",
-        "Tail",
-        Command.Shell.SSH,
-        false,
-        true,
-        "tail",
-        Command.SSH_READY_PATTERN,
-        10,
-        false,
-        Command.SSH_ERR_PATTERNS
-    );
-
-    static Command COMMAND_ZIP = new Command(
-        "zip",
-        "zip",
-        Command.Shell.SSH,
-        false,
-        true,
-        "zip -9 -j -q -", //-9 уровень сжатия, -j без папок, -q без лишней инфы
-        Command.SSH_READY_PATTERN,
-        10,
-        false,
-        Command.SSH_ERR_PATTERNS
-    );
-
+    /**
+     * Предоставляет указанное количество строк с конца указанного лог-файла.
+     */
     public String getServerLogFile(
         final GetLogFileRequest request
     ) {
@@ -90,23 +70,29 @@ public class LogFileService {
 
         return sshService.executeCommand(
             appServer,
-            COMMAND_TAIL,
+            LogFileServiceCommands.COMMAND_TAIL,
             List.of(
                 "-n " + lineCount,
-                appServer.getFilePaths().logsFilePath()
+                appServer.getFilePaths().logs()
                     + "/"
                     + serverLog.path()));
     }
 
-    public ResponseEntity<Resource> getEntireLogFile(int serverId, String logId) {
+    /**
+     * Предоставляет указанный полный лог-файл указанного сервера, упакованный в ZIP.
+     */
+    public ResponseEntity<Resource> getEntireLogFile(
+        final int serverId,
+        final String logId
+    ) {
         final AppServer appServer = appServerConfig.get(serverId);
         final LogFile serverLog = logFileConfig.get(logId);
 
         final String result = sshService.executeCommand(
             appServer,
-            COMMAND_ZIP,
+            LogFileServiceCommands.COMMAND_ZIP,
             List.of(
-                appServer.getFilePaths().logsFilePath() + "/" + serverLog.path(),
+                appServer.getFilePaths().logs() + "/" + serverLog.path(),
                 "| base64"
             ));
             final HttpHeaders responseHeaders = new HttpHeaders();
@@ -114,7 +100,7 @@ public class LogFileService {
                 HttpHeaders.CONTENT_DISPOSITION,
                 serverId
                 + "_" + serverLog.id()
-                + "_" + DATE_FORMAT_LOG_FILE.format(LocalDateTime.now())
+                + "_" + logFileConfig.getDateFormatLogFile().format(LocalDateTime.now())
                 + ".zip");
             final byte[] decoded = Base64.getDecoder().decode(
                 StringUtils.replace(result, "\r\n", ""));
@@ -124,7 +110,12 @@ public class LogFileService {
                 HttpStatus.OK);
     }
 
-    public Mono<ResponseEntity<Resource>> getLogsArchive(int serverId) {
+    /**
+     * Предоставляет архив со всеми логами указанного сервера приложения.
+     */
+    public Mono<ResponseEntity<Resource>> getLogsArchive(
+        final int serverId
+    ) {
         final AppServer appServer = appServerConfig.get(serverId);
 
         return client.get()

@@ -7,6 +7,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+/**
+ * Внешняя конфигурация сервиса загрузки/сохранения файлов конфигурации на сервере приложения.
+ */
 @ConfigurationProperties(prefix = "app.files.configs")
 @RequiredArgsConstructor
 @Getter
@@ -14,6 +17,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 class ConfigFileConfigExternalBinding {
     java.util.List<ConfigFileConfigExternalBindingDto> list;
 
+    /**
+     * Информация о файле конфигурации.
+     */
     @Data
     static class ConfigFileConfigExternalBindingDto {
         String id;

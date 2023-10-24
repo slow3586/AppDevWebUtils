@@ -10,8 +10,7 @@ export type OverviewServerProps = {
     serverId: number
 }
 
-const OFFLINE_TEXT = "OFF";
-
+/** Компонент - небольшое окно с краткой информацией о сервере приложения */
 export function OverviewServer({serverId}: OverviewServerProps) {
     const queryClient = useQueryClient();
     const connectionContext = useContext(ConnectionContext);
@@ -62,7 +61,7 @@ export function OverviewServer({serverId}: OverviewServerProps) {
                     <div className="comp-content">
                         <div className="comp-row">
                             <Form.Text className="comp-status">
-                                Сборка: <span className="comp-status-bold">{query?.data?.appBuildText ?? OFFLINE_TEXT}</span>
+                                Сборка: <span className="comp-status-bold">{query?.data?.appBuildText}</span>
                             </Form.Text>
                         </div>
                         {query?.data?.moduleBuildInfoList.map(moduleBuildInfo =>
@@ -71,9 +70,7 @@ export function OverviewServer({serverId}: OverviewServerProps) {
                                  className="comp-row">
                                 <Form.Text className="comp-status">{moduleBuildInfo.name
                                     + ": "
-                                    + (isEmpty(moduleBuildInfo.buildText)
-                                        ? OFFLINE_TEXT
-                                        : moduleBuildInfo.buildText)}
+                                    + moduleBuildInfo.buildText}
                                 </Form.Text>
                             </div>
                         )}

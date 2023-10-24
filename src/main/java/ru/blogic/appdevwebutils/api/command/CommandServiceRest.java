@@ -13,25 +13,13 @@ import ru.blogic.appdevwebutils.api.command.dto.CommandCancelRequest;
 import ru.blogic.appdevwebutils.api.command.dto.CommandDelayRequest;
 import ru.blogic.appdevwebutils.api.command.dto.CommandRunRequest;
 
+/** REST сервис, отвечающий за выполнение и планирование операций пользователями на серверах приложений. */
 @RestController
 @RequestMapping("api/command")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class CommandServiceRest {
     CommandService commandService;
-
-    @GetMapping(path = "run/{host}/{command}", produces = "application/json")
-    public void runGet(
-        @PathVariable("host") int serverId,
-        @PathVariable("command") String commandId
-    ) {
-        commandService.run(
-            new CommandRunRequest(
-                serverId,
-                commandId,
-                "",
-                0));
-    }
 
     @PostMapping(path = "run", produces = "application/json")
     public void runPost(

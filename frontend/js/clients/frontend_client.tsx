@@ -1,3 +1,7 @@
+/**
+ * Клиент для конфигурации frontend-а. Связан с FrontendService.
+ */
+
 import {getWrapper} from "../utils/client";
 
 export type FrontendConfigCommand = {

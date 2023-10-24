@@ -16,6 +16,7 @@ import ru.blogic.appdevwebutils.api.app.ssh.SshService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+/** Сервис, отвечающий за поддержку SSH соединений с серверами приложений. */
 @Service
 @Slf4j
 @RequiredArgsConstructor

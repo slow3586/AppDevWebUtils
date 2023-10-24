@@ -21,6 +21,7 @@ import ru.blogic.appdevwebutils.utils.Utils;
 
 import java.nio.charset.StandardCharsets;
 
+/** Сервис, отвечающий за показ и изменения конфигов сервера приложения. */
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -31,6 +32,7 @@ public class ConfigFileService {
     ConfigFileConfig configFileConfig;
     HistoryService historyService;
 
+    /** Загружает конфиг с сервера и возвращает его текстовый контент. */
     public String getServerConfigFile(
         final int serverId,
         final String configId
@@ -40,7 +42,7 @@ public class ConfigFileService {
 
         final byte[] file = sshService.downloadFile(
             appServer,
-            appServer.getFilePaths().configsFilePath()
+            appServer.getFilePaths().configs()
                 + "/"
                 + configFile.path());
 
@@ -49,6 +51,7 @@ public class ConfigFileService {
             StandardCharsets.UTF_8);
     }
 
+    /** Сохраняет конфиг на сервер, выполняя предварительные проверки. */
     public void saveServerConfigFile(
         final SaveConfigFileRequest saveConfigFileRequest
     ) {
@@ -110,7 +113,7 @@ public class ConfigFileService {
             sshService.uploadFile(
                 appServer,
                 saveConfigFileRequest.configText().getBytes(),
-                appServer.getFilePaths().configsFilePath()
+                appServer.getFilePaths().configs()
                     + "/"
                     + configFile.path());
 

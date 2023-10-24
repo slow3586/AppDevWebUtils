@@ -22,6 +22,7 @@ export type Command = {
     effect: string
 }
 
+/** Компонент страницы управления операциями сервера приложения. */
 export function ServerControl({isActive, serverId}: ServerControlProps) {
     const logLast = useRef(0);
     const info = useRef("");

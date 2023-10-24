@@ -1,3 +1,7 @@
+/**
+ * Клиент для информации о сервере приложения. Связан с InfoService.
+ */
+
 import {getWrapper} from "../utils/client";
 
 export type Command = {

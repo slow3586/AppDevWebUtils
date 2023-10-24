@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+/** Внешняя конфигурация, хранящая информацию о серверах приложений */
 @ConfigurationProperties(prefix = "app.app")
 @RequiredArgsConstructor
 @Getter

@@ -7,6 +7,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+/**
+ * Аспект для REST методов Spring для обработки исключений.
+ */
 @Slf4j
 @RestControllerAdvice
 public class RestExceptionHandler {

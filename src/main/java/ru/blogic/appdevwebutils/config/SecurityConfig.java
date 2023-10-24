@@ -19,13 +19,17 @@ import org.springframework.security.web.authentication.rememberme.PersistentToke
 
 import javax.sql.DataSource;
 
+/**
+ * Конфигурация Spring Security.
+ */
 @EnableWebSecurity
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private static final String REMEMBER_ME = "remember-me";
     final DataSource dataSource;
     final SecurityConfigConfig securityConfigConfig;
+
+    private static final String REMEMBER_ME = "remember-me";
     private static final String REMEMBER_ME_KEY = "KEY";
 
     @PostConstruct

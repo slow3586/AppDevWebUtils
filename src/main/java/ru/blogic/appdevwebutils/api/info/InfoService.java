@@ -1,9 +1,10 @@
 package ru.blogic.appdevwebutils.api.info;
 
+import io.vavr.Function1;
+import io.vavr.Predicates;
 import io.vavr.collection.List;
 import io.vavr.control.Option;
 import io.vavr.control.Try;
-import jakarta.annotation.PostConstruct;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -15,14 +16,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Hooks;
 import reactor.core.publisher.Mono;
+import ru.blogic.appdevwebutils.api.app.AppServer;
+import ru.blogic.appdevwebutils.api.app.config.AppServerConfig;
 import ru.blogic.appdevwebutils.api.command.Command;
 import ru.blogic.appdevwebutils.api.info.config.InfoServiceConfig;
 import ru.blogic.appdevwebutils.api.info.dto.GetServerInfoResponse;
-import ru.blogic.appdevwebutils.api.app.AppServer;
-import ru.blogic.appdevwebutils.api.app.config.AppServerConfig;
 import ru.blogic.appdevwebutils.config.logging.DisableLoggingAspect;
+import ru.blogic.appdevwebutils.utils.Utils;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -31,6 +32,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Сервис, отвечающий за регулярное обновление актуальной информации о сборках, стоящих на
+ * серверах приложений, хранение этой информации,
+ * а так же за получение этой информации из интерфейса пользователя.
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -38,27 +44,16 @@ import java.util.regex.Pattern;
 public class InfoService {
     AppServerConfig appServerConfig;
     InfoServiceConfig infoServiceConfig;
-    static String UNKNOWN = "<?>";
-    static WebClient WEB_CLIENT = WebClient.create();
+    WebClient.Builder webClientBuilder;
 
-    @PostConstruct
-    public void postConstruct() {
-        try {
-            Hooks.onErrorDropped(error -> {
-                if (!StringUtils.containsAnyIgnoreCase(error.getMessage(),
-                    "503 Service Unavailable",
-                    "Connection refused: no further information")) {
-                    log.error("Hooks.onErrorDropped: " + error.getMessage());
-                }
-            });
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
+    /**
+     * Предоставляет информацию о сборке приложения на указанном сервере.
+     */
     @DisableLoggingAspect
     @Cacheable(value = "getServerInfo")
-    public GetServerInfoResponse getServerInfo(int serverId) {
+    public GetServerInfoResponse getServerInfo(
+        final int serverId
+    ) {
         final AppServer appServer = appServerConfig.get(serverId);
 
         return new GetServerInfoResponse(
@@ -82,14 +77,15 @@ public class InfoService {
             appServer.getModuleBuildInfoList()
                 .map(moduleBuildInfo -> new GetServerInfoResponse.ModuleBuildInfo(
                     moduleBuildInfo.name(),
-                    moduleBuildInfo.online()
-                        ? this.formatBuildText(
+                    this.formatBuildText(
                         infoServiceConfig.getModuleBuildTextConfig().textFormat(),
                         moduleBuildInfo,
-                        infoServiceConfig.getModuleBuildTextConfig().dateTimeFormat())
-                        : null)));
+                        infoServiceConfig.getModuleBuildTextConfig().dateTimeFormat()))));
     }
 
+    /**
+     * Отвечает за регулярное получение актуальной информации о сборках приложений на серверах.
+     */
     @Scheduled(fixedDelay = 3000)
     @DisableLoggingAspect
     public void updateInfo() {
@@ -97,38 +93,44 @@ public class InfoService {
             .getAll()
             .forEach(server ->
                 Flux.fromStream(infoServiceConfig.getModuleConfigs().toJavaStream())
+                    // Собираем внешнюю информацию о сборке каждого модуля отдельного сервера приложения
                     .flatMapSequential(moduleConfig ->
-                        WEB_CLIENT.get()
-                            .uri("http://" + server.getHost() + "/" + moduleConfig.uri())
+                        webClientBuilder
+                            .baseUrl("http"
+                                + (infoServiceConfig.isUseHttps() ? "s" : "")
+                                + "://" + server.getHost()
+                                + "/"
+                                + moduleConfig.uri())
+                            .build()
+                            .get()
                             .retrieve()
                             .bodyToMono(String.class)
-                            .doOnError(e1 -> {
-                                if (!StringUtils.containsAnyIgnoreCase(e1.getMessage(),
-                                    "503 Service Unavailable",
-                                    "Connection refused: no further information")
-                                ) {
-                                    log.error("#updateInfo {} {}",
-                                        server.getId(),
-                                        e1.getMessage());
-                                }
-                            }).map(answer ->
-                                new AppServer.ModuleBuildInfo(
-                                    moduleConfig.name(),
-                                    true,
-                                    this.find(answer, infoServiceConfig.getAuthorPattern()),
-                                    Option.of(this.find(
-                                            answer,
-                                            infoServiceConfig.getDatePattern()))
+                            .map(answer -> {
+                                final Function1<Pattern, String> find =
+                                    (pattern) -> Option.of(answer)
                                         .filter(StringUtils::isNotBlank)
+                                        .map(pattern::matcher)
+                                        .filter(Matcher::find)
+                                        .map(m -> m.group(1))
+                                        .filter(s -> !StringUtils.containsAnyIgnoreCase(s, "fatal:"))
+                                        .filter(StringUtils::isNotBlank)
+                                        .getOrNull();
+
+                                return new AppServer.ModuleBuildInfo(
+                                    moduleConfig.name(),
+                                    StringUtils.isNotBlank(answer) && !answer.equals("None"),
+                                    true,
+                                    find.apply(infoServiceConfig.getAuthorPattern()),
+                                    Option.of(find.apply(infoServiceConfig.getDatePattern()))
                                         .flatMap(dateStr -> Try.of(() ->
                                                 infoServiceConfig.getDateTimeFormat().parse(dateStr)
                                             ).onFailure((err) -> log.error("#updateInfo date: " + err.getMessage()))
                                             .toOption())
                                         .map(ZonedDateTime::from)
                                         .getOrNull(),
-                                    this.find(answer, infoServiceConfig.getBranchPattern()),
-                                    this.find(answer, infoServiceConfig.getHashPattern()))
-                            ).doOnError((err) -> {
+                                    find.apply(infoServiceConfig.getBranchPattern()),
+                                    find.apply(infoServiceConfig.getHashPattern()));
+                            }).doOnError((err) -> {
                                 if (!StringUtils.containsAnyIgnoreCase(err.getMessage(),
                                     "503 Service Unavailable",
                                     "Connection refused: no further information")) {
@@ -140,61 +142,71 @@ public class InfoService {
                                 Mono.just(new AppServer.ModuleBuildInfo(
                                     moduleConfig.name(),
                                     false,
+                                    false,
                                     null,
                                     null,
                                     null,
                                     null)))
                     ).collectList()
+                    // Информация об отдельных модулях собрана, формируем общую информацию о сборке
                     .mapNotNull(List::ofAll)
                     .doOnSuccess(appBuildInfoList -> {
                         server.setModuleBuildInfoList(appBuildInfoList);
-                        server.setAppBuildText(appBuildInfoList
-                            .filter(appBuildInfo -> appBuildInfo.date() != null)
-                            .minBy(Comparator.comparing(AppServer.ModuleBuildInfo::date))
-                            .map(appBuildInfo -> this.formatBuildText(
-                                infoServiceConfig.getAppBuildTextConfig().textFormat(),
-                                appBuildInfo,
-                                infoServiceConfig.getAppBuildTextConfig().dateTimeFormat()))
-                            .getOrNull());
-                    }).doOnError(e -> server.setAppBuildText(null))
+                        server.setAppBuildText(
+                            appBuildInfoList
+                                .filter(AppServer.ModuleBuildInfo::online)
+                                .isEmpty()
+                                ? infoServiceConfig.getOfflineText()
+                                : appBuildInfoList
+                                    .filter(Predicates.allOf(
+                                        AppServer.ModuleBuildInfo::online,
+                                        AppServer.ModuleBuildInfo::hasBuildInfo))
+                                    .minBy(Comparator.comparing(
+                                        moduleBuildInfo -> Option.of(moduleBuildInfo.date())
+                                            .getOrElse(Utils::getZeroDate)))
+                                    .map(appBuildInfo -> this.formatBuildText(
+                                        infoServiceConfig.getAppBuildTextConfig().textFormat(),
+                                        appBuildInfo,
+                                        infoServiceConfig.getAppBuildTextConfig().dateTimeFormat()))
+                                    .getOrElse(infoServiceConfig.getUnknownBuildText()));
+                    }).doOnError(e -> server.setAppBuildText(infoServiceConfig.getOfflineText()))
                     .subscribe());
     }
 
+    /**
+     * Конвертирует ModuleBuildInfo в текст с информацией о сборке для пользователя согласно указанному шаблону.
+     * Учитывает, включен ли модуль и есть ли по нему внешняя информация о сборке.
+     */
     private String formatBuildText(
         final String textFormat,
         final AppServer.ModuleBuildInfo moduleBuildInfo,
         final DateTimeFormatter dateTimeFormatter
-        ) {
-        return textFormat
-            .replaceAll("\\$author",
-                Option.of(moduleBuildInfo.author())
-                    .filter(StringUtils::isNotBlank)
-                    .getOrElse(UNKNOWN))
-            .replaceAll("\\$date",
-                Option.of(moduleBuildInfo.date())
-                    .map(dateTimeFormatter::format)
-                    .getOrElse(UNKNOWN))
-            .replaceAll("\\$branch",
-                Option.of(moduleBuildInfo.branch())
-                    .filter(StringUtils::isNotBlank)
-                    .getOrElse(UNKNOWN))
-            .replaceAll("\\$hash",
-                Option.of(moduleBuildInfo.hash())
-                    .filter(StringUtils::isNotBlank)
-                    .map(s -> s.substring(0, infoServiceConfig.getModuleBuildTextConfig().hashLength()))
-                    .getOrElse(UNKNOWN));
+    ) {
+        final String result;
+        if (!moduleBuildInfo.online()) {
+            result = infoServiceConfig.getOfflineText();
+        } else if (!moduleBuildInfo.hasBuildInfo()) {
+            result = infoServiceConfig.getUnknownBuildText();
+        } else {
+            final Function1<String, String> replaceText = (text) -> Option.of(text)
+                .filter(StringUtils::isNotBlank)
+                .getOrElse(infoServiceConfig.getUnknownValueText());
+
+            result = textFormat
+                .replaceAll("\\$author", replaceText.apply(moduleBuildInfo.author()))
+                .replaceAll("\\$date",
+                    Option.of(moduleBuildInfo.date())
+                        .map(dateTimeFormatter::format)
+                        .getOrElse(infoServiceConfig.getUnknownValueText()))
+                .replaceAll("\\$branch", replaceText.apply(moduleBuildInfo.branch()))
+                .replaceAll("\\$hash", replaceText.apply(moduleBuildInfo.hash()));
+        }
+        return result;
     }
 
-    private String find(String text, Pattern pattern) {
-        return Option.of(text)
-            .filter(StringUtils::isNotBlank)
-            .map(pattern::matcher)
-            .filter(Matcher::find)
-            .map(m -> m.group(1))
-            .filter(s -> !StringUtils.containsAnyIgnoreCase(s, "fatal:"))
-            .getOrNull();
-    }
-
+    /**
+     * Отвечает за очистку кэша с информацией о сборках на стенде.
+     */
     @CacheEvict(allEntries = true, value = "getServerInfo")
     @Scheduled(fixedDelay = 3000)
     @DisableLoggingAspect
