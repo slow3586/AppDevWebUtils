@@ -78,9 +78,8 @@ public class InfoService {
                 .map(moduleBuildInfo -> new GetServerInfoResponse.ModuleBuildInfo(
                     moduleBuildInfo.name(),
                     this.formatBuildText(
-                        infoServiceConfig.getModuleBuildTextConfig().textFormat(),
-                        moduleBuildInfo,
-                        infoServiceConfig.getModuleBuildTextConfig().dateTimeFormat()))));
+                        infoServiceConfig.getModuleBuildTextConfig(),
+                        moduleBuildInfo))));
     }
 
     /**
@@ -165,9 +164,8 @@ public class InfoService {
                                         moduleBuildInfo -> Option.of(moduleBuildInfo.date())
                                             .getOrElse(Utils::getZeroDate)))
                                     .map(appBuildInfo -> this.formatBuildText(
-                                        infoServiceConfig.getAppBuildTextConfig().textFormat(),
-                                        appBuildInfo,
-                                        infoServiceConfig.getAppBuildTextConfig().dateTimeFormat()))
+                                        infoServiceConfig.getAppBuildTextConfig(),
+                                        appBuildInfo))
                                     .getOrElse(infoServiceConfig.getUnknownBuildText()));
                     }).doOnError(e -> server.setAppBuildText(infoServiceConfig.getOfflineText()))
                     .subscribe());
@@ -178,9 +176,8 @@ public class InfoService {
      * Учитывает, включен ли модуль и есть ли по нему внешняя информация о сборке.
      */
     private String formatBuildText(
-        final String textFormat,
-        final AppServer.ModuleBuildInfo moduleBuildInfo,
-        final DateTimeFormatter dateTimeFormatter
+        final InfoServiceConfig.BuildTextConfig buildTextConfig,
+        final AppServer.ModuleBuildInfo moduleBuildInfo
     ) {
         final String result;
         if (!moduleBuildInfo.online()) {
@@ -192,14 +189,18 @@ public class InfoService {
                 .filter(StringUtils::isNotBlank)
                 .getOrElse(infoServiceConfig.getUnknownValueText());
 
-            result = textFormat
+            result = buildTextConfig.textFormat()
                 .replaceAll("\\$author", replaceText.apply(moduleBuildInfo.author()))
                 .replaceAll("\\$date",
                     Option.of(moduleBuildInfo.date())
-                        .map(dateTimeFormatter::format)
+                        .map(buildTextConfig.dateTimeFormat()::format)
                         .getOrElse(infoServiceConfig.getUnknownValueText()))
                 .replaceAll("\\$branch", replaceText.apply(moduleBuildInfo.branch()))
-                .replaceAll("\\$hash", replaceText.apply(moduleBuildInfo.hash()));
+                .replaceAll("\\$hash",
+                    StringUtils.substring(
+                        replaceText.apply(moduleBuildInfo.hash()),
+                        0,
+                        buildTextConfig.hashLength()));
         }
         return result;
     }
