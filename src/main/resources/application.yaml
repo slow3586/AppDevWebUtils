@@ -48,7 +48,7 @@ server:
     include-stacktrace: always
 
 app:
-  version: 'v1.1'
+  version: 'v1.2'
   security:
     users:
       - 'Багрянцев Дмитрий'
