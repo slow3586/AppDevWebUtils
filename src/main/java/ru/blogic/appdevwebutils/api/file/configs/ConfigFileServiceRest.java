@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.blogic.appdevwebutils.api.file.configs.dto.SaveConfigFileRequest;
 
-/** REST сервис, отвечающий за показ и изменения конфигов сервера приложения. */
+/**
+ * REST сервис, отвечающий за показ и изменения конфигов сервера приложения.
+ */
 @RestController
 @RequestMapping("api/file/config")
 @RequiredArgsConstructor

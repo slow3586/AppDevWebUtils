@@ -14,12 +14,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import javax.print.attribute.standard.Severity;
 import java.util.Date;
 import java.util.UUID;
 
@@ -34,32 +32,46 @@ import java.util.UUID;
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "HISTORY_ENTRIES")
 public class HistoryEntry {
-    /** ID записи. */
+    /**
+     * ID записи.
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "UUID", updatable = false)
     @Setter(value = AccessLevel.PROTECTED)
     UUID uuid;
-    /** ID сервера приложения. */
+    /**
+     * ID сервера приложения.
+     */
     @Column(name = "SERVER_ID")
     int serverId;
-    /** Текст записи. */
+    /**
+     * Текст записи.
+     */
     @Column(name = "TEXT")
     String text;
-    /** Важность записи. */
+    /**
+     * Важность записи.
+     */
     @Column(name = "SEVERITY")
     Severity severity;
-    /** Имя пользователя, связанного с операцией. */
+    /**
+     * Имя пользователя, связанного с операцией.
+     */
     @Column(name = "USERNAME")
     String username;
-    /** Время записи */
+    /**
+     * Время записи
+     */
     @CreationTimestamp
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "DATE", updatable = false)
     @Setter(value = AccessLevel.PROTECTED)
     Date date;
 
-    /** Важность операции */
+    /**
+     * Важность операции
+     */
     public enum Severity {
         CRIT,
         INFO,

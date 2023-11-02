@@ -7,7 +7,9 @@ import org.apache.sshd.client.channel.ChannelShell;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
-/** Сущность SSH соединения, хранящая SSH канал и использующая Lock для хранения состояния использования. */
+/**
+ * Сущность SSH соединения, хранящая SSH канал и использующая Lock для хранения состояния использования.
+ */
 @Value
 @Slf4j
 public class SshConnection implements AutoCloseable {

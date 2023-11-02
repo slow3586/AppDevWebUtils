@@ -20,7 +20,9 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 @Getter
 public class InfoServiceConfig {
-    /** Внешняя конфигурация. */
+    /**
+     * Внешняя конфигурация.
+     */
     final InfoServiceConfigExternalBinding infoServiceConfigExternalBinding;
 
     List<ModuleConfig> moduleConfigs;
@@ -36,7 +38,9 @@ public class InfoServiceConfig {
     boolean useHttps;
     String offlineText;
 
-    /** Конвертация внешней конфигурации. */
+    /**
+     * Конвертация внешней конфигурации.
+     */
     @PostConstruct
     public void postConstruct() {
         moduleConfigs = List.ofAll(
@@ -71,8 +75,9 @@ public class InfoServiceConfig {
 
     /**
      * Конфигурация информации о сборке.
-     * @param textFormat Формат текста сборки.
-     * @param hashLength Длина хэша.
+     *
+     * @param textFormat     Формат текста сборки.
+     * @param hashLength     Длина хэша.
      * @param dateTimeFormat Формат даты.
      */
     public record BuildTextConfig(
@@ -83,8 +88,9 @@ public class InfoServiceConfig {
 
     /**
      * Конфигурация информации о модуле.
+     *
      * @param name Название модуля.
-     * @param uri URI для получения внешней информации о сборке модуля.
+     * @param uri  URI для получения внешней информации о сборке модуля.
      */
     public record ModuleConfig(
         String name,

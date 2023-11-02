@@ -11,19 +11,25 @@ import ru.blogic.appdevwebutils.api.command.Command;
 import ru.blogic.appdevwebutils.api.command.config.CommandConfigExternalBinding.CommandConfigExternalBindingDto.CommandConfigDtoFlags;
 import ru.blogic.appdevwebutils.config.logging.DisableLoggingAspect;
 
-/** Конфигурация сервиса операций. */
+/**
+ * Конфигурация сервиса операций.
+ */
 @Component
 @DisableLoggingAspect
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter
 public class CommandConfig {
-    /** Внешняя конфигурация. */
+    /**
+     * Внешняя конфигурация.
+     */
     final CommandConfigExternalBinding commandConfigExternalBinding;
 
     List<Command> commands;
 
-    /** Конвертация внешней конфигурации. */
+    /**
+     * Конвертация внешней конфигурации.
+     */
     @PostConstruct
     public void postConstruct() {
         this.commands = List.ofAll(commandConfigExternalBinding.getCommands())
@@ -49,7 +55,9 @@ public class CommandConfig {
             ));
     }
 
-    /** Предоставляет информацию об операции с указанным ID. */
+    /**
+     * Предоставляет информацию об операции с указанным ID.
+     */
     public Command get(String id) {
         return commands
             .find(c -> c.id().equals(id))

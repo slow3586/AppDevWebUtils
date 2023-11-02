@@ -2,7 +2,6 @@ package ru.blogic.appdevwebutils.api.file.logs;
 
 import io.vavr.collection.List;
 import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -16,19 +15,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-import ru.blogic.appdevwebutils.api.file.logs.config.LogFile;
-import ru.blogic.appdevwebutils.api.file.logs.config.LogFileConfig;
-import ru.blogic.appdevwebutils.api.file.logs.dto.GetLogFileRequest;
 import ru.blogic.appdevwebutils.api.app.AppServer;
 import ru.blogic.appdevwebutils.api.app.config.AppServerConfig;
 import ru.blogic.appdevwebutils.api.app.ssh.SshService;
+import ru.blogic.appdevwebutils.api.file.logs.config.LogFile;
+import ru.blogic.appdevwebutils.api.file.logs.config.LogFileConfig;
+import ru.blogic.appdevwebutils.api.file.logs.dto.GetLogFileRequest;
 import ru.blogic.appdevwebutils.utils.Utils;
 
 import java.net.URI;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Base64;
-import java.util.Locale;
 
 /**
  * Сервис, отвечающий за предоставление файлов логов, хранящихся на серверах приложений.
@@ -95,19 +92,19 @@ public class LogFileService {
                 appServer.getFilePaths().logs() + "/" + serverLog.path(),
                 "| base64"
             ));
-            final HttpHeaders responseHeaders = new HttpHeaders();
-            responseHeaders.set(
-                HttpHeaders.CONTENT_DISPOSITION,
-                serverId
+        final HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set(
+            HttpHeaders.CONTENT_DISPOSITION,
+            serverId
                 + "_" + serverLog.id()
                 + "_" + logFileConfig.getDateFormatLogFile().format(LocalDateTime.now())
                 + ".zip");
-            final byte[] decoded = Base64.getDecoder().decode(
-                StringUtils.replace(result, "\r\n", ""));
-            return new ResponseEntity<>(
-                new ByteArrayResource(decoded),
-                responseHeaders,
-                HttpStatus.OK);
+        final byte[] decoded = Base64.getDecoder().decode(
+            StringUtils.replace(result, "\r\n", ""));
+        return new ResponseEntity<>(
+            new ByteArrayResource(decoded),
+            responseHeaders,
+            HttpStatus.OK);
     }
 
     /**

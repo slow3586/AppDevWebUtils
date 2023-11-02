@@ -29,8 +29,10 @@ public class Utils {
         return List.ofAll(StringUtils.defaultString(text).lines());
     }
 
-    /** Возвращает самую раннюю возможную дату */
-    public static ZonedDateTime getZeroDate(){
+    /**
+     * Возвращает самую раннюю возможную дату
+     */
+    public static ZonedDateTime getZeroDate() {
         return ZonedDateTime.ofInstant(Instant.EPOCH, ZoneId.systemDefault());
     }
 }

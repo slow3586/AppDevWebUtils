@@ -26,7 +26,6 @@ export type GetFrontendConfigResponse = {
     logs: FrontendConfigLog[]
 }
 
-export const getFrontendConfig = (
-): Promise<GetFrontendConfigResponse> =>
+export const getFrontendConfig = (): Promise<GetFrontendConfigResponse> =>
     getWrapper('Запрос конфигурации веб-приложения',
         `api/front`)

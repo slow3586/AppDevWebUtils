@@ -1,24 +1,32 @@
 spring:
   devtools:
     livereload:
+      # DEV: ускоренная перезагрузка приложения
       enabled: true
   web:
     resources:
+      # DEV: путь к собранные файлам frontend
       static-locations:
         - 'file:src/main/resources/static/'
         - 'classpath:/static/'
   codec:
+    # REQUIRED: для работоспособности LogFileService#getLogsArchive
     max-in-memory-size: 50MB
   main:
+    # REQUIRED: для работоспособности Spring
     allow-bean-definition-overriding: true
+    # CONFIG: отключение баннера Spring
     banner-mode: 'off'
   output:
     ansi:
+      # REQUIRED: логи Spring
       enabled: ALWAYS
   cache:
     jcache:
+      # REQUIRED: путь к конфигу ehcache
       config: 'classpath:ehcache.xml'
   datasource:
+    # REQUIRED
     url: jdbc:h2:file:./h2
     username: sa
     password:
@@ -70,9 +78,9 @@ app:
       - 'Николаев Артем'
   app:
     servers:
-      - id: '61'
-        host: '172.19.203.61'
-        password: '${pw_61}'
+      - id: '60'
+        host: '172.19.203.60'
+        password: '${pw_60}'
         file-paths:
           configs: '/fs/it/gp-uzdo'
           logs: '/workdir/logs'

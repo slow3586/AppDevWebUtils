@@ -9,19 +9,21 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import ru.blogic.appdevwebutils.api.app.AppServer;
+import ru.blogic.appdevwebutils.api.app.config.AppServerConfig;
+import ru.blogic.appdevwebutils.api.app.ssh.SshService;
 import ru.blogic.appdevwebutils.api.file.configs.config.ConfigFile;
 import ru.blogic.appdevwebutils.api.file.configs.config.ConfigFileConfig;
 import ru.blogic.appdevwebutils.api.file.configs.dto.SaveConfigFileRequest;
 import ru.blogic.appdevwebutils.api.history.HistoryService;
-import ru.blogic.appdevwebutils.api.app.AppServer;
-import ru.blogic.appdevwebutils.api.app.config.AppServerConfig;
-import ru.blogic.appdevwebutils.api.app.ssh.SshService;
 import ru.blogic.appdevwebutils.api.history.repo.HistoryEntry;
 import ru.blogic.appdevwebutils.utils.Utils;
 
 import java.nio.charset.StandardCharsets;
 
-/** Сервис, отвечающий за показ и изменения конфигов сервера приложения. */
+/**
+ * Сервис, отвечающий за показ и изменения конфигов сервера приложения.
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -32,7 +34,9 @@ public class ConfigFileService {
     ConfigFileConfig configFileConfig;
     HistoryService historyService;
 
-    /** Загружает конфиг с сервера и возвращает его текстовый контент. */
+    /**
+     * Загружает конфиг с сервера и возвращает его текстовый контент.
+     */
     public String getServerConfigFile(
         final int serverId,
         final String configId
@@ -51,7 +55,9 @@ public class ConfigFileService {
             StandardCharsets.UTF_8);
     }
 
-    /** Сохраняет конфиг на сервер, выполняя предварительные проверки. */
+    /**
+     * Сохраняет конфиг на сервер, выполняя предварительные проверки.
+     */
     public void saveServerConfigFile(
         final SaveConfigFileRequest saveConfigFileRequest
     ) {

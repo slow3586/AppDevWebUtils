@@ -9,14 +9,13 @@ import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
+import ru.blogic.appdevwebutils.api.app.AppServer;
+import ru.blogic.appdevwebutils.api.app.config.AppServerConfig;
 import ru.blogic.appdevwebutils.api.command.Command;
 import ru.blogic.appdevwebutils.api.command.config.CommandConfig;
 import ru.blogic.appdevwebutils.api.file.configs.config.ConfigFileConfig;
 import ru.blogic.appdevwebutils.api.file.logs.config.LogFileConfig;
 import ru.blogic.appdevwebutils.api.front.dto.GetFrontendConfigResponse;
-import ru.blogic.appdevwebutils.api.app.AppServer;
-import ru.blogic.appdevwebutils.api.app.config.AppServerConfig;
 import ru.blogic.appdevwebutils.config.logging.DisableLoggingAspect;
 
 /**

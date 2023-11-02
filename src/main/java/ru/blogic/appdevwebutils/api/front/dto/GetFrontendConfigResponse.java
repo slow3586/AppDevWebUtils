@@ -4,11 +4,12 @@ import io.vavr.collection.List;
 
 /**
  * Хранит конфигурацию frontend-клиента.
- * @param version Версия приложения.
+ *
+ * @param version  Версия приложения.
  * @param commands Список доступных операций над серверами приложений.
- * @param servers Сервера приложений
- * @param configs Список доступных конфиг-файлов серверов приложений.
- * @param logs Список доступных лог-файлов серверов приложений.
+ * @param servers  Сервера приложений
+ * @param configs  Список доступных конфиг-файлов серверов приложений.
+ * @param logs     Список доступных лог-файлов серверов приложений.
  */
 public record GetFrontendConfigResponse(
     String version,
@@ -19,8 +20,9 @@ public record GetFrontendConfigResponse(
 ) {
     /**
      * Информация об операции.
-     * @param id ID операции.
-     * @param name Название операции для интерфейса.
+     *
+     * @param id            ID операции.
+     * @param name          Название операции для интерфейса.
      * @param blocksWsadmin Блокирует ли операция WsAdmin.
      */
     public record GetFrontendConfigResponseCommand(
@@ -31,6 +33,7 @@ public record GetFrontendConfigResponse(
 
     /**
      * Информация о файле конфигурации.
+     *
      * @param id ID файла.
      */
     public record GetFrontendConfigResponseConfig(
@@ -39,6 +42,7 @@ public record GetFrontendConfigResponse(
 
     /**
      * Информация о файле лога.
+     *
      * @param id ID файла.
      */
     public record GetFrontendConfigResponseLog(

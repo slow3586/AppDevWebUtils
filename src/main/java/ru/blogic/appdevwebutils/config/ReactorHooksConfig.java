@@ -13,7 +13,7 @@ import reactor.core.publisher.Hooks;
 @Configuration
 public class ReactorHooksConfig {
     @PostConstruct
-    public void registerOnErrorDropped(){
+    public void registerOnErrorDropped() {
         Hooks.onErrorDropped(error -> {
             if (!StringUtils.containsAnyIgnoreCase(error.getMessage(),
                 "503 Service Unavailable",

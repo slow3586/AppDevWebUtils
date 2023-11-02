@@ -18,7 +18,7 @@ final class LogFileServiceCommands {
         false,
         Command.SSH_ERR_PATTERNS
     );
-    
+
     final static Command COMMAND_ZIP = new Command(
         "zip",
         "Zip",

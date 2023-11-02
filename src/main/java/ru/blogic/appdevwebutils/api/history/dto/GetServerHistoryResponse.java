@@ -7,7 +7,8 @@ import java.util.Date;
 
 /**
  * Хранит информацию об ответе на запрос истории операций.
- * @param logs Список записей в истории операций.
+ *
+ * @param logs    Список записей в истории операций.
  * @param logLast ID последней записи.
  */
 public record GetServerHistoryResponse(
@@ -16,11 +17,12 @@ public record GetServerHistoryResponse(
 ) {
     /**
      * Хранит информацию о записи в истории операций.
+     *
      * @param serverId ID сервера.
-     * @param text Текст записи.
+     * @param text     Текст записи.
      * @param severity Важность записи.
-     * @param user Пользователь, связанный с записью.
-     * @param date Дата и время записи.
+     * @param user     Пользователь, связанный с записью.
+     * @param date     Дата и время записи.
      */
     public record HistoryEntryDto(
         int serverId,

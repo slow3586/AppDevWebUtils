@@ -6,9 +6,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import lombok.experimental.NonFinal;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Repository;
 import ru.blogic.appdevwebutils.config.logging.DisableLoggingAspect;
 
 /**

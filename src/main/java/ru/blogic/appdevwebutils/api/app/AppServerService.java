@@ -9,14 +9,16 @@ import org.apache.sshd.client.channel.ChannelShell;
 import org.apache.sshd.client.session.ClientSession;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import ru.blogic.appdevwebutils.api.command.Command;
 import ru.blogic.appdevwebutils.api.app.config.AppServerConfig;
 import ru.blogic.appdevwebutils.api.app.ssh.SshService;
+import ru.blogic.appdevwebutils.api.command.Command;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-/** Сервис, отвечающий за поддержку SSH соединений с серверами приложений. */
+/**
+ * Сервис, отвечающий за поддержку SSH соединений с серверами приложений.
+ */
 @Service
 @Slf4j
 @RequiredArgsConstructor

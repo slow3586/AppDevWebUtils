@@ -6,8 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.apache.sshd.client.channel.ChannelShell;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.scp.client.ScpClient;
-import ru.blogic.appdevwebutils.api.command.Command;
 import ru.blogic.appdevwebutils.api.app.ssh.SshConnection;
+import ru.blogic.appdevwebutils.api.command.Command;
 import ru.blogic.appdevwebutils.utils.TimerScheduler;
 
 import java.time.ZonedDateTime;
@@ -98,13 +98,13 @@ public class AppServer {
     /**
      * Сущность для хранения информации о сборке модуля приложения.
      *
-     * @param name   Название модуля.
+     * @param name         Название модуля.
      * @param hasBuildInfo Получена ли внешняя информация о сборке модуля.
-     * @param online Онлайн ли модуль.
-     * @param author Автор сборки модуля.
-     * @param date   Дата сборки модуля.
-     * @param branch Ветка сборки модуля.
-     * @param hash   Хэш сборки модуля.
+     * @param online       Онлайн ли модуль.
+     * @param author       Автор сборки модуля.
+     * @param date         Дата сборки модуля.
+     * @param branch       Ветка сборки модуля.
+     * @param hash         Хэш сборки модуля.
      */
     public record ModuleBuildInfo(
         String name,

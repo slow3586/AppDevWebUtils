@@ -3,8 +3,6 @@ package ru.blogic.appdevwebutils.api.command;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,7 +11,9 @@ import ru.blogic.appdevwebutils.api.command.dto.CommandCancelRequest;
 import ru.blogic.appdevwebutils.api.command.dto.CommandDelayRequest;
 import ru.blogic.appdevwebutils.api.command.dto.CommandRunRequest;
 
-/** REST сервис, отвечающий за выполнение и планирование операций пользователями на серверах приложений. */
+/**
+ * REST сервис, отвечающий за выполнение и планирование операций пользователями на серверах приложений.
+ */
 @RestController
 @RequestMapping("api/command")
 @RequiredArgsConstructor
