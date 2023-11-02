@@ -17,7 +17,7 @@ import ru.blogic.appdevwebutils.api.file.configs.dto.SaveConfigFileRequest;
 @RestController
 @RequestMapping("api/file/config")
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 public class ConfigFileServiceRest {
     ConfigFileService configFileService;
 

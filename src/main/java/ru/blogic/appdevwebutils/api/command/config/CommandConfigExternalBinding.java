@@ -14,7 +14,7 @@ import ru.blogic.appdevwebutils.api.command.Command;
 @ConfigurationProperties(prefix = "app.command")
 @RequiredArgsConstructor
 @Getter
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 class CommandConfigExternalBinding {
     java.util.List<CommandConfigExternalBindingDto> commands;
 

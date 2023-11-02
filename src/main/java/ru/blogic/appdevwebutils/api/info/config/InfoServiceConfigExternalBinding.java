@@ -13,7 +13,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "app.info")
 @RequiredArgsConstructor
 @Getter
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 class InfoServiceConfigExternalBinding {
     /**
      * Конфигурация информации о модулях приложения.

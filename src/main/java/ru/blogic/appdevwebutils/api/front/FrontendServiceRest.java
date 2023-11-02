@@ -14,7 +14,7 @@ import ru.blogic.appdevwebutils.api.front.dto.GetFrontendConfigResponse;
 @RestController
 @RequestMapping("api/front")
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 public class FrontendServiceRest {
     FrontendService frontendService;
 

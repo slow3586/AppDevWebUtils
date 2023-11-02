@@ -13,7 +13,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "app.files.configs")
 @RequiredArgsConstructor
 @Getter
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 class ConfigFileConfigExternalBinding {
     java.util.List<ConfigFileConfigExternalBindingDto> list;
 

@@ -55,8 +55,15 @@ server:
     include-message: always
     include-stacktrace: always
 
+
+
 app:
-  version: 'v1.2'
+  version: 'v1.3'
+  ssh-service:
+    username: root
+    port: 22
+    key-file: keyfile
+    key-pw: ${pw_key}
   security:
     users:
       - 'Багрянцев Дмитрий'

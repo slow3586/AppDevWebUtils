@@ -27,7 +27,7 @@ import java.nio.charset.StandardCharsets;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 public class ConfigFileService {
     AppServerConfig appServerConfig;
     SshService sshService;

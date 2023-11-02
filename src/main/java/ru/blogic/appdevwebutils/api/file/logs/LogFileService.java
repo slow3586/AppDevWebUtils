@@ -32,7 +32,7 @@ import java.util.Base64;
  */
 @Service
 @Slf4j
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 public class LogFileService {
     AppServerConfig appServerConfig;
     SshService sshService;

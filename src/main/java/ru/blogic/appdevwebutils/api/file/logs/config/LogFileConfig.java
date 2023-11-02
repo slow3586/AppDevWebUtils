@@ -18,7 +18,7 @@ import java.util.Locale;
 @Component
 @DisableLoggingAspect
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PROTECTED)
 @Getter
 public class LogFileConfig {
     /**
