@@ -1,0 +1,262 @@
+spring:
+  devtools:
+    livereload:
+      # DEV: ускоренная перезагрузка приложения
+      enabled: true
+  web:
+    resources:
+      # DEV: путь к собранные файлам frontend
+      static-locations:
+        - 'file:src/main/resources/static/'
+        - 'classpath:/static/'
+  codec:
+    # REQUIRED: для работоспособности LogFileService#getLogsArchive
+    max-in-memory-size: 50MB
+  main:
+    # REQUIRED: для работоспособности Spring
+    allow-bean-definition-overriding: true
+    # CONFIG: отключение баннера Spring
+    banner-mode: 'off'
+  output:
+    ansi:
+      # REQUIRED: логи Spring
+      enabled: ALWAYS
+  cache:
+    jcache:
+      # REQUIRED: путь к конфигу ehcache
+      config: 'classpath:ehcache.xml'
+  datasource:
+    # REQUIRED
+    url: jdbc:h2:file:./h2
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+      ddl-auto: none
+    database-platform: org.hibernate.dialect.H2Dialect
+    properties:
+      hibernate:
+        globally_quoted_identifiers: true
+logging:
+  config: 'classpath:logback-spring.xml'
+server:
+  ssl:
+    enabled: true
+    key-store-type: PKCS12
+    key-store: 'classpath:cert.p12'
+    key-store-password: changeit
+    key-alias: '1'
+  port: '8443'
+  error:
+    include-exception: true
+    include-message: always
+    include-stacktrace: always
+
+app:
+  version: 'v1.2'
+  security:
+    users:
+      - 'Багрянцев Дмитрий'
+      - 'Власов Павел'
+      - 'Дымко Андрей'
+      - 'Ермолаева Екатерина'
+      - 'Ермош Константин'
+      - 'Кравцов Павел'
+      - 'Скворцов Демьян'
+      - 'Чанчиков Сергей'
+      - 'Саитова Ильсияр'
+      - 'Каюмов Камиль'
+      - 'Климов Максим'
+      - 'Беркутов Алмаз'
+      - 'Габдуллина Гузель'
+      - 'Чурсин Владимир'
+      - 'Смирнова Наталья'
+      - 'Насыров Руслан'
+      - 'Николаев Артем'
+  app:
+    servers:
+      - id: '60'
+        host: '172.19.203.60'
+        password: '${pw_60}'
+        file-paths:
+          configs: '/fs/it/gp-uzdo'
+          logs: '/workdir/logs'
+  info:
+    modules:
+      - name: "GP"
+        uri: "UZDO/api/app/buildInfo"
+      - name: "Integ"
+        uri: "UZDO-ui/rest/app/buildInfo"
+    date-format: "HH:mm:ss dd.MM.yyyy z Z"
+    author-regex: "Собрано пользователем: (.*)"
+    date-regex: "Дата сборки: (.*)"
+    branch-regex: "Ветка: (.*)"
+    hash-regex: "Хэш: (.*)"
+    app-build-text:
+      date-time-format: "dd.MM.yy_HH.mm"
+      hash-length: 0
+      text-format: "1.3-FP11_$date"
+    module-build-text:
+      date-time-format: "HH:mm dd.MM.yy z"
+      hash-length: 6
+      text-format: "$author @ $date $branch@$hash"
+    unknown-build-text: "Неизвестная сборка"
+    offline-text: "OFF"
+    use-https: false
+    unknown-value-text: "<?>"
+  files:
+    configs:
+      list:
+        - id: 'uzdo.properties'
+          path: 'uzdo/uzdo.properties'
+        - id: 'environment.xml'
+          path: 'environment.xml'
+        - id: 'departments.xml'
+          path: 'uzdo/departments.xml'
+        - id: 'SEDRequest.xml'
+          path: 'poa-test/SEDRequest.xml'
+        - id: 'successfulAnswer.xml'
+          path: 'uzdo/successfulAnswer.xml'
+        - id: 'build_gp_integ_upload'
+          path: 'deploy_maven/build_gp_integ_upload/run_script.sh'
+    logs:
+      list:
+        - id: 'UZDO-integration'
+          path: 'UZDO-integration.log'
+        - id: 'UZDO-samba-ehd'
+          path: 'UZDO-samba-ehd.log'
+        - id: 'UZDO_GP'
+          path: 'UZDO_GP.log'
+        - id: 'SystemOut'
+          path: 'app/SystemOut.log'
+        - id: 'UZDO-NEW_JAVAGATE_HTTP'
+          path: 'UZDO-NEW_JAVAGATE_HTTP.log'
+        - id: 'UZDO-ksdd-integration'
+          path: 'UZDO-ksdd-integration.log'
+  command:
+    commands:
+      - id: 'announce'
+        name: 'Оповещение'
+        command: ''
+        timeout: 10
+        shell: none
+        flags:
+          - announce_execution
+      - id: 'clear_cache'
+        name: 'Клир кэш'
+        command: '/root/deploy/clear_cache_shortcut.sh'
+        timeout: 900
+        shell: ssh
+        flags:
+          - ssh_ready_pattern
+          - ssh_err_patterns
+          - wsadmin_block
+          - announce_execution
+      - id: 'ra'
+        name: 'Рестарт приложения'
+        command: 'ra(1)'
+        timeout: 180
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
+      - id: 'sa'
+        name: 'Старт приложения'
+        command: 'sa(1)'
+        timeout: 180
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
+      - id: 'ba'
+        name: 'Остановка приложения'
+        command: 'ba()'
+        timeout: 60
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
+      - id: 'cnf'
+        name: 'Обновление приложения (cfg)'
+        command: 'cnf()'
+        timeout: 90
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
+      - id: 'uric'
+        name: 'Обновление приложения (integ + cfg)'
+        command: 'uric()'
+        timeout: 240
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
+      - id: 'urg'
+        name: 'Обновление приложения (gp)'
+        command: 'urg(1)'
+        timeout: 240
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
+      - id: 'ura'
+        name: 'Обновление приложения (gp + integ + cfg)'
+        command: 'ura(1)'
+        timeout: 300
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
+      - id: 'truncate_db2_temp_tables'
+        name: 'Чистка таблицы LOCK и др.'
+        command: 'truncate_db2_temp_tables()'
+        timeout: 60
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
+      - id: 'build_gp_integ_upload'
+        name: 'Сборка GP + Integ и обновление стенда'
+        command: 'build_gp_integ_upload()'
+        timeout: 900
+        shell: wsadmin
+        flags:
+          - wsadmin_ready_pattern
+          - wsadmin_block
+          - wsadmin_err_patterns
+          - announce_execution
+      - id: 'hostname'
+        name: 'Проверка SSH'
+        command: 'hostname'
+        timeout: 10
+        shell: ssh
+        flags:
+          - ssh_ready_pattern
+      - id: 'restart_wsadmin'
+        name: 'Рестарт WsAdmin'
+        command: ''
+        timeout: 90
+        shell: wsadmin
+        flags:
+          - wsadmin_block
+          - announce_execution

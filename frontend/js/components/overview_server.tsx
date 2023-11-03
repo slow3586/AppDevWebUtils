@@ -1,21 +1,22 @@
-import React, {ReactElement, useContext, useEffect, useRef, useState} from "react";
-import {Form, Container, Row, Tooltip, OverlayTrigger} from "react-bootstrap";
+import React, {useContext} from "react";
+import {Form} from "react-bootstrap";
 import {useQuery, useQueryClient} from "react-query";
-import {getServerInfo, getServerLog} from "../clients/info_client";
-import {isEmpty, isNil} from "lodash";
-import {ServerContext, ServersContext} from "./app";
-import {useCookies} from "react-cookie";
+import {getServerInfo} from "../clients/info_client";
+import {isEmpty} from "lodash";
+import {ConnectionContext} from "../contexts/connection_context";
+import {ServerContext, ServersContext} from "../contexts/servers_context";
 
 export type OverviewServerProps = {
     serverId: number
 }
 
+/** Компонент - небольшое окно с краткой информацией о сервере приложения */
 export function OverviewServer({serverId}: OverviewServerProps) {
-    //const servers = useContext(ServersContext);
-    const [cookies, setCookies] = useCookies(['servers']);
-    const servers: ServerContext[] = cookies.servers;
-    const server = servers.find(s => s.id == serverId);
     const queryClient = useQueryClient();
+    const connectionContext = useContext(ConnectionContext);
+    const serversContext = useContext(ServersContext);
+    const servers: ServerContext[] = serversContext.servers ?? [];
+    const server = servers.find(s => s.id == serverId);
 
     const query = useQuery(
         ['getServerInfo', serverId],
@@ -23,7 +24,8 @@ export function OverviewServer({serverId}: OverviewServerProps) {
         {
             refetchInterval: 3000,
             refetchIntervalInBackground: true,
-            enabled: servers.find(s => s.id == serverId).enabled
+            enabled: connectionContext.connectionEstablished && server.enabled,
+            retry: false
         });
 
     let commandText = "-";
@@ -38,32 +40,12 @@ export function OverviewServer({serverId}: OverviewServerProps) {
     const changeServerEnabled = (enabled: boolean) => {
         queryClient.removeQueries(['getServerInfo', serverId]);
         queryClient.removeQueries(['getServerLog', serverId]);
-        setCookies('servers', servers.map(s => {
+        serversContext.setServers(servers.map(s => {
             if (s.id == serverId)
                 s.enabled = enabled
             return s;
         }));
     }
-
-    const gpBuild = query?.data?.gpBuild;
-    const gpShort = isNil(gpBuild)
-        ? "OFF"
-        : !isNil(gpBuild?.date)
-            ? `${gpBuild.author} @ ${gpBuild.date.substring(0, 22)}`
-            : "Неизвестная сборка";
-    const gpFull = gpBuild?.date
-        ? `(${gpBuild.branch}, ${gpBuild.hash})`
-        : '';
-
-    const integBuild = query?.data?.integBuild;
-    const integShort = isNil(integBuild)
-        ? "OFF"
-        : !isNil(integBuild?.date)
-            ? `${integBuild.author} @ ${integBuild.date.substring(0, 22)}`
-            : "Неизвестная сборка";
-    const integFull = integBuild?.date
-        ? `(${integBuild.branch}, ${integBuild.hash})`
-        : '';
 
     return (
         <div className="comp-overview-server">
@@ -78,14 +60,20 @@ export function OverviewServer({serverId}: OverviewServerProps) {
                 {server.enabled && (
                     <div className="comp-content">
                         <div className="comp-row">
-                            <Form.Text className="comp-status">Сборка: <span className="comp-status-bold">{query?.data?.build ?? "OFF"}</span></Form.Text>
+                            <Form.Text className="comp-status">
+                                Сборка: <span className="comp-status-bold">{query?.data?.appBuildText}</span>
+                            </Form.Text>
                         </div>
-                        <div title={gpFull} className="comp-row">
-                            <Form.Text className="comp-status">GP: {gpShort}</Form.Text>
-                        </div>
-                        <div title={integFull} className="comp-row">
-                            <Form.Text className="comp-status">Integ: {integShort}</Form.Text>
-                        </div>
+                        {query?.data?.moduleBuildInfoList.map(moduleBuildInfo =>
+                            <div key={`k${moduleBuildInfo.name}`}
+                                 title={moduleBuildInfo.name}
+                                 className="comp-row">
+                                <Form.Text className="comp-status">{moduleBuildInfo.name
+                                    + ": "
+                                    + moduleBuildInfo.buildText}
+                                </Form.Text>
+                            </div>
+                        )}
                         <div className="comp-row">
                             <Form.Text className="comp-status">Операция: {commandText}</Form.Text>
                         </div>

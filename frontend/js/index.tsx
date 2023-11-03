@@ -1,24 +1,26 @@
 import {createRoot} from "react-dom/client";
-import React, {createContext} from "react";
+import React from "react";
 import {App} from "./components/app";
-import {
-    QueryClient,
-    QueryClientProvider,
-} from 'react-query'
+import {QueryClient, QueryClientProvider,} from 'react-query'
 import {ToastContainer} from "react-toastify";
+import {ConnectionContextProvider} from "./contexts/connection_context";
+import {ServersContextProvider} from "./contexts/servers_context";
 
 require('../less/index.less')
 
-console.log("v0.7");
-
-const queryClient = new QueryClient()
+// Просим разрешение на показ оповещений в операционной системе пользователя
 Notification.requestPermission();
 
+// Создание корневого элемента веб-приложения
 createRoot(document.getElementById("root")).render(
     <div>
-        <QueryClientProvider client={queryClient}>
-            <App/>
-        </QueryClientProvider>
-        <ToastContainer/>
+        <ConnectionContextProvider>
+            <ServersContextProvider>
+                <QueryClientProvider client={new QueryClient()}>
+                    <App/>
+                </QueryClientProvider>
+                <ToastContainer/>
+            </ServersContextProvider>
+        </ConnectionContextProvider>
     </div>
 );

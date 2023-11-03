@@ -1,7 +1,5 @@
-//@import 'bootstrap-less/bootstrap/bootstrap.less';
 @import 'bootstrap/dist/css/bootstrap.min.css';
 @import 'react-toastify/dist/ReactToastify.css';
-//@body-bg: #eeeeee;
 
 .comp-app {
   margin-top: 5px;
@@ -14,7 +12,7 @@
   }
 
   > .tab-content {
-    margin-top: 10px
+    margin-top: 5px
   }
 }
 
@@ -30,30 +28,39 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    width: 400px;
-  }
 
-  > .comp-textarea {
-    max-height: 500px;
-    letter-spacing: -0.5px;
-    font-family: monospace;
+    > .comp-textarea {
+      width: 625px;
+      max-height: 700px;
+      letter-spacing: -0.5px;
+      font-family: monospace;
+      line-height: 1.4;
+    }
   }
 }
 
 .comp-server {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.comp-server-control {
+  display: flex;
   justify-content: center;
+  flex-direction: column;
 
   > .comp-container {
-    width: 450px;
+    width: 625px;
     display: flex;
     flex-direction: column;
     gap: 5px;
 
     > .comp-textarea {
-      max-height: 400px;
+      max-height: 500px;
       letter-spacing: -0.5px;
       font-family: monospace;
+      line-height: 1.4;
     }
 
     > .comp-footer {
@@ -90,7 +97,7 @@
 .comp-overview-server {
   border: var(--bs-border-width) solid var(--bs-border-color);
   border-radius: var(--bs-border-radius);
-  min-width: 300px;
+  min-width: 350px;
   padding: 5px 10px;
 
   > .comp-enabled {
@@ -131,6 +138,67 @@
           }
         }
       }
+    }
+  }
+}
+
+.comp-server-configs {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+
+  .comp-bigtextarea {
+    width: 1000px;
+    font-size: 12px;
+    letter-spacing: -0.5px;
+    font-family: monospace;
+    white-space: nowrap;
+  }
+
+  .comp-controls {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-direction: column;
+    width: 400px;
+    gap: 5px;
+
+    > .comp-button-container {
+      display: flex;
+      height: 65px;
+      gap: 5px;
+      margin-top: 5px;
+    }
+  }
+}
+
+.comp-server-logs {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+
+  .comp-bigtextarea {
+    width: 1000px;
+    font-size: 10px;
+    letter-spacing: -0.5px;
+    font-family: monospace;
+  }
+
+  .comp-controls {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-direction: column;
+    width: 400px;
+    gap: 5px;
+
+    > .comp-button-container {
+      display: flex;
+      height: 65px;
+      gap: 5px;
+      margin-top: 5px;
     }
   }
 }

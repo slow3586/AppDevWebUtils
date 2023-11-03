@@ -1,21 +1,20 @@
-import {post} from "../utils/client";
+/**
+ * Клиент для операций. Связан с CommandService.
+ */
+
+import {postWrapper, ResponseType} from "../utils/client";
 
 export enum Type {
     WSADMIN = "WSADMIN",
     SSH = "SSH"
 }
 
-export interface CommandRunRequest {
+export type CommandRunRequest = {
     serverId: number,
     commandId: string,
     comment: string,
     delaySeconds: number
 }
-
-export const commandRun = (
-    request: CommandRunRequest
-): Promise<string> =>
-    post(`api/command/run`, request, true)
 
 export interface CommandDelayRequest {
     serverId: number,
@@ -23,17 +22,31 @@ export interface CommandDelayRequest {
     delaySeconds: number
 }
 
-export const commandDelay = (
-    request: CommandDelayRequest
-): Promise<string> =>
-    post(`api/command/delay`, request, true)
-
 export interface CommandCancelRequest {
     serverId: number,
     comment: string
 }
 
+export const commandRun = (
+    request: CommandRunRequest
+): Promise<string> =>
+    postWrapper('Запуск операции',
+        `api/command/run`,
+        request,
+        ResponseType.TEXT)
+
+export const commandDelay = (
+    request: CommandDelayRequest
+): Promise<string> =>
+    postWrapper('Отсрочка операции',
+        `api/command/delay`,
+        request,
+        ResponseType.TEXT)
+
 export const commandCancel = (
     request: CommandCancelRequest
 ): Promise<string> =>
-    post(`api/command/cancel`, request, true)
+    postWrapper('Отмена операции',
+        `api/command/cancel`,
+        request,
+        ResponseType.TEXT)

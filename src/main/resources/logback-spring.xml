@@ -3,30 +3,30 @@
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
     <property name="PATTERN" value="%d{HH:mm:ss.SSS} [%-1level] [%.3t] %logger{0}: %msg%n" />
-    <appender name="MDWUConsole"
+    <appender name="ADWUConsole"
               class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>${PATTERN}</pattern>
         </encoder>
     </appender>
 
-    <appender name="MDWUFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <appender name="ADWUFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>log.txt</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>logs/%d{yyyy-MM-dd}.%i.txt</fileNamePattern>
             <maxFileSize>1MB</maxFileSize>
             <maxHistory>30</maxHistory>
-            <totalSizeCap>1GB</totalSizeCap>
+            <totalSizeCap>100MB</totalSizeCap>
         </rollingPolicy>
         <encoder>
             <pattern>${PATTERN}</pattern>
         </encoder>
     </appender>
 
-    <logger name="ru.blogic.muzedodevwebutils" level="TRACE"/>
+    <logger name="ru.blogic.appdevwebutils" level="TRACE"/>
     <!--<logger name="org.apache.sshd.client" level="DEBUG"/>-->
     <root level="INFO">
-        <appender-ref ref="MDWUConsole" />
-        <appender-ref ref="MDWUFile" />
+        <appender-ref ref="ADWUConsole" />
+        <appender-ref ref="ADWUFile" />
     </root>
 </configuration>

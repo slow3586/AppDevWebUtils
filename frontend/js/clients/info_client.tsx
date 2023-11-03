@@ -1,17 +1,8 @@
-import {get} from "../utils/client";
+/**
+ * Клиент для информации о сервере приложения. Связан с InfoService.
+ */
 
-export enum Severity {
-    CRIT = "CRIT",
-    INFO = "INFO",
-    TRACE = "TRACE"
-}
-
-export type LogEntry = {
-    date: Date,
-    text: string,
-    severity: Severity,
-    user: string
-}
+import {getWrapper} from "../utils/client";
 
 export type Command = {
     id: string,
@@ -28,30 +19,17 @@ export type GetServerInfoResponse = {
     executingCommandTimer: number,
     scheduledCommand: Command,
     scheduledCommandTimer: number,
-    build: string,
-    gpBuild: MuzedoBuildInfo,
-    integBuild: MuzedoBuildInfo
+    appBuildText: string,
+    moduleBuildInfoList: ModuleBuildInfo[]
 }
 
-export type MuzedoBuildInfo = {
-    author: string,
-    date: string,
-    branch: string,
-    hash: string
-}
-
-export type GetServerLogResponse = {
-    logs: LogEntry[],
-    logLast: number
+export type ModuleBuildInfo = {
+    name: string,
+    buildText: string
 }
 
 export const getServerInfo = (
     serverId: number
 ): Promise<GetServerInfoResponse> =>
-    get(`api/info/getServerInfo/${serverId}`)
-
-export const getServerLog = (
-    serverId: number,
-    last: number
-): Promise<GetServerLogResponse> =>
-    get(`api/info/getServerLog/${serverId}?last=${last}`)
+    getWrapper('Запрос статуса стенда',
+        `api/info/${serverId}`)
