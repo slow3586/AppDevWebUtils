@@ -70,13 +70,20 @@ public class SshService {
                 ).verify(DEFAULT_TIMEOUT)
                 .getSession();
 
-            PuttyKeyUtils.DEFAULT_INSTANCE.loadKeyPairs(
-                session,
-                Path.of(sshServiceConfig.getKeyFile()),
-                FilePasswordProvider.of(sshServiceConfig.getKeyPw())
-            ).forEach(session::addPublicKeyIdentity);
+            if (StringUtils.isNotBlank(sshServiceConfig.getKeyFile())) {
+                if (StringUtils.isBlank(sshServiceConfig.getKeyPw())) {
+                    throw new IllegalStateException("Не указан пароль для SSH ключа");
+                }
+                PuttyKeyUtils.DEFAULT_INSTANCE.loadKeyPairs(
+                    session,
+                    Path.of(sshServiceConfig.getPw()),
+                    FilePasswordProvider.of(sshServiceConfig.getKeyPw())
+                ).forEach(session::addPublicKeyIdentity);
+            }
 
-            session.addPasswordIdentity(appServer.getPassword());
+            if (StringUtils.isNotBlank(sshServiceConfig.getPw())) {
+                session.addPasswordIdentity(sshServiceConfig.getKeyFile());
+            }
 
             session.auth().verify(DEFAULT_TIMEOUT);
 

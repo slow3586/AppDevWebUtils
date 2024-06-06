@@ -16,6 +16,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class SshServiceConfig {
     String username;
     String port;
+    String pw;
     String keyFile;
     String keyPw;
 }
