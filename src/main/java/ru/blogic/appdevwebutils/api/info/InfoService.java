@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 public class InfoService {
     AppServerConfig appServerConfig;
     InfoServiceConfig infoServiceConfig;
@@ -159,7 +159,7 @@ public class InfoService {
                                     .filter(Predicates.allOf(
                                         AppServer.ModuleBuildInfo::online,
                                         AppServer.ModuleBuildInfo::hasBuildInfo))
-                                    .minBy(Comparator.comparing(
+                                    .maxBy(Comparator.comparing(
                                         moduleBuildInfo -> Option.of(moduleBuildInfo.date())
                                             .getOrElse(Utils::getZeroDate)))
                                     .map(appBuildInfo -> this.formatBuildText(

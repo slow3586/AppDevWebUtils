@@ -15,7 +15,7 @@ import ru.blogic.appdevwebutils.api.info.dto.GetServerInfoResponse;
 @RestController
 @RequestMapping("api/info")
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 public class InfoServiceRest {
     InfoService infoService;
 

@@ -32,11 +32,10 @@ build/
 ### VS Code ###
 .vscode/
 
-package-lock.json
-yarn.lock
 **/built/*
 built.ls
 log.txt
 h2.trace.db
 logs/**
 node_modules/**
+h2.mv.db

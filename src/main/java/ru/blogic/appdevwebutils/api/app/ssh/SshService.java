@@ -8,7 +8,6 @@ import lombok.AccessLevel;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.client.SshClient;
@@ -16,17 +15,21 @@ import org.apache.sshd.client.channel.ChannelShell;
 import org.apache.sshd.client.channel.PtyCapableChannelSession;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.channel.RequestHandler;
+import org.apache.sshd.common.config.keys.FilePasswordProvider;
 import org.apache.sshd.common.util.io.output.NoCloseOutputStream;
+import org.apache.sshd.putty.PuttyKeyUtils;
 import org.apache.sshd.scp.client.ScpClient;
 import org.apache.sshd.scp.client.ScpClientCreator;
 import org.apache.sshd.scp.common.helpers.ScpTimestampCommandDetails;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.blogic.appdevwebutils.api.app.AppServer;
+import ru.blogic.appdevwebutils.api.command.Command;
+import ru.blogic.appdevwebutils.api.app.ssh.config.SshServiceConfig;
 import ru.blogic.appdevwebutils.api.command.Command;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Date;
 import java.util.concurrent.locks.ReentrantLock;
@@ -34,19 +37,15 @@ import java.util.concurrent.locks.ReentrantLock;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 public class SshService {
-    private static final int MAX_CONNECTION_POOL_SIZE = 5;
+    static int MAX_CONNECTION_POOL_SIZE = 5;
     static long DEFAULT_TIMEOUT = 5000;
     static String COMMAND_OUTPUT_START = "_OUTPUT_";
     static ScpClientCreator SCP_CLIENT_CREATOR = ScpClientCreator.instance();
     static SshClient DEFAULT_SSH_CLIENT = SshClient.setUpDefaultClient();
-    @NonFinal
-    @Value("${ssh-service.username:root}")
-    String username;
-    @NonFinal
-    @Value("${ssh-service.port:22}")
-    String port;
+
+    SshServiceConfig sshServiceConfig;
 
     @PostConstruct
     public void postConstruct() {
@@ -63,15 +62,29 @@ public class SshService {
     public ClientSession createSession(final AppServer appServer) {
         try {
             final ClientSession session = DEFAULT_SSH_CLIENT.connect(
-                    username,
+                    sshServiceConfig.getUsername(),
                     appServer.getHost(),
-                    Try.of(() -> Integer.parseInt(port))
+                    Try.of(() -> Integer.parseInt(sshServiceConfig.getPort()))
                         .onFailure((e) -> log.error("#createSession Некорректный порт SSH", e))
                         .getOrElse(22)
                 ).verify(DEFAULT_TIMEOUT)
                 .getSession();
 
-            session.addPasswordIdentity(appServer.getPassword());
+            if (StringUtils.isNotBlank(sshServiceConfig.getKeyFile())) {
+                if (StringUtils.isBlank(sshServiceConfig.getKeyPw())) {
+                    throw new IllegalStateException("Не указан пароль для SSH ключа");
+                }
+                PuttyKeyUtils.DEFAULT_INSTANCE.loadKeyPairs(
+                    session,
+                    Path.of(sshServiceConfig.getPw()),
+                    FilePasswordProvider.of(sshServiceConfig.getKeyPw())
+                ).forEach(session::addPublicKeyIdentity);
+            }
+
+            if (StringUtils.isNotBlank(sshServiceConfig.getPw())) {
+                session.addPasswordIdentity(sshServiceConfig.getKeyFile());
+            }
+
             session.auth().verify(DEFAULT_TIMEOUT);
 
             return session;

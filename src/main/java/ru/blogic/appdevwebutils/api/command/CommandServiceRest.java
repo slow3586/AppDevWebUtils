@@ -17,7 +17,7 @@ import ru.blogic.appdevwebutils.api.command.dto.CommandRunRequest;
 @RestController
 @RequestMapping("api/command")
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 public class CommandServiceRest {
     CommandService commandService;
 

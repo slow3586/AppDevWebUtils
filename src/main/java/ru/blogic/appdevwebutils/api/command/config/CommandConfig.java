@@ -17,7 +17,7 @@ import ru.blogic.appdevwebutils.config.logging.DisableLoggingAspect;
 @Component
 @DisableLoggingAspect
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PROTECTED)
 @Getter
 public class CommandConfig {
     /**

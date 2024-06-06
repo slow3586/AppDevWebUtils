@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 public class CommandService {
     SshService sshService;
     AppServerConfig appServerConfig;
@@ -61,7 +61,8 @@ public class CommandService {
             if (isBlockingCommand) {
                 if (appServer.getWsadminShell() == null
                     || appServer.getWsadminShell().isClosing()
-                    || !appServer.getWsadminShell().isOpen()) {
+                    || !appServer.getWsadminShell().isOpen()
+                ) {
                     throw new RuntimeException("Wsadmin не запущен! Необходимо дождаться его запуска (~1 мин)");
                 }
 
@@ -119,7 +120,7 @@ public class CommandService {
 
                         //region ЗАПУСК ОПЕРАЦИИ
                         if (command.shell().equals(Command.Shell.WSADMIN)) {
-                            CheckedFunction0<String> execute = () ->
+                            final CheckedFunction0<String> execute = () ->
                                 sshService.executeCommand(
                                     appServer.getWsadminShell(),
                                     command,

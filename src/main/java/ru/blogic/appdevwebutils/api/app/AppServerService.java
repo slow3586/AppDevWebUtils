@@ -22,7 +22,7 @@ import java.util.concurrent.ScheduledExecutorService;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 public class AppServerService {
     SshService sshService;
     AppServerConfig appServerConfig;

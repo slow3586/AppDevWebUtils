@@ -21,7 +21,7 @@ import ru.blogic.appdevwebutils.api.file.logs.dto.GetLogFileRequest;
 @RestController
 @RequestMapping("api/file/log")
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 public class LogFileServiceRest {
     LogFileService logFileService;
 

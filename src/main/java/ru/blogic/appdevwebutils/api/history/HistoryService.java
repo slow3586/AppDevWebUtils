@@ -20,7 +20,7 @@ import ru.blogic.appdevwebutils.config.logging.DisableLoggingAspect;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 public class HistoryService {
     HistoryEntryRepository historyEntryRepository;
 

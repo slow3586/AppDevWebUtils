@@ -24,7 +24,7 @@ import ru.blogic.appdevwebutils.config.logging.DisableLoggingAspect;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@FieldDefaults(level = AccessLevel.PROTECTED, makeFinal = true)
 public class FrontendService {
     CommandConfig commandConfig;
     AppServerConfig appServerConfig;

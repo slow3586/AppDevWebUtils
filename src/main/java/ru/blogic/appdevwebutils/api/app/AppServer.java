@@ -30,10 +30,6 @@ public class AppServer {
      */
     final String host;
     /**
-     * Пароль SSH сервера.
-     */
-    final String password;
-    /**
      * Пути к файлам SSH сервера.
      */
     final FilePaths filePaths;
