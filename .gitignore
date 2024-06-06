@@ -3,7 +3,6 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-h2.mv.db
 
 ### STS ###
 .apt_generated
@@ -33,11 +32,10 @@ build/
 ### VS Code ###
 .vscode/
 
-package-lock.json
-yarn.lock
 **/built/*
 built.ls
 log.txt
 h2.trace.db
 logs/**
 node_modules/**
+h2.mv.db
